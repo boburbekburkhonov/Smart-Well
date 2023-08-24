@@ -1,11 +1,42 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import logo from "../../assets/images/logo.svg";
 import weatherVideo from "../../assets/video/water.mp4";
 import "./Login.css";
 import { api } from "../Api/Api";
 
 const Login = () => {
+  const [errorMessage, setErrorMessage] = useState("");
+  const [error, setError] = useState(false);
   const [checkRemember, setCheckRemember] = useState("off");
+
+  useEffect(() => {
+    if (window.localStorage.getItem("checkRemember") == "on") {
+      fetch(`${api}/auth/signIn`, {
+        method: "post",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          username: window.localStorage.getItem("username"),
+          password: window.localStorage.getItem("password"),
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.statusCode == 200) {
+            window.localStorage.setItem("accessToken", data.data.accessToken);
+            window.localStorage.setItem("refreshToken", data.data.refreshToken);
+            if (data.data.user?.role == "SUPERADMIN") {
+              window.location.href = "/admin";
+            } else if (data.data.user?.role == "USER") {
+              window.location.href = "/user";
+            } else {
+              window.location.href = "/admin";
+            }
+          }
+        });
+    }
+  }, []);
 
   const loginUser = async (e) => {
     e.preventDefault();
@@ -24,26 +55,27 @@ const Login = () => {
     });
 
     const response = await request.json();
-    console.log(username.value, password.value);
-    console.log(response.message);
-    // if (response.statusCode == 200) {
-    //   window.localStorage.setItem("username", username.value);
-    //   window.localStorage.setItem("password", password.value);
-    //   window.localStorage.setItem("checkRemember", checkRemember);
-    //   window.localStorage.setItem("accessToken", response.data.accessToken);
-    //   window.localStorage.setItem("refreshToken", response.data.refreshToken);
-    //   if (response.data.user.role == "SUPERADMIN") {
-    //     window.location.href = "/admin";
-    //   } else if (response.data.user.role == "USER") {
-    //     window.location.href = "/user";
-    //   }
-    // } else {
-    //   setError(true);
-    //   setErrorMessage("Username yoki password noto'g'ri!");
-    // }
+    console.log(response);
+    if (response.statusCode == 200) {
+      window.localStorage.setItem("username", username.value);
+      window.localStorage.setItem("password", password.value);
+      window.localStorage.setItem("checkRemember", checkRemember);
+      window.localStorage.setItem("accessToken", response.data.accessToken);
+      window.localStorage.setItem("refreshToken", response.data.refreshToken);
+      if (response.data.user?.role == "SUPERADMIN") {
+        window.location.href = "/admin";
+      } else if (response.data.user?.role == "USER") {
+        window.location.href = "/user";
+      } else {
+        window.location.href = "/admin";
+      }
+    } else {
+      setError(true);
+      setErrorMessage("Username yoki password noto'g'ri!");
+    }
 
-    // username.value = "";
-    // password.value = "";
+    username.value = "";
+    password.value = "";
   };
 
   return (
@@ -143,6 +175,10 @@ const Login = () => {
                         Eslab qolish
                       </label>
                     </div>
+
+                    <p className="error-message text-danger m-0 mt-3 text-center fs-5">
+                      {error ? errorMessage : ""}
+                    </p>
 
                     <button className="btn btn-primary bg-primary mt-3">
                       Login

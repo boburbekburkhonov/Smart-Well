@@ -201,17 +201,34 @@ const Admin = () => {
                 </li>
               </ul>
             </li>
+
+            <li className="mt-3 logout-item-admin">
+              <a href="#" className="sidebar-style" onClick={logoutFunction}>
+                <img
+                  className="bx bx-menu"
+                  src={logout}
+                  alt="menuBar"
+                  width={26}
+                  height={26}
+                />
+                <span className="link_name ms-3">Logout</span>
+              </a>
+              <ul className="sub-menu blank">
+                <li>
+                  <a className="link_name" href="#">
+                    Logout
+                  </a>
+                </li>
+              </ul>
+            </li>
           </ul>
         </div>
         <header className="home-section-header">
           <div className="container-fluid py-3">
-            <div className="dropdown text-end">
-              <button
-                className="btn-logout dropdown-toggle"
-                type="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              >
+            <div className="dropdown text-end d-flex align-items-center justify-content-between">
+              <h2 className="admin-page-heading m-0">Smart Well</h2>
+
+              <div>
                 <img
                   className="bx bx-menu"
                   src={userLogout}
@@ -220,25 +237,7 @@ const Admin = () => {
                   height={30}
                 />
                 <span className="mx-2">Nasos</span>
-              </button>
-              <ul className="dropdown-menu">
-                <li className="d-flex align-items-center justify-content-center ms-auto">
-                  <a
-                    className="dropdown-item ps-1 d-flex align-items-center"
-                    href="#"
-                    onClick={logoutFunction}
-                  >
-                    <img
-                      className="bx bx-menu mx-2"
-                      src={logout}
-                      alt="menuBar"
-                      width={22}
-                      height={22}
-                    />
-                    <span>Chiqish</span>
-                  </a>
-                </li>
-              </ul>
+              </div>
             </div>
           </div>
         </header>

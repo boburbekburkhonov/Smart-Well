@@ -109,8 +109,17 @@ body {
   color: #226385 !important;
 }
 
+.cite-main-color {
+  color: #0CC0CE !important;
+}
+
 .bg-primary {
   width: 100%;
   background-color: #226385 !important;
+  border: transparent;
+}
+
+.bg-btn {
+  background-color: #0CC0CE !important;
   border: transparent;
 }

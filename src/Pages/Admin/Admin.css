@@ -117,7 +117,7 @@ body {
 .sidebar .nav-links li a .link_name {
   font-size: 17px;
   font-weight: 500;
-  color: #474747;
+  color: #ffffff;
   transition: all 0.4s ease;
 }
 
@@ -313,4 +313,18 @@ body {
 }
 .sidebar-active > span {
   color: #474747 !important;
+}
+
+.admin-page-heading {
+  color: #0CC0CE;
+}
+
+.logout-item-admin {
+  position: absolute !important;
+  bottom: 30px;
+}
+
+.sidebar.close ~ .home-section-header {
+  left: 78px;
+  width: calc(100% - 78px);
 }
