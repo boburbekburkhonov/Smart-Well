@@ -776,7 +776,7 @@ const AdminUser = () => {
                       <div className="search-region">
                         <label
                           htmlFor="region-select"
-                          className="search-label-region mb-2"
+                          className="search-label-region mb-2 cite-main-color"
                         >
                           Viloyat
                         </label>
