@@ -26,12 +26,13 @@ const Login = () => {
           if (data.statusCode == 200) {
             window.localStorage.setItem("accessToken", data.data.accessToken);
             window.localStorage.setItem("refreshToken", data.data.refreshToken);
+            console.log(data);
             if (data.data.user?.role == "SUPERADMIN") {
               window.location.href = "/admin";
             } else if (data.data.user?.role == "USER") {
               window.location.href = "/user";
             } else {
-              window.location.href = "/admin";
+              window.location.href = "/user";
             }
           }
         });
@@ -55,7 +56,7 @@ const Login = () => {
     });
 
     const response = await request.json();
-    console.log(response);
+
     if (response.statusCode == 200) {
       window.localStorage.setItem("username", username.value);
       window.localStorage.setItem("password", password.value);
@@ -67,7 +68,7 @@ const Login = () => {
       } else if (response.data.user?.role == "USER") {
         window.location.href = "/user";
       } else {
-        window.location.href = "/admin";
+        window.location.href = "/user";
       }
     } else {
       setError(true);

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import ReactPaginate from "react-paginate";
-import "./AdminStation.css";
+import "./UserStations.css";
 import circle from "../../assets/images/circle.png";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -11,7 +11,7 @@ import excelFileImage from "../../assets/images/excel-file.png";
 import moment from "moment";
 import { api } from "../Api/Api";
 
-const AdminStation = () => {
+const UserStations = () => {
   const [count, setCount] = useState(0);
   const [allStation, setAllStation] = useState([]);
   const [allRegions, setAllRegions] = useState([]);
@@ -1945,4 +1945,4 @@ const AdminStation = () => {
   );
 };
 
-export default AdminStation;
+export default UserStations;

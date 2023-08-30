@@ -7,7 +7,7 @@ import {
   InfoWindowF,
   MarkerClusterer,
 } from "@react-google-maps/api";
-import "./AdminMap.css";
+import "./UserMap.css";
 import circleBlue from "../../assets/images/record.png";
 import circleRed from "../../assets/images/circle-red.png";
 import locationRed from "../../assets/images/location-red.png";
@@ -16,7 +16,7 @@ import locationYellow from "../../assets/images/location-yellow.png";
 import locationOrange from "../../assets/images/location-orange.png";
 import { api } from "../Api/Api";
 
-const AdminMap = () => {
+const UserMap = () => {
   const [lastData, setLastData] = useState([]);
   const [lastDataForList, setLastDataForList] = useState([]);
   const [oneLastData, setOneLastData] = useState([]);
@@ -133,6 +133,7 @@ const AdminMap = () => {
   };
 
   if (!isLoaded) return <div>Loading...</div>;
+
   return (
     <div>
       <div className="card">
@@ -434,4 +435,4 @@ const AdminMap = () => {
   );
 };
 
-export default AdminMap;
+export default UserMap;
