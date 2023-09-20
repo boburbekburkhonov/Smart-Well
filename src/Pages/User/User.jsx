@@ -14,13 +14,10 @@ import stationsWhite from "../../assets/images/station-white.png";
 import map from "../../assets/images/map.png";
 import mapBlack from "../../assets/images/map-black.png";
 import userLogout from "../../assets/images/user-logout.png";
-import user from "../../assets/images/user.png";
-import userWhite from "../../assets/images/user-white.png";
 import logout from "../../assets/images/logout.png";
 import UserDashboard from "../UserDashboard/UserDashboard";
 import UserMap from "../UserMap/UserMap";
 import UserStations from "../UserStations/UserStations";
-import UserNews from "../UserNews/UserNews";
 import UserData from "../UserData/UserData";
 import UserLastData from "../UserLastData/UserLastData";
 
