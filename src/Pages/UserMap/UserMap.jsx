@@ -73,8 +73,8 @@ const UserMap = () => {
         }
       }
 
-      setLastData(response[0].data);
-      setLastDataForList(response[0].data);
+      setLastData(response.docs);
+      setLastDataForList(response.docs);
     };
 
     userMap();
@@ -117,7 +117,7 @@ const UserMap = () => {
 
   const changeDataWithInput = (inputValue) => {
     const search = lastData.filter((e) =>
-      e.station.name.toLowerCase().includes(inputValue)
+      e.name.toLowerCase().includes(inputValue)
     );
     setLastDataForList(search);
     setActive(null);
@@ -126,8 +126,8 @@ const UserMap = () => {
   const zoomLocation = (station) => {
     setOneLastData([station]);
     setCount(count + 1);
-    const lat = Number(station.station.location.split("-")[0]);
-    const lng = Number(station.station.location.split("-")[1]);
+    const lat = Number(station.location.split("-")[0]);
+    const lng = Number(station.location.split("-")[1]);
     setLocation({ lat: lat, lng: lng });
     setZoom(14);
   };
@@ -152,10 +152,10 @@ const UserMap = () => {
                         clusterer={clusterer}
                         key={i}
                         position={{
-                          lat: Number(e.station.location?.split("-")[0]),
-                          lng: Number(e.station.location?.split("-")[1]),
+                          lat: Number(e.location?.split("-")[0]),
+                          lng: Number(e.location?.split("-")[1]),
                         }}
-                        title={e.station.name}
+                        title={e.name}
                         onClick={() => handleActiveMarker(e._id)}
                       >
                         {activeMarker == e._id ? (
@@ -169,7 +169,7 @@ const UserMap = () => {
                             {e.level != undefined ? (
                               <div>
                                 <h3 className="fw-semibold text-success fs-6">
-                                  {e.station.name}
+                                  {e.name}
                                 </h3>
 
                                 <div className="d-flex align-items-center mb-1">
@@ -183,7 +183,7 @@ const UserMap = () => {
                                     Daraja:
                                   </p>{" "}
                                   <span className="infowindow-span">
-                                    {e.level}
+                                    {e.lastData.level}
                                   </span>
                                 </div>
 
@@ -198,7 +198,7 @@ const UserMap = () => {
                                     O'tkazuvchanlik:
                                   </p>{" "}
                                   <span className="infowindow-span">
-                                    {e.conductivity}
+                                    {e.lastData.conductivity}
                                   </span>
                                 </div>
 
@@ -213,7 +213,7 @@ const UserMap = () => {
                                     Temperatura:
                                   </p>{" "}
                                   <span className="infowindow-span">
-                                    {e.temp} °C
+                                    {e.lastData.temp} °C
                                   </span>
                                 </div>
 
@@ -228,12 +228,22 @@ const UserMap = () => {
                                     Sana:
                                   </p>{" "}
                                   <span className="infowindow-span">
-                                    {e.date.split("-")[0]}/
-                                    {e.date.split("-")[1]}/
-                                    {e.date.split("-")[2].slice(0, 2)}{" "}
-                                    {e.date.split("T")[1].split(":")[0]}:
-                                    {e.date.split("T")[1].split(":")[1]}:
-                                    {e.date
+                                    {e.lastData.date.split("-")[0]}/
+                                    {e.lastData.date.split("-")[1]}/
+                                    {e.lastData.date.split("-")[2].slice(0, 2)}{" "}
+                                    {
+                                      e.lastData.date
+                                        .split("T")[1]
+                                        .split(":")[0]
+                                    }
+                                    :
+                                    {
+                                      e.lastData.date
+                                        .split("T")[1]
+                                        .split(":")[1]
+                                    }
+                                    :
+                                    {e.lastData.date
                                       .split("T")[1]
                                       .split(":")[2]
                                       .slice(0, 2)}
@@ -243,7 +253,7 @@ const UserMap = () => {
                             ) : (
                               <div>
                                 <h3 className="fw-semibold text-success fs-6 text-center">
-                                  {e.station.name}
+                                  {e.name}
                                 </h3>
                                 <div className="d-flex align-items-center justify-content-center">
                                   <img
@@ -272,10 +282,10 @@ const UserMap = () => {
                 <MarkerF
                   key={i}
                   position={{
-                    lat: Number(e.station.location?.split("-")[0]),
-                    lng: Number(e.station.location?.split("-")[1]),
+                    lat: Number(e.location?.split("-")[0]),
+                    lng: Number(e.location?.split("-")[1]),
                   }}
-                  title={e.station.name}
+                  title={e.name}
                   onClick={() => handleActiveMarker(e._id)}
                 >
                   {activeMarker == e._id ? (
@@ -289,7 +299,7 @@ const UserMap = () => {
                       {e.level != undefined ? (
                         <div>
                           <h3 className="fw-semibold text-success fs-6">
-                            {e.station.name}
+                            {e.name}
                           </h3>
 
                           <div className="d-flex align-items-center mb-1">
@@ -302,7 +312,9 @@ const UserMap = () => {
                             <p className="m-0 infowindow-desc ms-1 me-1 ">
                               Daraja:
                             </p>{" "}
-                            <span className="infowindow-span">{e.level}</span>
+                            <span className="infowindow-span">
+                              {e.lastData.level}
+                            </span>
                           </div>
 
                           <div className="d-flex align-items-center mb-1">
@@ -316,7 +328,7 @@ const UserMap = () => {
                               O'tkazuvchanlik:
                             </p>{" "}
                             <span className="infowindow-span">
-                              {e.conductivity}
+                              {e.lastData.conductivity}
                             </span>
                           </div>
 
@@ -330,7 +342,9 @@ const UserMap = () => {
                             <p className="m-0 infowindow-desc ms-1 me-1 ">
                               Temperatura:
                             </p>{" "}
-                            <span className="infowindow-span">{e.temp} °C</span>
+                            <span className="infowindow-span">
+                              {e.lastData.temp} °C
+                            </span>
                           </div>
 
                           <div className="d-flex align-items-center">
@@ -344,18 +358,22 @@ const UserMap = () => {
                               Sana:
                             </p>{" "}
                             <span className="infowindow-span">
-                              {e.date.split("-")[0]}/{e.date.split("-")[1]}/
-                              {e.date.split("-")[2].slice(0, 2)}{" "}
-                              {e.date.split("T")[1].split(":")[0]}:
-                              {e.date.split("T")[1].split(":")[1]}:
-                              {e.date.split("T")[1].split(":")[2].slice(0, 2)}
+                              {e.lastData.date.split("-")[0]}/
+                              {e.date.split("-")[1]}/
+                              {e.lastData.date.split("-")[2].slice(0, 2)}{" "}
+                              {e.lastData.date.split("T")[1].split(":")[0]}:
+                              {e.lastData.date.split("T")[1].split(":")[1]}:
+                              {e.lastData.date
+                                .split("T")[1]
+                                .split(":")[2]
+                                .slice(0, 2)}
                             </span>
                           </div>
                         </div>
                       ) : (
                         <div>
                           <h3 className="fw-semibold text-success fs-6 text-center">
-                            {e.station.name}
+                            {e.name}
                           </h3>
                           <div className="d-flex align-items-center justify-content-center">
                             <img
@@ -423,7 +441,7 @@ const UserMap = () => {
                       width={25}
                       height={25}
                     />
-                    <p className="m-0 ms-2">{e.station.name}</p>
+                    <p className="m-0 ms-2">{e.name}</p>
                   </li>
                 );
               })}

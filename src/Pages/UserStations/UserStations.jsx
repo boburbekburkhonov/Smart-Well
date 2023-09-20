@@ -120,7 +120,7 @@ const UserStations = () => {
 
     fetchDataRegion();
 
-    fetch(`${api}/stations/sensorType/all`, {
+    fetch(`${api}/sensorType/getAll`, {
       method: "GET",
       headers: {
         "content-type": "application/json",
@@ -179,13 +179,12 @@ const UserStations = () => {
         },
       }
     );
-
     const responseStationOne = await requestStationOne.json();
-    setStationOne(responseStationOne?.data[0]);
+    setStationOne(responseStationOne?.data.data[0]);
 
     // REGION NAME
     const requestRegionName = await fetch(
-      `${api}/regions/${responseStationOne?.data[0].region_id}`,
+      `${api}/regions/getById?id=${responseStationOne?.data.data[0]?.region_id}`,
       {
         method: "GET",
         headers: {
@@ -200,7 +199,7 @@ const UserStations = () => {
 
     // DISTRICT NAME
     const requestDistrictName = await fetch(
-      `${api}/districts/${responseStationOne?.data[0].region_id}`,
+      `${api}/districts/${responseStationOne?.data.data[0].region_id}`,
       {
         method: "GET",
         headers: {
@@ -216,7 +215,7 @@ const UserStations = () => {
 
     // BALANS ORGANIZATION NAME
     const requestBalansOrgName = await fetch(
-      `${api}/balance-organizations/${responseStationOne?.data[0].region_id}`,
+      `${api}/balance-organizations/${responseStationOne?.data.data[0].region_id}`,
       {
         method: "GET",
         headers: {
@@ -567,7 +566,7 @@ const UserStations = () => {
             <div className="modal-content table-location-scrol">
               <div className="modal-header lastdata-close pb-3 pb-0">
                 <h3 className="m-0 text-primary fs-3 cite-main-color">
-                  {stationOne.name}
+                  {stationOne?.name}
                 </h3>
 
                 <button
@@ -582,13 +581,13 @@ const UserStations = () => {
                   <div className="modal-item-wrapper d-flex align-items-center  mt-3">
                     <img src={circle} alt="name" width={20} height={20} />
                     <p className="m-0 ms-4">Nomi:</p>
-                    <p className="m-0 ms-2 fw-semibold">{stationOne.name}</p>
+                    <p className="m-0 ms-2 fw-semibold">{stationOne?.name}</p>
                   </div>
 
                   <div className="modal-item-wrapper d-flex align-items-center ">
                     <img src={circle} alt="name" width={20} height={20} />
                     <p className="m-0 ms-4">Imei:</p>
-                    <p className="m-0 ms-2 fw-semibold">{stationOne.imel}</p>
+                    <p className="m-0 ms-2 fw-semibold">{stationOne?.imel}</p>
                   </div>
 
                   <div className="modal-item-wrapper d-flex align-items-center ">
@@ -603,7 +602,7 @@ const UserStations = () => {
                     <p className="m-0 ms-2 fw-semibold">
                       {
                         stationDistrictName.find((e) => {
-                          if (e.id == stationOne.district_id) {
+                          if (e.id == stationOne?.district_id) {
                             return e.name;
                           }
                         })?.name
@@ -617,7 +616,7 @@ const UserStations = () => {
                     <p className="m-0 ms-2 fw-semibold">
                       {
                         stationBalansOrgName.find((e) => {
-                          if (e.id == stationOne.balance_organization_id) {
+                          if (e.id == stationOne?.balance_organization_id) {
                             return e.name;
                           }
                         })?.name
@@ -629,7 +628,7 @@ const UserStations = () => {
                     <img src={circle} alt="name" width={20} height={20} />
                     <p className="m-0 ms-4">User telefon raqami:</p>
                     <p className="m-0 ms-2 fw-semibold">
-                      {stationOne.userPhoneNum}
+                      {stationOne?.userPhoneNum}
                     </p>
                   </div>
 
@@ -637,7 +636,7 @@ const UserStations = () => {
                     <img src={circle} alt="name" width={20} height={20} />
                     <p className="m-0 ms-4">Qurilma telefon raqami:</p>
                     <p className="m-0 ms-2 fw-semibold">
-                      {stationOne.devicePhoneNum}
+                      {stationOne?.devicePhoneNum}
                     </p>
                   </div>
 
@@ -645,7 +644,7 @@ const UserStations = () => {
                     <img src={circle} alt="name" width={20} height={20} />
                     <p className="m-0 ms-4">Lokatsiya:</p>
                     <p className="m-0 ms-2 fw-semibold">
-                      {stationOne.location}
+                      {stationOne?.location}
                     </p>
                   </div>
 
@@ -653,7 +652,7 @@ const UserStations = () => {
                     <img src={circle} alt="name" width={20} height={20} />
                     <p className="m-0 ms-4">Datani yuborish vaqti:</p>
                     <p className="m-0 ms-2 fw-semibold">
-                      {stationOne.sendDataTime}
+                      {stationOne?.sendDataTime}
                     </p>
                   </div>
 
@@ -661,7 +660,7 @@ const UserStations = () => {
                     <img src={circle} alt="name" width={20} height={20} />
                     <p className="m-0 ms-4">Infoni yuborish vaqti:</p>
                     <p className="m-0 ms-2 fw-semibold">
-                      {stationOne.sendInfoTime}
+                      {stationOne?.sendInfoTime}
                     </p>
                   </div>
 
@@ -669,7 +668,7 @@ const UserStations = () => {
                     <img src={circle} alt="name" width={20} height={20} />
                     <p className="m-0 ms-4">Programma versiyasi:</p>
                     <p className="m-0 ms-2 fw-semibold">
-                      {stationOne.programVersion}
+                      {stationOne?.programVersion}
                     </p>
                   </div>
 
@@ -677,7 +676,7 @@ const UserStations = () => {
                     <img src={circle} alt="name" width={20} height={20} />
                     <p className="m-0 ms-4">Temperatura:</p>
                     <p className="m-0 ms-2 fw-semibold">
-                      {stationOne.temperture}
+                      {stationOne?.temperture}
                     </p>
                   </div>
 
@@ -696,20 +695,20 @@ const UserStations = () => {
                           : "")
                       }
                     >
-                      {stationOne.battery}%
+                      {stationOne?.battery}%
                     </p>
                   </div>
 
                   <div className="modal-item-wrapper d-flex align-items-center ">
                     <img src={circle} alt="name" width={20} height={20} />
                     <p className="m-0 ms-4">Signal:</p>
-                    <p className="m-0 ms-2 fw-semibold">{stationOne.signal}</p>
+                    <p className="m-0 ms-2 fw-semibold">{stationOne?.signal}</p>
                   </div>
 
                   <div className="modal-item-wrapper d-flex align-items-center ">
                     <img src={circle} alt="name" width={20} height={20} />
                     <p className="m-0 ms-4">Status:</p>
-                    <p className="m-0 ms-2 fw-semibold">{stationOne.status}</p>
+                    <p className="m-0 ms-2 fw-semibold">{stationOne?.status}</p>
                   </div>
 
                   <div className="modal-item-wrapper d-flex align-items-center ">

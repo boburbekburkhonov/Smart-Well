@@ -120,7 +120,7 @@ const AdminStation = () => {
 
     fetchDataRegion();
 
-    fetch(`${api}/stations/sensorType/all`, {
+    fetch(`${api}/sensorType/getAll`, {
       method: "GET",
       headers: {
         "content-type": "application/json",
@@ -181,11 +181,11 @@ const AdminStation = () => {
     );
 
     const responseStationOne = await requestStationOne.json();
-    setStationOne(responseStationOne?.data[0]);
+    setStationOne(responseStationOne?.data.data[0]);
 
     // REGION NAME
     const requestRegionName = await fetch(
-      `${api}/regions/${responseStationOne?.data[0].region_id}`,
+      `${api}/regions/getById?id=${responseStationOne?.data.data[0].region_id}`,
       {
         method: "GET",
         headers: {
@@ -200,7 +200,7 @@ const AdminStation = () => {
 
     // DISTRICT NAME
     const requestDistrictName = await fetch(
-      `${api}/districts/${responseStationOne?.data[0].region_id}`,
+      `${api}/districts/${responseStationOne?.data.data[0].region_id}`,
       {
         method: "GET",
         headers: {
@@ -216,7 +216,7 @@ const AdminStation = () => {
 
     // BALANS ORGANIZATION NAME
     const requestBalansOrgName = await fetch(
-      `${api}/balance-organizations/${responseStationOne?.data[0].region_id}`,
+      `${api}/balance-organizations/${responseStationOne?.data.data[0].region_id}`,
       {
         method: "GET",
         headers: {

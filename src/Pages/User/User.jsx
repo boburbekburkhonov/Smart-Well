@@ -7,6 +7,8 @@ import dashboard from "../../assets/images/dashboard.png";
 import dashboardBlack from "../../assets/images/dashboard-black.png";
 import news from "../../assets/images/news.png";
 import newsWhite from "../../assets/images/news-white.png";
+import newsLastdata from "../../assets/images/lastdata.png";
+import newsLastdataBlack from "../../assets/images/lastdata-black.png";
 import stations from "../../assets/images/station.png";
 import stationsWhite from "../../assets/images/station-white.png";
 import map from "../../assets/images/map.png";
@@ -19,6 +21,8 @@ import UserDashboard from "../UserDashboard/UserDashboard";
 import UserMap from "../UserMap/UserMap";
 import UserStations from "../UserStations/UserStations";
 import UserNews from "../UserNews/UserNews";
+import UserData from "../UserData/UserData";
+import UserLastData from "../UserLastData/UserLastData";
 
 const User = () => {
   const token = window.localStorage.getItem("accessToken");
@@ -87,6 +91,66 @@ const User = () => {
               <a
                 href="#"
                 className={
+                  location.pathname == "/user/lastdata"
+                    ? "sidebar-active sidebar-style"
+                    : "sidebar-style"
+                }
+                onClick={() => navigate("/user/lastdata")}
+              >
+                <img
+                  className="bx bx-menu"
+                  src={
+                    location.pathname == "/user/lastdata"
+                      ? newsLastdataBlack
+                      : newsLastdata
+                  }
+                  alt="menuBar"
+                  width={36}
+                  height={33}
+                />
+                <span className="link_name ms-3">Oxirgi ma'lumotlar</span>
+              </a>
+              <ul className="sub-menu blank">
+                <li>
+                  <a className="link_name" href="#">
+                    Oxirgi ma'lumotlar
+                  </a>
+                </li>
+              </ul>
+            </li>
+
+            <li className="mt-3">
+              <a
+                href="#"
+                className={
+                  location.pathname == "/user/data"
+                    ? "sidebar-active sidebar-style"
+                    : "sidebar-style"
+                }
+                onClick={() => navigate("/user/data")}
+              >
+                <img
+                  className="bx bx-menu"
+                  src={location.pathname == "/user/data" ? news : newsWhite}
+                  alt="menuBar"
+                  width={26}
+                  height={26}
+                />
+                <span className="link_name ms-3">Ma'lumotlar</span>
+              </a>
+              <ul className="sub-menu blank">
+                <li>
+                  <a className="link_name" href="#">
+                    Ma'lumotlar
+                  </a>
+                </li>
+              </ul>
+            </li>
+
+            <li className="mt-3">
+              <a
+                href="#"
+                className={
                   location.pathname == "/user/map"
                     ? "sidebar-active sidebar-style"
                     : "sidebar-style"
@@ -111,35 +175,6 @@ const User = () => {
               </ul>
             </li>
 
-            <li className="mt-3">
-              <div className="icon-link">
-                <a
-                  href="#"
-                  className={
-                    location.pathname == "/user/news"
-                      ? "sidebar-active sidebar-style"
-                      : "sidebar-style"
-                  }
-                  onClick={() => navigate("/user/news")}
-                >
-                  <img
-                    className="bx bx-menu"
-                    src={location.pathname == "/user/news" ? news : newsWhite}
-                    alt="menuBar"
-                    width={26}
-                    height={26}
-                  />
-                  <span className="link_name ms-3">Ma'lumotlar</span>
-                </a>
-              </div>
-              <ul className="sub-menu">
-                <li>
-                  <a className="link_name" href="#">
-                    Ma'lumotlar
-                  </a>
-                </li>
-              </ul>
-            </li>
             <li className="mt-3">
               <div className="icon-link">
                 <a
@@ -218,9 +253,11 @@ const User = () => {
           <div className="container-fluid">
             <Routes>
               <Route path="/*" element={<UserDashboard />} />
+              <Route path="/lastdata" element={<UserLastData />} />
+              <Route path="/data" element={<UserData />} />
               <Route path="/map" element={<UserMap />} />
               <Route path="/stations" element={<UserStations />} />
-              <Route path="/news" element={<UserNews />} />
+              {/* <Route path="/news" element={<UserNews />} /> */}
             </Routes>
           </div>
         </section>
