@@ -428,7 +428,7 @@ const UserStations = () => {
         .then((res) => res.json())
         .then((data) => {
           setTotalPages(0);
-          setAllStation(data.data);
+          setAllStation(data.data.data);
         });
     } else if (nameOrImeiSelect.value == "imei") {
       fetch(`${api}/stations/searchImel?imel=${nameOrImeiInput.value}`, {
@@ -441,7 +441,7 @@ const UserStations = () => {
         .then((res) => res.json())
         .then((data) => {
           setTotalPages(0);
-          setAllStation(data.data);
+          setAllStation(data.data.data);
         });
     } else if (nameOrImeiSelect.value == "all") {
       fetch(`${api}/stations/all?page=1&perPage=10`, {
@@ -1281,7 +1281,7 @@ const UserStations = () => {
                 </button>
               </li>
 
-              <li className="nav-item">
+              {/* <li className="nav-item">
                 <button
                   className="nav-link"
                   data-bs-toggle="tab"
@@ -1289,9 +1289,9 @@ const UserStations = () => {
                 >
                   Stansiya yaratish
                 </button>
-              </li>
+              </li> */}
 
-              <li className="nav-item">
+              {/* <li className="nav-item">
                 <button
                   className="nav-link"
                   data-bs-toggle="tab"
@@ -1299,7 +1299,7 @@ const UserStations = () => {
                 >
                   Viloyat bo'yicha qidirish
                 </button>
-              </li>
+              </li> */}
             </ul>
             <div className="tab-content pt-4">
               <div
@@ -1448,7 +1448,7 @@ const UserStations = () => {
                 />
               </div>
 
-              <div
+              {/* <div
                 className="tab-pane fade profile-overview"
                 id="profile-overview"
               >
@@ -1758,9 +1758,9 @@ const UserStations = () => {
                     </button>
                   </div>
                 </form>
-              </div>
+              </div> */}
 
-              <div
+              {/* <div
                 className="tab-pane fade profile-search profile-search-station"
                 id="profile-search"
               >
@@ -1931,7 +1931,7 @@ const UserStations = () => {
                   previousLabel={"<<"}
                   nextLabel={">>"}
                 />
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
