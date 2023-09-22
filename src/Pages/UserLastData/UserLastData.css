@@ -1,0 +1,12 @@
+.user-lastdata-heading {
+  margin: 0;
+  color: #0cc0ce;
+}
+
+.user-lastdata-select-station-name {
+  max-width: 250px;
+}
+
+.user-lastdata-select-station-count {
+  max-width: 80px;
+}
