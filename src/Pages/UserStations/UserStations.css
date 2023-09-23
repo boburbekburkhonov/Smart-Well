@@ -1,7 +1,3 @@
-.card {
-  height: 100vh;
-}
-
 .table-scroll {
   max-width: 100vw !important;
   overflow: auto;

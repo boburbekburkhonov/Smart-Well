@@ -1,10 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
 
 .dashboard-heading {
   margin: 0;
-  font-family: sans-serif;
-  font-size: 28px;
+  font-size: 32px;
   font-weight: 500;
   color: #000000;
 }
@@ -15,7 +15,7 @@
   width: 100%;
   padding: 10px 20px;
   border-radius: 10px;
-  background-color: rgb(195, 217, 255);
+  background-color: rgb(255, 255, 255);
   color: rgb(0, 0, 0);
 }
 
@@ -34,23 +34,6 @@
   max-height: 80vh !important;
 }
 
-.dashboard-list-item:nth-child(2) {
-  background-color: #DCFCE7;
-}
-
-.dashboard-list-item:nth-child(3) {
-  background-color: #feffde;
-}
-
-.dashboard-list-item:nth-child(4) {
-  background-color: #FFE2E6;
-}
-
-.dashboard-list-item:nth-child(5) {
-  max-width: 380px;
-  background-color: #ffffff;
-}
-
 .dashboard-list-number {
   font-weight: 600;
   font-size: 23px;
@@ -60,10 +43,11 @@
 
 .dashboard-list-desc {
   font-weight: 600;
-  font-size: 15px;
+  font-size: 18px;
 }
 
 .dashboard-list-desc-percentage {
+  font-size: 20px;
   font-weight: 600;
 }
 

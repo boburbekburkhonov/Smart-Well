@@ -206,9 +206,9 @@ const UserDashboard = () => {
         </div>
 
         <ul className="dashboard-list list-unstyled m-0 d-flex flex-wrap align-items-center justify-content-between">
-          <li className="dashboard-list-item d-flex mt-3">
+          <li className="dashboard-list-item mt-3">
             <img src={circleBlue} alt="circleBlue" width={30} height={30} />
-            <div className="ms-3">
+            <div className="mt-2">
               <p className="dashboard-list-number m-0">124 ta</p>
               <p className="dashboard-list-desc m-0">Umumiy stansiyalar soni</p>
               <p className="dashboard-list-desc-percentage text-info m-0">
@@ -217,9 +217,9 @@ const UserDashboard = () => {
             </div>
           </li>
 
-          <li className="dashboard-list-item d-flex mt-3">
+          <li className="dashboard-list-item  mt-3">
             <img src={circleGreen} alt="circleGreen" width={30} height={30} />
-            <div className="ms-3">
+            <div className="mt-2">
               <p className="dashboard-list-number m-0">80 ta</p>
               <p className="dashboard-list-desc m-0">
                 Bugun ishlayotganlar stansiyalar
@@ -230,9 +230,9 @@ const UserDashboard = () => {
             </div>
           </li>
 
-          <li className="dashboard-list-item d-flex mt-3">
+          <li className="dashboard-list-item mt-3">
             <img src={circleOrange} alt="circleGreen" width={30} height={30} />
-            <div className="ms-3">
+            <div className="mt-2">
               <p className="dashboard-list-number m-0">20 ta</p>
               <p className="dashboard-list-desc m-0">
                 3 kun ichida Ishlagan stansiyalar
@@ -243,9 +243,9 @@ const UserDashboard = () => {
             </div>
           </li>
 
-          <li className="dashboard-list-item d-flex mt-3">
+          <li className="dashboard-list-item mt-3">
             <img src={circleRed} alt="circleGreen" width={30} height={30} />
-            <div className="ms-3">
+            <div className="mt-2">
               <p className="dashboard-list-number m-0">24 ta</p>
               <p className="dashboard-list-desc m-0">
                 Umuman ishlamagan stansiyalar

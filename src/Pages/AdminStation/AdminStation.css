@@ -1,7 +1,3 @@
-.card {
-  height: 100vh;
-}
-
 .table-scroll {
   max-width: 100vw !important;
   overflow: auto;
@@ -207,10 +203,6 @@ font-weight: 400;
   margin-bottom: 15px;
 }
 .file-image {
-  /* width: 130px;
-  min-width: 130px;
-  height: 85px;
-  min-height: 85px; */
   width: 130px;
   height: 85px;
   background-size: cover;
