@@ -20,6 +20,7 @@ import UserMap from "../UserMap/UserMap";
 import UserStations from "../UserStations/UserStations";
 import UserData from "../UserData/UserData";
 import UserLastData from "../UserLastData/UserLastData";
+import UserLastDataNews from "../UserLastDataNews/UserLastDataNews";
 
 const User = () => {
   const token = window.localStorage.getItem("accessToken");
@@ -251,6 +252,7 @@ const User = () => {
             <Routes>
               <Route path="/*" element={<UserDashboard />} />
               <Route path="/lastdata" element={<UserLastData />} />
+              <Route path="/lastdata/:news" element={<UserLastDataNews />} />
               <Route path="/data" element={<UserData />} />
               <Route path="/map" element={<UserMap />} />
               <Route path="/stations" element={<UserStations />} />

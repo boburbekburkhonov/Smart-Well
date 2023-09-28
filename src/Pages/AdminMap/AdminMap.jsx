@@ -133,6 +133,7 @@ const AdminMap = () => {
   };
 
   if (!isLoaded) return <div>Loading...</div>;
+
   return (
     <div>
       <div className="card">
