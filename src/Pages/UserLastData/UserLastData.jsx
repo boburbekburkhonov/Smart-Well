@@ -393,7 +393,7 @@ const UserLastData = () => {
             profile-search
           </div>
         </div>
-        <div className="userlast-data-bottom-modal">
+        {/* <div className="userlast-data-bottom-modal">
           <div className="userlast-data-bottom-modal-header d-flex justify-content-end">
             <img
               className="ms-auto"
@@ -403,7 +403,7 @@ const UserLastData = () => {
               height={20}
             />
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

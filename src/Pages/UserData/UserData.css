@@ -1,0 +1,122 @@
+.card-user-data {
+	background: #ffffff;
+	padding: 10px 20px;
+	padding-bottom: 0;
+	border-radius: 20px;
+}
+
+.tableFlexible {
+	height: 70vh;
+}
+
+.tab-pane-hour {
+	max-width: 1050px;
+	width: 100%;
+}
+
+.tableFlexible {
+	max-width: 1050px;
+	width: 100%;
+	overflow: auto;
+}
+
+.table-style {
+	cursor: pointer;
+	border-collapse: collapse;
+}
+
+.tableFlexible tbody tr:nth-child(even), .sticky {
+	background: #F8F8F8;
+}
+
+.tableFlexible tbody tr:hover {
+	background: #d7d7d7;
+}
+
+.tableFlexible .sticky {
+	position: -webkit-sticky;
+	position: sticky;
+	left: 0;
+	overflow: auto;
+}
+
+.tableFlexible thead .sticky {
+	z-index: 4;
+}
+
+.tableFlexible tbody .sticky {
+	z-index: 3;
+}
+
+.tableFlexible table tr .fix-with, .fix-with {
+	text-align: start!important;
+	white-space: nowrap;
+}
+
+.fix-with {
+	width: 100%;
+}
+
+.table-style thead th {
+	background: #eaeaec;
+	border: 1px solid #fafafa;
+	color: #1e1e2d;
+	font-size: 14px;
+	font-weight: 700;
+	line-height: 17px;
+	text-align: center;
+	vertical-align: middle;
+}
+
+.table-style tbody td, .table-style tbody th {
+	border: 1px solid #eee!important;
+	color: #25213b;
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 17px;
+}
+
+th {
+	height: 42px;
+}
+
+th, td {
+	padding: 0 16px;
+}
+
+thead {
+	background: #EAEAEC;
+}
+
+td {
+	height: 48px;
+}
+
+.search-user-data-input-observe {
+	max-width: 200px;
+	width: 100%;
+}
+
+.smartwell-search-user-data {
+	background: #EAEAEC;
+	padding: 15px 20px;
+	border-radius: 10px;
+}
+
+/* .active {
+	background: #0CC0CE !important;
+} */
+
+.card--open .userlast-data-bottom-modal {
+  padding: 10px 20px;
+  display: inline-block;
+  position: relative;
+  right: 0;
+  bottom: -0;
+	max-width: 1050px;
+  width: 100%;
+  height: 40vh;
+  background: #ffffff;
+  border: 3px solid #32779C;
+	z-index: 4;
+}

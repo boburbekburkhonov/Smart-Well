@@ -5,7 +5,6 @@ import statistic from "../../assets/images/stats.png";
 import pdf from "../../assets/images/pdf.jpg";
 import location from "../../assets/images/location-google.png";
 import "./UserLastDataNews.css";
-import { useState } from "react";
 import { GoogleMap, MarkerF, useLoadScript } from "@react-google-maps/api";
 import { Line } from "react-chartjs-2";
 import Chart from "chart.js/auto";
