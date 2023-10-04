@@ -64,7 +64,7 @@ const UserStations = () => {
         }
       }
 
-      setAllStation(response.data);
+      setAllStation(response.data.data);
       setTotalPages(response.metadata.lastPage);
     };
 

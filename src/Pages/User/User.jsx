@@ -21,15 +21,37 @@ import UserStations from "../UserStations/UserStations";
 import UserData from "../UserData/UserData";
 import UserLastData from "../UserLastData/UserLastData";
 import UserLastDataNews from "../UserLastDataNews/UserLastDataNews";
+import { api } from "../Api/Api";
+import { useState } from "react";
 
 const User = () => {
+  const [balanceOrg, setBalanceOrg] = useState([]);
   const token = window.localStorage.getItem("accessToken");
+  const name = window.localStorage.getItem("name");
+  const username = window.localStorage.getItem("username");
   const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!token) {
       window.location.href = "/";
+    }
+
+    if (name) {
+      const balansOrgName = async () => {
+        const requst = await fetch(`${api}/balance-organizations/all-find`, {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+          },
+        });
+
+        const response = await requst.json();
+
+        setBalanceOrg(response.balanceOrganizations);
+      };
+
+      balansOrgName();
     }
   }, []);
 
@@ -38,6 +60,7 @@ const User = () => {
     window.localStorage.removeItem("password");
     window.localStorage.removeItem("accessToken");
     window.localStorage.removeItem("refreshToken");
+    window.localStorage.removeItem("name");
     window.location.reload();
   }
 
@@ -241,7 +264,7 @@ const User = () => {
                   width={30}
                   height={30}
                 />
-                <span className="mx-2">Nasos</span>
+                <span className="mx-2">{username}</span>
               </div>
             </div>
           </div>
@@ -250,13 +273,30 @@ const User = () => {
         <section className="home-section py-3">
           <div className="container-fluid">
             <Routes>
-              <Route path="/*" element={<UserDashboard />} />
-              <Route path="/lastdata" element={<UserLastData />} />
-              <Route path="/lastdata/:news" element={<UserLastDataNews />} />
-              <Route path="/data" element={<UserData />} />
-              <Route path="/map" element={<UserMap />} />
-              <Route path="/stations" element={<UserStations />} />
-              {/* <Route path="/news" element={<UserNews />} /> */}
+              <Route
+                path="/*"
+                element={<UserDashboard balanceOrg={balanceOrg} />}
+              />
+              <Route
+                path="/lastdata"
+                element={<UserLastData balanceOrg={balanceOrg} />}
+              />
+              <Route
+                path="/lastdata/:news"
+                element={<UserLastDataNews balanceOrg={balanceOrg} />}
+              />
+              <Route
+                path="/data"
+                element={<UserData balanceOrg={balanceOrg} />}
+              />
+              <Route
+                path="/map"
+                element={<UserMap balanceOrg={balanceOrg} />}
+              />
+              <Route
+                path="/stations"
+                element={<UserStations balanceOrg={balanceOrg} />}
+              />
             </Routes>
           </div>
         </section>

@@ -7,10 +7,64 @@ import circleGreen from "../../assets/images/circle.png";
 import circleOrange from "../../assets/images/circle-orange.png";
 import circleRed from "../../assets/images/circle-red.png";
 import fullScreen from "../../assets/images/fullscreen.png";
+import { useEffect } from "react";
+import { api } from "../Api/Api";
+import { useState } from "react";
 
 Chartjs.register(ArcElement, Tooltip, Legend);
 
-const UserDashboard = () => {
+const UserDashboard = (prop) => {
+  const { balanceOrg } = prop;
+  const name = window.localStorage.getItem("name");
+  const username = window.localStorage.getItem("username");
+  const [stationStatistic, settationStatistic] = useState([]);
+
+  useEffect(() => {
+    const userDashboardFunc = async () => {
+      // ! STATION STATISTIC
+      const requestStationStatistic = await fetch(
+        `${api}/last-data/getStatisticStations`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      );
+
+      const responseStationStatistic = await requestStationStatistic.json();
+
+      settationStatistic(responseStationStatistic.data);
+
+      if (responseStationStatistic.statusCode == 401) {
+        const request = await fetch(`${api}/auth/signin`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            username: window.localStorage.getItem("username"),
+            password: window.localStorage.getItem("password"),
+          }),
+        });
+
+        const response = await request.json();
+
+        if (response.statusCode == 200) {
+          window.localStorage.setItem("accessToken", response.data.accessToken);
+          window.localStorage.setItem(
+            "refreshToken",
+            response.data.refreshToken
+          );
+        }
+      }
+    };
+
+    userDashboardFunc();
+  }, []);
+
   const data = {
     labels: ["70% dan balandlari", "30% dan balandlari", "30% dan kichiklari"],
     datasets: [
@@ -201,7 +255,15 @@ const UserDashboard = () => {
             height="35"
           />
           <h1 className="dashboard-heading ms-2">
-            Smart Solutions System tomonidan o'rnatilgan qurilmalar
+            {balanceOrg.length == 0
+              ? `${username} ga biriktirilgan qurilmalar`
+              : `${
+                  balanceOrg.find((e) => {
+                    if (e.id == name) {
+                      return e.name;
+                    }
+                  })?.name
+                } ga biriktirilgan qurilmalar`}
           </h1>
         </div>
 
@@ -209,7 +271,9 @@ const UserDashboard = () => {
           <li className="dashboard-list-item mt-3">
             <img src={circleBlue} alt="circleBlue" width={30} height={30} />
             <div className="mt-2">
-              <p className="dashboard-list-number m-0">124 ta</p>
+              <p className="dashboard-list-number m-0">
+                {stationStatistic.totalStationsCount} ta
+              </p>
               <p className="dashboard-list-desc m-0">Umumiy stansiyalar soni</p>
               <p className="dashboard-list-desc-percentage text-info m-0">
                 100%
@@ -220,7 +284,9 @@ const UserDashboard = () => {
           <li className="dashboard-list-item  mt-3">
             <img src={circleGreen} alt="circleGreen" width={30} height={30} />
             <div className="mt-2">
-              <p className="dashboard-list-number m-0">80 ta</p>
+              <p className="dashboard-list-number m-0">
+                {stationStatistic.totalTodayWorkStationsCount} ta
+              </p>
               <p className="dashboard-list-desc m-0">
                 Bugun ishlayotganlar stansiyalar
               </p>
@@ -233,7 +299,26 @@ const UserDashboard = () => {
           <li className="dashboard-list-item mt-3">
             <img src={circleOrange} alt="circleGreen" width={30} height={30} />
             <div className="mt-2">
-              <p className="dashboard-list-number m-0">20 ta</p>
+              <p className="dashboard-list-number m-0">
+                {stationStatistic.totalThreeDayWorkStationsCount} ta
+              </p>
+              <p className="dashboard-list-desc m-0">
+                3 kun ichida Ishlagan stansiyalar
+              </p>
+              <p className="dashboard-list-desc-percentage text-info m-0">
+                32%
+              </p>
+            </div>
+          </li>
+
+          <li className="dashboard-list-item mt-3">
+            <img src={circleOrange} alt="circleGreen" width={30} height={30} />
+            <div className="mt-2">
+              <p className="dashboard-list-number m-0">
+                {stationStatistic.totalMonthWorkStationsCount +
+                  stationStatistic.totalMoreWorkStationsCount}{" "}
+                ta
+              </p>
               <p className="dashboard-list-desc m-0">
                 3 kun ichida Ishlagan stansiyalar
               </p>
@@ -246,7 +331,9 @@ const UserDashboard = () => {
           <li className="dashboard-list-item mt-3">
             <img src={circleRed} alt="circleGreen" width={30} height={30} />
             <div className="mt-2">
-              <p className="dashboard-list-number m-0">24 ta</p>
+              <p className="dashboard-list-number m-0">
+                {stationStatistic.totalNotDataStationsCount} ta
+              </p>
               <p className="dashboard-list-desc m-0">
                 Umuman ishlamagan stansiyalar
               </p>

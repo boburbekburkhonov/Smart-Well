@@ -67,6 +67,11 @@ const Login = () => {
         window.location.href = "/admin";
       } else if (response.data.user?.role == "USER") {
         window.location.href = "/user";
+      } else if (
+        response.data.user?.role == "Organization"
+      ) {
+        window.location.href = "/user";
+        window.localStorage.setItem("name", response.data.user?.name);
       }
     } else {
       setError(true);
