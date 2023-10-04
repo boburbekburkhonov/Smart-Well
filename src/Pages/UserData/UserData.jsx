@@ -5,10 +5,113 @@ import { Helmet, HelmetProvider } from "react-helmet-async";
 import excel from "../../assets/images/excel.png";
 import pdf from "../../assets/images/pdf.jpg";
 import close from "../../assets/images/close-black.png";
+import { GoogleMap, MarkerF, useLoadScript } from "@react-google-maps/api";
+import { Line } from "react-chartjs-2";
 
 const UserData = () => {
+  const { isLoaded } = useLoadScript({
+    googleMapsApiKey:
+      "AIzaSyC57hT2pRJZ4Gh85ai0sUjP72i7VYJxTHc&region=UZ&language=uz",
+  });
+
+  if (!isLoaded) return <div>Loading...</div>;
+
+  const labels = [
+    2, 4546, 65, 65, 4, 2, 3, 8, 6, 5, 4, 2, 4546, 65, 65, 4, 2, 3, 8, 6, 5, 4,
+  ];
+
+  const data = {
+    labels: labels,
+    datasets: [
+      {
+        label: "Bugungi ma'lumotlar",
+        data: [
+          1, 2, 1, 4, 1, 6, 5, 3, 1, 11, 24, 1, 2, 1, 4, 1, 6, 5, 3, 1, 11, 24,
+        ],
+        fill: true,
+        borderColor: "#EE8A9D",
+        backgroundColor: "#F3E5E7",
+        tension: 0.4,
+      },
+    ],
+  };
+
+  const option = {
+    plugins: {
+      tooltip: {
+        boxHeight: 25,
+        boxWidth: 40,
+        titleFont: {
+          size: 16,
+        },
+        bodyFont: {
+          size: 16,
+        },
+        callbacks: {
+          label: function (context) {
+            return `Ko'rsatgich: ${context.formattedValue}`;
+          },
+        },
+      },
+    },
+  };
+
   return (
     <HelmetProvider>
+      {/* MODAL */}
+      <div
+        className="modal fade"
+        id="exampleModal"
+        tabIndex="-1"
+        data-bs-backdrop="static"
+        aria-labelledby="exampleModalLabel"
+        aria-hidden="true"
+      >
+        <div className="modal-dialog table-location-width-user-data modal-dialog-centered">
+          <div className="modal-content modal-content-user-data">
+            <div className="modal-header">
+              <h1 className="modal-title fs-5" id="exampleModalLabel">
+                Modal title
+              </h1>
+              <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div className="modal-body d-flex justify-content-between flex-wrap">
+              <GoogleMap
+                zoom={5.6}
+                center={{ lat: 42.00000000048624, lng: 63.999999999999986 }}
+                mapContainerClassName="user-data-map"
+              >
+                <MarkerF
+                  position={{
+                    lat: 42.00000000048624,
+                    lng: 63.999999999999986,
+                  }}
+                />
+              </GoogleMap>
+
+              <div className="modal-body pt-0">
+                <div className="char-statistic-frame m-auto">
+                  <Line
+                    className="char-statistic-wrapper"
+                    data={data}
+                    options={option}
+                  />
+                </div>
+
+                <select className="form-select select-user-last-data">
+                  <option value="Sathi">Sathi</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="card-user-data card--open">
         <div className="card-body pt-3">
           <ul className="nav nav-tabs nav-tabs-bordered">
@@ -138,7 +241,11 @@ const UserData = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          <tr className="tr0">
+                          <tr
+                            className="tr0"
+                            data-bs-toggle="modal"
+                            data-bs-target="#exampleModal"
+                          >
                             <td className="sticky" style={{}}>
                               1
                             </td>
@@ -436,7 +543,7 @@ const UserData = () => {
               </div>
             </div>
           </div>
-          <div className="userlast-data-bottom-modal">
+          {/* <div className="userlast-data-bottom-modal">
             <div className="userlast-data-bottom-modal-header d-flex justify-content-end">
               <img
                 className="ms-auto"
@@ -446,7 +553,7 @@ const UserData = () => {
                 height={20}
               />
             </div>
-          </div>
+          </div> */}
         </div>
 
         <Helmet>

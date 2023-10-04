@@ -101,33 +101,33 @@ const UserLastDataNews = () => {
 
       {/* MODAL MAP */}
       <div
-        class="modal fade"
+        className="modal fade"
         id="modalMapId"
         data-bs-backdrop="static"
         data-bs-keyboard="false"
-        tabindex="-1"
+        tabIndex="-1"
         aria-labelledby="modalMap"
         aria-hidden="true"
       >
-        <div class="modal-dialog table-location-width-map modal-dialog-centered">
-          <div class="modal-content modal-content-user-last-data-map">
-            <div class="modal-header">
-              <h1 class="modal-title fs-5" id="modalMap">
+        <div className="modal-dialog table-location-width-map modal-dialog-centered">
+          <div className="modal-content modal-content-user-last-data-map">
+            <div className="modal-header">
+              <h1 className="modal-title fs-5" id="modalMap">
                 Modal title
               </h1>
               <button
                 type="button"
-                class="btn-close"
+                className="btn-close"
                 data-bs-dismiss="modal"
                 aria-label="Close"
               ></button>
             </div>
-            <div class="modal-body">
-              <div className="user-last-data-map-wrapper">
+            <div className="modal-body">
+              <div className="user-last-data-map-wrapper h-100">
                 <GoogleMap
                   zoom={6}
                   center={{ lat: 42.00000000048624, lng: 63.999999999999986 }}
-                  mapContainerClassName="user-last-data-map"
+                  mapContainerclassName="user-last-data-map"
                 >
                   <MarkerF
                     position={{

@@ -103,11 +103,31 @@ td {
 	border-radius: 10px;
 }
 
+.table-location-width-user-data {
+	max-width: 60vw !important;
+}
+
+.modal-content-user-data {
+  height: 52vh;
+  overflow: auto;
+}
+
+.user-data-map {
+	height: 40vh;
+	max-width: 550px;
+	width: 100%;
+  overflow: auto;
+}
+
+.char-statistic-frame-user-data {
+	max-width: 500px !important;
+}
+
 /* .active {
 	background: #0CC0CE !important;
 } */
 
-.card--open .userlast-data-bottom-modal {
+/* .card--open .userlast-data-bottom-modal {
   padding: 10px 20px;
   display: inline-block;
   position: relative;
@@ -119,4 +139,4 @@ td {
   background: #ffffff;
   border: 3px solid #32779C;
 	z-index: 4;
-}
+} */

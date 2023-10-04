@@ -17,7 +17,7 @@ const UserLastData = () => {
   return (
     <div className="card">
       <div className="card-body pt-3">
-        <ul className="nav nav-tabs nav-tabs-bordered">
+        {/* <ul className="nav nav-tabs nav-tabs-bordered">
           <li className="nav-item">
             <button
               className="nav-link active"
@@ -47,7 +47,7 @@ const UserLastData = () => {
               Balans tashkiloti bo'yicha qidirish
             </button>
           </li>
-        </ul>
+        </ul> */}
 
         <div className="tab-content">
           <div
@@ -382,7 +382,7 @@ const UserLastData = () => {
             </ul>
           </div>
 
-          <div className="tab-pane fade profile-overview" id="profile-overview">
+          {/* <div className="tab-pane fade profile-overview" id="profile-overview">
             profile-overview
           </div>
 
@@ -391,7 +391,7 @@ const UserLastData = () => {
             id="profile-search"
           >
             profile-search
-          </div>
+          </div> */}
         </div>
         {/* <div className="userlast-data-bottom-modal">
           <div className="userlast-data-bottom-modal-header d-flex justify-content-end">

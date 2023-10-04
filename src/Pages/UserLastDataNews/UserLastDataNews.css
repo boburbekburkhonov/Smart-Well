@@ -18,7 +18,10 @@
 .user-last-data-map-wrapper {
   max-width: 800px;
   width: 100%;
+}
 
+.user-last-data-map-wrapper > div {
+  height: 100%;
 }
 
 .select-user-last-data {
@@ -39,16 +42,16 @@
 }
 
 .user-last-data-map {
-  position: relative;
   max-width: 800px;
   width: 100%;
-  height: 420px;
+  height: 40vh;
+  overflow: auto;
 }
 
 .char-statistic-frame {
   max-width: 600px;
   width: 100%;
-  height: 500px;
+  height: 275px;
 }
 
 .char-statistic-wrapper {
