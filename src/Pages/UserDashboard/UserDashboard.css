@@ -89,6 +89,14 @@
   border-radius: 5px;
 }
 
+@media (max-width: 1800px) {
+
+  .table-char-wrapperlist {
+    justify-content: center !important;
+  }
+
+}
+
 @media (max-width: 835px) {
 
   .dashboard-list {

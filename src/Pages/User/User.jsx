@@ -27,7 +27,7 @@ import { useState } from "react";
 const User = () => {
   const [balanceOrg, setBalanceOrg] = useState([]);
   const token = window.localStorage.getItem("accessToken");
-  const name = window.localStorage.getItem("name");
+  const role = window.localStorage.getItem("role");
   const username = window.localStorage.getItem("username");
   const location = useLocation();
   const navigate = useNavigate();
@@ -37,7 +37,7 @@ const User = () => {
       window.location.href = "/";
     }
 
-    if (name) {
+    if (role == "Organization") {
       const balansOrgName = async () => {
         const requst = await fetch(`${api}/balance-organizations/all-find`, {
           method: "GET",
@@ -56,11 +56,12 @@ const User = () => {
   }, []);
 
   function logoutFunction() {
+    window.localStorage.removeItem("name");
+    window.localStorage.removeItem("role");
     window.localStorage.removeItem("username");
     window.localStorage.removeItem("password");
     window.localStorage.removeItem("accessToken");
     window.localStorage.removeItem("refreshToken");
-    window.localStorage.removeItem("name");
     window.location.reload();
   }
 

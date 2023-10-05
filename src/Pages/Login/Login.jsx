@@ -60,6 +60,8 @@ const Login = () => {
     if (response.statusCode == 200) {
       window.localStorage.setItem("username", username.value);
       window.localStorage.setItem("password", password.value);
+      window.localStorage.setItem("name", response.data.user.name);
+      window.localStorage.setItem("role", response.data.user.role);
       window.localStorage.setItem("checkRemember", checkRemember);
       window.localStorage.setItem("accessToken", response.data.accessToken);
       window.localStorage.setItem("refreshToken", response.data.refreshToken);
@@ -67,11 +69,8 @@ const Login = () => {
         window.location.href = "/admin";
       } else if (response.data.user?.role == "USER") {
         window.location.href = "/user";
-      } else if (
-        response.data.user?.role == "Organization"
-      ) {
+      } else if (response.data.user?.role == "Organization") {
         window.location.href = "/user";
-        window.localStorage.setItem("name", response.data.user?.name);
       }
     } else {
       setError(true);
