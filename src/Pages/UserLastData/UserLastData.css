@@ -2,8 +2,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
 
 .user-lastdata-heading {
+  font-size: 32px;
+  font-weight: 500;
   margin: 0;
-  color: #0cc0ce;
+  color: #000000;
 }
 
 .user-lastdata-select-station-name {
@@ -37,9 +39,13 @@
 .user-last-data-list-item-href {
   display: inline-block;
   width: 100%;
-  height: 5px;
+  height: 3px;
   color: red;
   background: limegreen;
+}
+
+.user-last-data-desc-date {
+  margin-top: 75px !important;
 }
 
 .userlast-data-bottom-modal {
@@ -49,4 +55,59 @@
 .userlast-data-bottom-modal-header {
   cursor: pointer;
   overflow: auto;
+}
+
+/* ! PAGINATION */
+.user-last-data-table-wrapper > ul {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+}
+
+.user-last-data-table-wrapper > ul > li {
+  margin: 0 15px;
+  background: #0CC0CE;
+  color: #ffffff;
+  padding: 3px 10px;
+  border-radius: 10px;
+}
+
+.profile-search-station > ul > li {
+  margin: 0 15px;
+  background: #0CC0CE !important;
+  color: #ffffff !important;
+  padding: 3px 10px;
+  border-radius: 10px;
+}
+
+.profile-search-station > ul {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+}
+
+.profile-search-station > ul > li {
+  margin: 0 15px;
+  background: #377BE8;
+  color: #ffffff;
+  padding: 3px 10px;
+  border-radius: 10px;
+}
+
+.previous > a {
+  text-decoration: none;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.next > a {
+  text-decoration: none;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.pagination__link--active {
+  background: #ffffff !important;
+  color: #0CC0CE !important;
+  border: 2px solid #0CC0CE;
 }

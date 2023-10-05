@@ -17,7 +17,6 @@ Chartjs.register(ArcElement, Tooltip, Legend);
 
 const UserDashboard = (prop) => {
   const { balanceOrg } = prop;
-  const username = window.localStorage.getItem("username");
   const name = window.localStorage.getItem("name");
   const role = window.localStorage.getItem("role");
   const [stationBattery, setStationBattery] = useState([]);
@@ -355,12 +354,6 @@ const UserDashboard = (prop) => {
       </div>
       <div className="container-fluid">
         <div className="d-flex align-items-center mb-4 pt-3">
-          <img
-            src="https://img.icons8.com/?size=512&id=7880&format=png"
-            alt="location"
-            width="35"
-            height="35"
-          />
           <h1 className="dashboard-heading ms-2">
             {balanceOrg.length == 0
               ? `${name} ga biriktirilgan qurilmalar`
