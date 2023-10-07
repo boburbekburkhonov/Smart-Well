@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import excel from "../../assets/images/excel.png";
 import statistic from "../../assets/images/stats.png";
@@ -8,8 +8,26 @@ import "./UserLastDataNews.css";
 import { GoogleMap, MarkerF, useLoadScript } from "@react-google-maps/api";
 import { Line } from "react-chartjs-2";
 import Chart from "chart.js/auto";
+import { useParams } from "react-router-dom";
+import { api } from "../Api/Api";
 
 const UserLastDataNews = () => {
+  const [todayData, setTodayData] = useState([]);
+  const { news } = useParams();
+  const stationName = localStorage.getItem("stationName");
+
+  useEffect(() => {
+    fetch(`${api}/mqttDataWrite/getTodayDataByStationId?stationId=${news}`, {
+      method: "GET",
+      headers: {
+        "content-type": "application/json",
+        Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => setTodayData(data.data));
+  }, []);
+  console.log(todayData);
   const { isLoaded } = useLoadScript({
     googleMapsApiKey:
       "AIzaSyC57hT2pRJZ4Gh85ai0sUjP72i7VYJxTHc&region=UZ&language=uz",
@@ -147,6 +165,16 @@ const UserLastDataNews = () => {
           <ul className="nav nav-tabs nav-tabs-bordered">
             <li className="nav-item">
               <button
+                className="nav-link"
+                data-bs-toggle="tab"
+                data-bs-target="#profile-users-ten"
+              >
+                Kecha
+              </button>
+            </li>
+
+            <li className="nav-item">
+              <button
                 className="nav-link active"
                 data-bs-toggle="tab"
                 data-bs-target="#profile-hour"
@@ -162,16 +190,6 @@ const UserLastDataNews = () => {
                 data-bs-target="#profile-users"
               >
                 Kunlik
-              </button>
-            </li>
-
-            <li className="nav-item">
-              <button
-                className="nav-link"
-                data-bs-toggle="tab"
-                data-bs-target="#profile-users-ten"
-              >
-                10 Kunlik
               </button>
             </li>
 
@@ -202,7 +220,61 @@ const UserLastDataNews = () => {
               id="profile-hour"
             >
               <div className="dashboard-table dashboard-table-user-last-data-news mt-2">
-                <h2 className="m-0 mb-3">218-Kuzatish Quduq</h2>
+                <div className="d-flex justify-content-between align-items-center">
+                  <h2 className="m-0 mb-3">{stationName}</h2>
+                  <div className="d-flex align-items-center ms-auto">
+                    <a
+                      className="ms-4"
+                      href="#"
+                      data-bs-toggle="modal"
+                      data-bs-target="#staticBackdrop"
+                    >
+                      <img src={statistic} alt="pdf" width={25} height={30} />
+                    </a>
+                    <a
+                      className="ms-4"
+                      data-bs-toggle="modal"
+                      data-bs-target="#modalMapId"
+                      href="#"
+                    >
+                      <img src={location} alt="pdf" width={30} height={30} />
+                    </a>
+                    <a className="ms-4" href="#">
+                      <img src={pdf} alt="pdf" width={23} height={30} />
+                    </a>
+                    <a className="ms-4" href="#">
+                      <img src={excel} alt="excel" width={26} height={30} />
+                    </a>
+                  </div>
+                </div>
+                <table className="table mt-4">
+                  <thead>
+                    <tr>
+                      <th scope="col">Sath (sm)</th>
+                      <th scope="col">Sho'rlanish (g/l) </th>
+                      <th scope="col">Temperatura (°C)</th>
+                      <th scope="col">Sana</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {todayData.map((e, i) => {
+                      return (
+                        <tr key={i}>
+                          <td>{Number(e.level).toFixed(2)}</td>
+                          <td>{Number(e.conductivity).toFixed(2)}</td>
+                          <td>{e.temp}</td>
+                          <td>{e.date?.split(" ")[1]}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="tab-pane fade profile-users" id="profile-users">
+              <div className="dashboard-table dashboard-table-user-last-data-news mt-2">
+                <h2 className="m-0 mb-3">{stationName}</h2>
                 <div className="d-flex justify-content-between align-items-center">
                   <input
                     className="form-control user-lastdata-news-search"
@@ -245,62 +317,26 @@ const UserLastDataNews = () => {
                 <table className="table mt-4">
                   <thead>
                     <tr>
-                      <th scope="col">Nomi</th>
-                      <th scope="col">Daraja</th>
-                      <th scope="col">O'tkazuvchanlik</th>
-                      <th scope="col">Temperatura</th>
+                      <th scope="col">Sath (sm)</th>
+                      <th scope="col">Sho'rlanish (g/l) </th>
+                      <th scope="col">Temperatura (°C)</th>
+                      <th scope="col">Sana</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td>218-Kuzatish Quduq</td>
-                      <td>45</td>
-                      <td>3.709</td>
-                      <td>21.3</td>
-                    </tr>
-                    <tr>
-                      <td>218-Kuzatish Quduq</td>
-                      <td>45</td>
-                      <td>3.709</td>
-                      <td>21.3</td>
-                    </tr>
-                    <tr>
-                      <td>218-Kuzatish Quduq</td>
-                      <td>45</td>
-                      <td>3.709</td>
-                      <td>21.3</td>
-                    </tr>
-                    <tr>
-                      <td>218-Kuzatish Quduq</td>
-                      <td>45</td>
-                      <td>3.709</td>
-                      <td>21.3</td>
-                    </tr>
-                    <tr>
-                      <td>218-Kuzatish Quduq</td>
-                      <td>45</td>
-                      <td>3.709</td>
-                      <td>21.3</td>
-                    </tr>
-                    <tr>
-                      <td>218-Kuzatish Quduq</td>
-                      <td>45</td>
-                      <td>3.709</td>
-                      <td>21.3</td>
-                    </tr>
-                    <tr>
-                      <td>218-Kuzatish Quduq</td>
-                      <td>45</td>
-                      <td>3.709</td>
-                      <td>21.3</td>
-                    </tr>
+                    {todayData.map((e, i) => {
+                      return (
+                        <tr key={i}>
+                          <td>{e.level}</td>
+                          <td>{Number(e.conductivity).toFixed(2)}</td>
+                          <td>{e.temp}</td>
+                          <td>{e.date?.split(" ")[1]}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
-            </div>
-
-            <div className="tab-pane fade profile-users" id="profile-users">
-              1
             </div>
 
             <div

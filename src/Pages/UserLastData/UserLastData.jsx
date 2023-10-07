@@ -100,7 +100,6 @@ const UserLastData = (prop) => {
     return date;
   };
 
-  console.log(allStation);
   return (
     <div className="card">
       <div className="card-body pt-3">
@@ -124,7 +123,12 @@ const UserLastData = (prop) => {
               {allStation.map((e, i) => {
                 return (
                   <li className="user-last-data-list-item mt-4" key={i}>
-                    <a onClick={() => navigate("/user/lastdata/news")}>
+                    <a
+                      onClick={() => {
+                        navigate(`/user/lastdata/${e._id}`);
+                        localStorage.setItem("stationName", e.name);
+                      }}
+                    >
                       <div className="user-last-data-list-item-top d-flex align-items-center justify-content-between">
                         <h3 className="fs-5 m-0">{e.name}</h3>
                         <div className="d-flex align-items-center justify-content-between">
