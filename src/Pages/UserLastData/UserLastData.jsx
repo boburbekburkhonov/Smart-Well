@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import battery from "../../assets/images/battery.png";
-import batteryPow from "../../assets/images/battery-70.png";
-import batteryLow from "../../assets/images/battery-40.png";
-import batteryRed from "../../assets/images/battery-30.png";
-import close from "../../assets/images/close-black.png";
+import batteryFull from "../../assets/images/battery-100.svg";
+import batteryNo from "../../assets/images/battery-0.svg";
+import batteryPow from "../../assets/images/battery-70.svg";
+import batteryLow from "../../assets/images/battery-40.svg";
+import batteryRed from "../../assets/images/battery-30.svg";
 import "./UserLastData.css";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
@@ -91,11 +91,12 @@ const UserLastData = (prop) => {
   const returnFixdDate = (item) => {
     const date = `${new Date(item).getDate()}/${
       new Date(item).getMonth() + 1
-    }/${new Date(item).getFullYear()} ${new Date(item).getHours()}:${new Date(
-      item
-    ).getMinutes()}`;
+    }/${new Date(item).getFullYear()} ${new Date(item).getHours()}:${
+      String(new Date(item).getMinutes()).length == 1
+        ? "0" + new Date(item).getMinutes()
+        : new Date(item).getMinutes()
+    }`;
 
-    console.log(date);
     return date;
   };
 
@@ -129,7 +130,7 @@ const UserLastData = (prop) => {
                         <div className="d-flex align-items-center justify-content-between">
                           <p
                             className={
-                              "m-0 me-1 " +
+                              "m-0 me-1 fw-semibold fs-5 " +
                               (e.battery > 70
                                 ? "text-success"
                                 : e.battery <= 70 && e.battery >= 50
@@ -143,7 +144,11 @@ const UserLastData = (prop) => {
                           </p>
                           <img
                             src={
-                              e.battery >= 70
+                              e.battery == 100
+                                ? batteryFull
+                                : e.battery == 0
+                                ? batteryNo
+                                : e.battery >= 70 && e.battery < 100
                                 ? batteryPow
                                 : (e.battery >= 30) & (e.battery < 70)
                                 ? batteryLow
@@ -160,22 +165,30 @@ const UserLastData = (prop) => {
 
                       <span className="user-last-data-list-item-href"></span>
 
-                      <span className="d-flex justify-content-between">
-                        <div>
+                      <span className="">
+                        <div className="text-end mt-2">
                           <p className="m-0">
-                            Sath: {Number(e.lastData?.level).toFixed()} sm
+                            Sath:{" "}
+                            <span className="fw-bold">
+                              {Number(e.lastData?.level).toFixed()} sm
+                            </span>
                           </p>
                           <p className="m-0">
                             Sho'rlanish:{" "}
-                            {Number(e.lastData?.conductivity).toFixed()} g/l
+                            <span className="fw-bold">
+                              {Number(e.lastData?.conductivity).toFixed()} g/l
+                            </span>
                           </p>
                           <p className="m-0">
-                            Temperatura: {Number(e.lastData?.temp).toFixed()} °C
+                            Temperatura:{" "}
+                            <span className="fw-bold">
+                              {Number(e.lastData?.temp).toFixed()} °C
+                            </span>
                           </p>
                         </div>
 
-                        <div className="d-flex align-items-end">
-                          <p className="m-0 user-last-data-desc-date">{returnFixdDate(e.date)}</p>
+                        <div className="mt-2">
+                          <p className="m-0">{returnFixdDate(e.date)}</p>
                         </div>
                       </span>
                     </a>

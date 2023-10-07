@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useRef } from "react";
 import { Chart as Chartjs, ArcElement, Tooltip, Legend } from "chart.js";
-import { Doughnut } from "react-chartjs-2";
+import { Doughnut, getElementsAtEvent } from "react-chartjs-2";
 import "./UserDashboard.css";
 import circleBlue from "../../assets/images/record.png";
 import circleGreen from "../../assets/images/circle.png";
@@ -19,12 +19,16 @@ const UserDashboard = (prop) => {
   const { balanceOrg } = prop;
   const name = window.localStorage.getItem("name");
   const role = window.localStorage.getItem("role");
+  const [dataOrStation, setDataOrStation] = useState("data");
   const [stationBattery, setStationBattery] = useState([]);
   const [stationStatistic, settationStatistic] = useState([]);
   const [viewStation, setViewStation] = useState([]);
   const [viewStationLimit, setViewStationLimit] = useState([]);
+  const [viewStationByChar, setViewStationByChar] = useState([]);
+  const [viewStationByCharLimit, setViewStationByCharLimit] = useState([]);
   const [whichStation, setWhichStation] = useState("allStation");
   const [tableTitle, setTableTitle] = useState("Umumiy stansiyalar soni");
+  const chartRef = useRef();
 
   useEffect(() => {
     const userDashboardFunc = async () => {
@@ -266,6 +270,145 @@ const UserDashboard = (prop) => {
 
   const options = {};
 
+  const filteredStationDate = (item) => {
+    const time = item?.split("T")[1].split(".")[0];
+    const date = item?.split("T")[0].split("-");
+    if (whichStation == "todayStation") {
+      return time;
+    } else if (time != undefined) {
+      return `${date[1]}/${date[2]}/${date[0]} ${time}`;
+    }
+  };
+
+  const filteredStationDateByChar = (item) => {
+    const time = item?.split("T")[1].split(".")[0];
+    const date = item?.split("T")[0].split("-");
+
+    return `${date[1]}/${date[2]}/${date[0]} ${time}`;
+  };
+
+  const onClick = (event) => {
+    setDataOrStation("station");
+    const index = getElementsAtEvent(chartRef.current, event)[0].index;
+
+    if (index == 0) {
+      setTableTitle("Batareya quvvati 90% dan ko'p bo'lgan stansiyalar");
+      // ! LIMIT
+      fetch(
+        `${api}/stations/batteryGreaterThen?batteryStatus=90&page=1&perPage=8`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      )
+        .then((res) => res.json())
+        .then((data) => setViewStationByCharLimit(data.data.data));
+
+      // !----------------------------------------------------------------
+
+      fetch(`${api}/stations/batteryGreaterThen?batteryStatus=90`, {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
+          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => setViewStationByChar(data.data.data));
+    } else if (index == 1) {
+      setTableTitle("Batareya quvvati 75% dan ko'p bo'lgan stansiyalar");
+
+      // ! LIMIT
+      fetch(
+        `${api}/stations/batteryLessThen?batteryStatus=75&page=1&perPage=8`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      )
+        .then((res) => res.json())
+        .then((data) => setViewStationByCharLimit(data.data.data));
+
+      // !----------------------------------------------------------------
+
+      fetch(`${api}/stations/batteryLessThen?batteryStatus=75`, {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
+          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => setViewStationByChar(data.data.data));
+    } else if (index == 2) {
+      setTableTitle("Batareya quvvati 50% dan ko'p bo'lgan stansiyalar");
+
+      // ! LIMIT
+      fetch(
+        `${api}/stations/batteryLessThen?batteryStatus=50&page=1&perPage=8`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      )
+        .then((res) => res.json())
+        .then((data) => setViewStationByCharLimit(data.data.data));
+
+      // !----------------------------------------------------------------
+
+      fetch(`${api}/stations/batteryLessThen?batteryStatus=50`, {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
+          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => setViewStationByChar(data.data.data));
+    } else if (index == 3) {
+      setTableTitle("Batareya quvvati 25% dan ko'p bo'lgan stansiyalar");
+
+      // ! LIMIT
+      fetch(
+        `${api}/stations/batteryLessThen?batteryStatus=25&page=1&perPage=8`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      )
+        .then((res) => res.json())
+        .then((data) => setViewStationByCharLimit(data.data.data));
+
+      // !----------------------------------------------------------------
+
+      fetch(`${api}/stations/batteryLessThen?batteryStatus=25`, {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
+          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => setViewStationByChar(data.data.data));
+    }
+  };
+
   return (
     <section className="section-dashboard">
       {/* MODAL */}
@@ -292,62 +435,113 @@ const UserDashboard = (prop) => {
               ></button>
             </div>
             <div className="modal-body">
-              <table className="table mt-4">
-                <thead>
-                  <tr>
-                    <th scope="col" className="text-center">
-                      Nomi
-                    </th>
-                    <th scope="col" className="text-center">
-                      Sath (sm)
-                    </th>
-                    <th scope="col" className="text-center">
-                      Sho'rlanish (g/l)
-                    </th>
-                    <th scope="col" className="text-center">
-                      Temperatura (°C)
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {viewStation?.map((e, i) => {
-                    return (
-                      <tr key={i}>
-                        <td className="text-center">
-                          {whichStation == "allStation" ||
-                          whichStation == "notWorkStation"
-                            ? e?.name
-                            : e.stations?.name}
-                        </td>
-                        <td className="text-center">
-                          {whichStation == "allStation" &&
-                          e.lastData?.level != undefined
-                            ? Number(e.lastData?.level).toFixed(2)
-                            : e.level != undefined
-                            ? Number(e.level).toFixed(2)
-                            : "-"}
-                        </td>
-                        <td className="text-center">
-                          {whichStation == "allStation" &&
-                          e.lastData?.conductivity != undefined
-                            ? Number(e.lastData?.conductivity).toFixed(2)
-                            : e.conductivity != undefined
-                            ? Number(e.conductivity).toFixed(2)
-                            : "-"}
-                        </td>
-                        <td className="text-center">
-                          {whichStation == "allStation" &&
-                          e.lastData?.temp != undefined
-                            ? Number(e.lastData?.temp).toFixed(2)
-                            : e.temp != undefined
-                            ? Number(e.temp).toFixed(2)
-                            : "-"}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              {dataOrStation == "data" ? (
+                <table className="table mt-4">
+                  <thead>
+                    <tr>
+                      <th scope="col" className="text-center">
+                        Nomi
+                      </th>
+                      <th scope="col" className="text-center">
+                        Sath (sm)
+                      </th>
+                      <th scope="col" className="text-center">
+                        Sho'rlanish (g/l)
+                      </th>
+                      <th scope="col" className="text-center">
+                        Temperatura (°C)
+                      </th>
+                      <th scope="col" className="text-center">
+                        {whichStation == "todayStation" ? "Vaqt" : "Sana"}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {viewStation?.map((e, i) => {
+                      return (
+                        <tr key={i}>
+                          <td className="text-center">
+                            {whichStation == "allStation" ||
+                            whichStation == "notWorkStation"
+                              ? e?.name
+                              : e.stations?.name}
+                          </td>
+                          <td className="text-center">
+                            {whichStation == "allStation" &&
+                            e.lastData?.level != undefined
+                              ? Number(e.lastData?.level).toFixed(2)
+                              : e.level != undefined
+                              ? Number(e.level).toFixed(2)
+                              : "-"}
+                          </td>
+                          <td className="text-center">
+                            {whichStation == "allStation" &&
+                            e.lastData?.conductivity != undefined
+                              ? Number(e.lastData?.conductivity).toFixed(2)
+                              : e.conductivity != undefined
+                              ? Number(e.conductivity).toFixed(2)
+                              : "-"}
+                          </td>
+                          <td className="text-center">
+                            {whichStation == "allStation" &&
+                            e.lastData?.temp != undefined
+                              ? Number(e.lastData?.temp).toFixed(2)
+                              : e.temp != undefined
+                              ? Number(e.temp).toFixed(2)
+                              : "-"}
+                          </td>
+                          <td className="text-center">
+                            {whichStation == "allStation"
+                              ? filteredStationDate(e.lastData?.date)
+                              : filteredStationDate(e?.date)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              ) : (
+                <table className="table mt-4">
+                  <thead>
+                    <tr>
+                      <th scope="col" className="text-center">
+                        Nomi
+                      </th>
+                      <th scope="col" className="text-center">
+                        Imei
+                      </th>
+                      <th scope="col" className="text-center">
+                        Batareya (%)
+                      </th>
+                      <th scope="col" className="text-center">
+                        Signal
+                      </th>
+                      <th scope="col" className="text-center">
+                        Status
+                      </th>
+                      <th scope="col" className="text-center">
+                        {whichStation == "todayStation" ? "Vaqt" : "Sana"}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {viewStationByChar?.map((e, i) => {
+                      return (
+                        <tr key={i}>
+                          <td className="text-center">{e?.name}</td>
+                          <td className="text-center">{e.imel}</td>
+                          <td className="text-center">{e.battery}</td>
+                          <td className="text-center">{e.signal}</td>
+                          <td className="text-center">{e.status}</td>
+                          <td className="text-center">
+                            {filteredStationDateByChar(e?.date)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         </div>
@@ -374,6 +568,7 @@ const UserDashboard = (prop) => {
               onClick={() => {
                 setWhichStation("allStation");
                 setTableTitle("Umumiy stansiyalar soni");
+                setDataOrStation("data");
               }}
             >
               <img src={circleBlue} alt="circleBlue" width={30} height={30} />
@@ -397,6 +592,7 @@ const UserDashboard = (prop) => {
               onClick={() => {
                 setWhichStation("todayStation");
                 setTableTitle("Bugun ishlayotganlar stansiyalar");
+                setDataOrStation("data");
               }}
             >
               <img src={circleGreen} alt="circleGreen" width={30} height={30} />
@@ -424,6 +620,7 @@ const UserDashboard = (prop) => {
               onClick={() => {
                 setWhichStation("withinThreeDayStation");
                 setTableTitle("3 kun ichida ishlagan stansiyalar");
+                setDataOrStation("data");
               }}
             >
               <img
@@ -456,6 +653,7 @@ const UserDashboard = (prop) => {
               onClick={() => {
                 setWhichStation("totalMonthWorkStation");
                 setTableTitle("Oxirgi oy ishlagan stansiyalar");
+                setDataOrStation("data");
               }}
             >
               <img
@@ -489,6 +687,7 @@ const UserDashboard = (prop) => {
               onClick={() => {
                 setWhichStation("totalMoreWorkStations");
                 setTableTitle("Uzoq vaqt ishlamagan qurilmalar");
+                setDataOrStation("data");
               }}
             >
               <img
@@ -522,6 +721,7 @@ const UserDashboard = (prop) => {
               onClick={() => {
                 setWhichStation("notWorkStation");
                 setTableTitle("Umuman ishlamagan stansiyalar");
+                setDataOrStation("data");
               }}
             >
               <img src={circleRed} alt="circleGreen" width={30} height={30} />
@@ -556,69 +756,122 @@ const UserDashboard = (prop) => {
                 <img src={fullScreen} alt="fullScreen" width={20} height={20} />
               </span>
             </div>
-            <table className="table mt-4">
-              <thead>
-                <tr>
-                  <th scope="col" className="text-center">
-                    Nomi
-                  </th>
-                  <th scope="col" className="text-center">
-                    Sath (sm)
-                  </th>
-                  <th scope="col" className="text-center">
-                    Sho'rlanish (g/l)
-                  </th>
-                  <th scope="col" className="text-center">
-                    Temperatura (°C)
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {viewStationLimit?.map((e, i) => {
-                  return (
-                    <tr key={i}>
-                      <td className="text-center">
-                        {whichStation == "allStation" ||
-                        whichStation == "notWorkStation"
-                          ? e?.name
-                          : e.stations?.name}
-                      </td>
-                      <td className="text-center">
-                        {whichStation == "allStation" &&
-                        e.lastData?.level != undefined
-                          ? Number(e.lastData?.level).toFixed(2)
-                          : e.level != undefined
-                          ? Number(e.level).toFixed(2)
-                          : "-"}
-                      </td>
-                      <td className="text-center">
-                        {whichStation == "allStation" &&
-                        e.lastData?.conductivity != undefined
-                          ? Number(e.lastData?.conductivity).toFixed(2)
-                          : e.conductivity != undefined
-                          ? Number(e.conductivity).toFixed(2)
-                          : "-"}
-                      </td>
-                      <td className="text-center">
-                        {whichStation == "allStation" &&
-                        e.lastData?.temp != undefined
-                          ? Number(e.lastData?.temp).toFixed(2)
-                          : e.temp != undefined
-                          ? Number(e.temp).toFixed(2)
-                          : "-"}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            {dataOrStation == "data" ? (
+              <table className="table mt-4">
+                <thead>
+                  <tr>
+                    <th scope="col" className="text-center">
+                      Nomi
+                    </th>
+                    <th scope="col" className="text-center">
+                      Sath (sm)
+                    </th>
+                    <th scope="col" className="text-center">
+                      Sho'rlanish (g/l)
+                    </th>
+                    <th scope="col" className="text-center">
+                      Temperatura (°C)
+                    </th>
+                    <th scope="col" className="text-center">
+                      {whichStation == "todayStation" ? "Vaqt" : "Sana"}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {viewStationLimit?.map((e, i) => {
+                    return (
+                      <tr key={i}>
+                        <td className="text-center">
+                          {whichStation == "allStation" ||
+                          whichStation == "notWorkStation"
+                            ? e?.name
+                            : e.stations?.name}
+                        </td>
+                        <td className="text-center">
+                          {whichStation == "allStation" &&
+                          e.lastData?.level != undefined
+                            ? Number(e.lastData?.level).toFixed(2)
+                            : e.level != undefined
+                            ? Number(e.level).toFixed(2)
+                            : "-"}
+                        </td>
+                        <td className="text-center">
+                          {whichStation == "allStation" &&
+                          e.lastData?.conductivity != undefined
+                            ? Number(e.lastData?.conductivity).toFixed(2)
+                            : e.conductivity != undefined
+                            ? Number(e.conductivity).toFixed(2)
+                            : "-"}
+                        </td>
+                        <td className="text-center">
+                          {whichStation == "allStation" &&
+                          e.lastData?.temp != undefined
+                            ? Number(e.lastData?.temp).toFixed(2)
+                            : e.temp != undefined
+                            ? Number(e.temp).toFixed(2)
+                            : "-"}
+                        </td>
+                        <td className="text-center">
+                          {whichStation == "allStation"
+                            ? filteredStationDate(e.lastData?.date)
+                            : filteredStationDate(e?.date)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            ) : (
+              <table className="table mt-4">
+                <thead>
+                  <tr>
+                    <th scope="col" className="text-center">
+                      Nomi
+                    </th>
+                    <th scope="col" className="text-center">
+                      Batareya (%)
+                    </th>
+                    <th scope="col" className="text-center">
+                      Signal
+                    </th>
+                    <th scope="col" className="text-center">
+                      Status
+                    </th>
+                    <th scope="col" className="text-center">
+                      {whichStation == "todayStation" ? "Vaqt" : "Sana"}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {viewStationByCharLimit?.map((e, i) => {
+                    return (
+                      <tr key={i}>
+                        <td className="text-center">{e?.name}</td>
+                        <td className="text-center">{e.battery}</td>
+                        <td className="text-center">{e.signal}</td>
+                        <td className="text-center">{e.status}</td>
+                        <td className="text-center">
+                          {filteredStationDateByChar(e?.date)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
           </div>
 
           <div className="dashboard-dought-wrapper mt-5">
             <h3 className="dashboard-dought-wrapper-heading m-0">
               Qurilmalarning batareya quvvatlari
             </h3>
-            <Doughnut className="mx-3" data={data} options={options}></Doughnut>
+            <Doughnut
+              className="mx-3"
+              data={data}
+              options={options}
+              onClick={onClick}
+              ref={chartRef}
+            ></Doughnut>
           </div>
         </div>
       </div>
