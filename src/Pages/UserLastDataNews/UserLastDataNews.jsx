@@ -5,16 +5,29 @@ import statistic from "../../assets/images/stats.png";
 import pdf from "../../assets/images/pdf.jpg";
 import location from "../../assets/images/location-google.png";
 import "./UserLastDataNews.css";
-import { GoogleMap, MarkerF, useLoadScript } from "@react-google-maps/api";
+import {
+  GoogleMap,
+  InfoWindowF,
+  MarkerF,
+  useLoadScript,
+} from "@react-google-maps/api";
 import { Line } from "react-chartjs-2";
 import Chart from "chart.js/auto";
 import { useParams } from "react-router-dom";
 import { api } from "../Api/Api";
+import jsPDF from "jspdf";
+import * as XLSX from "xlsx";
+import circleRed from "../../assets/images/circle-red.png";
+import circleBlue from "../../assets/images/record.png";
+import autoTable from "jspdf-autotable";
 
 const UserLastDataNews = () => {
   const [todayData, setTodayData] = useState([]);
+  const [valueStatistic, setValueStatistic] = useState("level");
+  const [activeMarker, setActiveMarker] = useState();
   const { news } = useParams();
   const stationName = localStorage.getItem("stationName");
+  const locationStation = localStorage.getItem("location");
 
   useEffect(() => {
     fetch(`${api}/mqttDataWrite/getTodayDataByStationId?stationId=${news}`, {
@@ -27,26 +40,29 @@ const UserLastDataNews = () => {
       .then((res) => res.json())
       .then((data) => setTodayData(data.data));
   }, []);
-  console.log(todayData);
+
   const { isLoaded } = useLoadScript({
     googleMapsApiKey:
       "AIzaSyC57hT2pRJZ4Gh85ai0sUjP72i7VYJxTHc&region=UZ&language=uz",
   });
 
+  const handleActiveMarker = (marker) => {
+    if (marker === activeMarker) {
+      return;
+    }
+    setActiveMarker(marker);
+  };
+
   if (!isLoaded) return <div>Loading...</div>;
 
-  const labels = [
-    2, 4546, 65, 65, 4, 2, 3, 8, 6, 5, 4, 2, 4546, 65, 65, 4, 2, 3, 8, 6, 5, 4,
-  ];
+  const labels = todayData.map((e) => e.date.split(" ")[1]);
 
   const data = {
     labels: labels,
     datasets: [
       {
         label: "Bugungi ma'lumotlar",
-        data: [
-          1, 2, 1, 4, 1, 6, 5, 3, 1, 11, 24, 1, 2, 1, 4, 1, 6, 5, 3, 1, 11, 24,
-        ],
+        data: todayData.map((e) => e[valueStatistic]),
         fill: true,
         borderColor: "#0CC0CE",
         backgroundColor: "#85e6ec",
@@ -75,6 +91,39 @@ const UserLastDataNews = () => {
     },
   };
 
+  const exportNewsByPdf = () => {
+    const doc = new jsPDF();
+
+    doc.text(`${stationName} qurilmadan kelgan ma'lumotlar`, 20, 10);
+
+    doc.autoTable({
+      theme: "grid",
+      columns: [
+        { header: "Sath (sm)", dataKey: "level" },
+        { header: "Sho'rlanish (g/l)", dataKey: "conductivity" },
+        { header: "Temperatura (°C)", dataKey: "temp" },
+        { Sana: "Temperatura (°C)", dataKey: "date" },
+      ],
+      body: todayData,
+    });
+
+    if (todayData.length > 0) {
+      doc.save(`${stationName} ning ma'lumotlari.pdf`);
+    }
+  };
+
+  // ! SAVE DATA
+  const exportDataToExcel = (data) => {
+    const workBook = XLSX.utils.book_new();
+    const workSheet = XLSX.utils.json_to_sheet(todayData);
+
+    XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
+
+    if (todayData.length > 0) {
+      XLSX.writeFile(workBook, `${stationName} ning ma'lumotlari.xlsx`);
+    }
+  };
+
   return (
     <HelmetProvider>
       {/* MODAL CHAR */}
@@ -101,8 +150,13 @@ const UserLastDataNews = () => {
               ></button>
             </div>
             <div className="modal-body">
-              <select className="form-select select-user-last-data">
-                <option value="Sathi">Sathi</option>
+              <select
+                onChange={(e) => setValueStatistic(e.target.value)}
+                className="form-select select-user-last-data"
+              >
+                <option value="level">Sathi</option>
+                <option value="conductivity">Sho'rlanish</option>
+                <option value="temp">Temperatura </option>
               </select>
 
               <div className="char-statistic-frame m-auto">
@@ -131,7 +185,7 @@ const UserLastDataNews = () => {
           <div className="modal-content modal-content-user-last-data-map">
             <div className="modal-header">
               <h1 className="modal-title fs-5" id="modalMap">
-                Modal title
+                {stationName} qurilmaning manzili
               </h1>
               <button
                 type="button"
@@ -143,16 +197,117 @@ const UserLastDataNews = () => {
             <div className="modal-body">
               <div className="user-last-data-map-wrapper h-100">
                 <GoogleMap
-                  zoom={6}
-                  center={{ lat: 42.00000000048624, lng: 63.999999999999986 }}
+                  zoom={15}
+                  center={{
+                    lat: locationStation.split("-")[0] * 1,
+                    lng: locationStation.split("-")[1] * 1,
+                  }}
                   mapContainerclassName="user-last-data-map"
                 >
                   <MarkerF
                     position={{
-                      lat: 42.00000000048624,
-                      lng: 63.999999999999986,
+                      lat: locationStation.split("-")[0] * 1,
+                      lng: locationStation.split("-")[1] * 1,
                     }}
-                  />
+                    title={stationName}
+                    onClick={() => handleActiveMarker(1)}
+                  >
+                    {activeMarker == 1 ? (
+                      <InfoWindowF
+                        className="w-100"
+                        onCloseClick={() => {
+                          setActiveMarker(null);
+                        }}
+                        options={{ maxWidth: "240" }}
+                      >
+                        {todayData.length > 0 ? (
+                          <div>
+                            <h3 className="fw-semibold text-success fs-6">
+                              {stationName}
+                            </h3>
+
+                            <div className="d-flex align-items-center mb-1">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="infowindow-desc m-0 ms-1 me-1">
+                                Sath:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {Number(todayData[0].level).toFixed(2)} sm
+                              </span>
+                            </div>
+
+                            <div className="d-flex align-items-center mb-1">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="m-0 infowindow-desc ms-1 me-1 ">
+                                Sho'rlanish:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {Number(todayData[0].conductivity).toFixed(2)}{" "}
+                                g/l
+                              </span>
+                            </div>
+
+                            <div className="d-flex align-items-center mb-1">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="m-0 infowindow-desc ms-1 me-1 ">
+                                Temperatura:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {Number(todayData[0].temp).toFixed(2)} °C
+                              </span>
+                            </div>
+
+                            <div className="d-flex align-items-center">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="m-0 infowindow-desc ms-1 me-1">
+                                Sana:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {todayData[0].date?.split(" ")[1]}
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <h3 className="fw-semibold text-success fs-6 text-center">
+                              {stationName}
+                            </h3>
+                            <div className="d-flex align-items-center justify-content-center">
+                              <img
+                                src={circleRed}
+                                alt="circleBlue"
+                                width={18}
+                                height={18}
+                              />
+                              <p className="m-0 infowindow-desc-not-last-data fs-6 ms-1 me-1 ">
+                                Ma'lumot kelmagan...
+                              </p>
+                            </div>{" "}
+                          </div>
+                        )}
+                      </InfoWindowF>
+                    ) : null}
+                  </MarkerF>
                 </GoogleMap>
               </div>
             </div>
@@ -239,12 +394,18 @@ const UserLastDataNews = () => {
                     >
                       <img src={location} alt="pdf" width={30} height={30} />
                     </a>
-                    <a className="ms-4" href="#">
+                    <button
+                      onClick={() => exportNewsByPdf()}
+                      className="ms-4 border border-0"
+                    >
                       <img src={pdf} alt="pdf" width={23} height={30} />
-                    </a>
-                    <a className="ms-4" href="#">
+                    </button>
+                    <button
+                      onClick={() => exportDataToExcel()}
+                      className="ms-4 border border-0"
+                    >
                       <img src={excel} alt="excel" width={26} height={30} />
-                    </a>
+                    </button>
                   </div>
                 </div>
                 <table className="table mt-4">
@@ -262,7 +423,7 @@ const UserLastDataNews = () => {
                         <tr key={i}>
                           <td>{Number(e.level).toFixed(2)}</td>
                           <td>{Number(e.conductivity).toFixed(2)}</td>
-                          <td>{e.temp}</td>
+                          <td>{Number(e.temp).toFixed(2)}</td>
                           <td>{e.date?.split(" ")[1]}</td>
                         </tr>
                       );

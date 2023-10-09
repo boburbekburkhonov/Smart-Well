@@ -83,7 +83,6 @@ const UserLastData = (prop) => {
     )
       .then((res) => res.json())
       .then((data) => {
-        console.log(data.data);
         setAllStation(data.data);
       });
   };
@@ -127,6 +126,7 @@ const UserLastData = (prop) => {
                       onClick={() => {
                         navigate(`/user/lastdata/${e._id}`);
                         localStorage.setItem("stationName", e.name);
+                        localStorage.setItem("location", e.location);
                       }}
                     >
                       <div className="user-last-data-list-item-top d-flex align-items-center justify-content-between">
