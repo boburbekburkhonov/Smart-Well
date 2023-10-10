@@ -15,35 +15,77 @@ import { Line } from "react-chartjs-2";
 import Chart from "chart.js/auto";
 import { useParams } from "react-router-dom";
 import { api } from "../Api/Api";
-import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
 import circleRed from "../../assets/images/circle-red.png";
 import circleBlue from "../../assets/images/record.png";
+import moment from "moment";
+import "moment/dist/locale/uz-latn";
+import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+
+moment.locale("uz-latn");
 
 const UserLastDataNews = () => {
   const [todayData, setTodayData] = useState([]);
+  const [yesterdayData, setYesterdayData] = useState([]);
+  const [dailyData, setDailyData] = useState([]);
   const [monthData, setMonthData] = useState([]);
   const [valueStatistic, setValueStatistic] = useState("level");
   const [activeMarker, setActiveMarker] = useState();
   const { news } = useParams();
   const stationName = localStorage.getItem("stationName");
   const locationStation = localStorage.getItem("location");
-  const [whichData, setWhichData] = useState("yesterday");
+  const [whichData, setWhichData] = useState("hour");
+  const date = new Date();
+  const currentMonth = `${date.getFullYear()}-${date.getMonth()}`;
 
   useEffect(() => {
-    fetch(`${api}/mqttDataWrite/getTodayDataByStationId?stationId=${news}`, {
-      method: "GET",
-      headers: {
-        "content-type": "application/json",
-        Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => setTodayData(data.data));
+    const todayData = async () => {
+      const request = await fetch(
+        `${api}/mqttDataWrite/getTodayDataByStationId?stationId=${news}`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      );
+
+      const response = await request.json();
+
+      setTodayData(response.data);
+
+      if (response.statusCode == 401) {
+        const request = await fetch(`${api}/auth/signin`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            username: window.localStorage.getItem("username"),
+            password: window.localStorage.getItem("password"),
+          }),
+        });
+
+        const response = await request.json();
+
+        if (response.statusCode == 200) {
+          window.localStorage.setItem("accessToken", response.data.accessToken);
+          window.localStorage.setItem(
+            "refreshToken",
+            response.data.refreshToken
+          );
+        }
+      }
+    };
+
+    todayData();
 
     const date = new Date();
 
+    // ! MONTH DATA
     fetch(
       `${api}/monthlyData/getStationDataByYearAndStationId?year=${date.getFullYear()}&stationsId=${news}`,
       {
@@ -56,6 +98,36 @@ const UserLastDataNews = () => {
     )
       .then((res) => res.json())
       .then((data) => setMonthData(data.stations));
+
+    // ! DAILY DATA
+    fetch(
+      `${api}/dailyData/getStationDailyDataById?stationId=${news}&month=${new Date()
+        .toISOString()
+        .substring(0, 7)}`,
+      {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
+          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
+        },
+      }
+    )
+      .then((res) => res.json())
+      .then((data) => setDailyData(data.data));
+
+    // ! DAILY DATA
+    fetch(
+      `${api}/yesterdayData/getYesterdayDataByStationId?stationId=${news}`,
+      {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
+          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
+        },
+      }
+    )
+      .then((res) => res.json())
+      .then((data) => setYesterdayData(data.data));
   }, []);
 
   const { isLoaded } = useLoadScript({
@@ -75,6 +147,10 @@ const UserLastDataNews = () => {
   const labels =
     whichData == "hour"
       ? todayData.map((e) => e.date.split(" ")[1])
+      : whichData == "yesterday"
+      ? yesterdayData.map((e) => e.date.split(" ")[1])
+      : whichData == "daily"
+      ? dailyData.map((e) => moment(e.date).format("LL").split(" ")[1])
       : whichData == "monthly"
       ? monthData.map((e) => e.monthNumber)
       : null;
@@ -87,6 +163,10 @@ const UserLastDataNews = () => {
         data:
           whichData == "hour"
             ? todayData.map((e) => e[valueStatistic])
+            : whichData == "yesterday"
+            ? yesterdayData.map((e) => e[valueStatistic])
+            : whichData == "daily"
+            ? dailyData.map((e) => e[valueStatistic])
             : whichData == "monthly"
             ? monthData.map((e) => e[valueStatistic])
             : null,
@@ -138,6 +218,23 @@ const UserLastDataNews = () => {
       if (todayData.length > 0) {
         doc.save(`${stationName} ning bugungi ma'lumotlari.pdf`);
       }
+    } else if (whichData == "daily") {
+      doc.text(`${stationName} qurilmaning kunlik ma'lumotlar`, 20, 10);
+
+      doc.autoTable({
+        theme: "grid",
+        columns: [
+          { header: "Sath (sm)", dataKey: "level" },
+          { header: "Sho'rlanish (g/l)", dataKey: "conductivity" },
+          { header: "Temperatura (°C)", dataKey: "temp" },
+          { header: "Oy", dataKey: "date" },
+        ],
+        body: dailyData,
+      });
+
+      if (dailyData.length > 0) {
+        doc.save(`${stationName} ning kunlik ma'lumotlari.pdf`);
+      }
     } else if (whichData == "monthly") {
       doc.text(`${stationName} qurilmaning oylik ma'lumotlar`, 20, 10);
 
@@ -154,6 +251,23 @@ const UserLastDataNews = () => {
 
       if (monthData.length > 0) {
         doc.save(`${stationName} ning oylik ma'lumotlari.pdf`);
+      }
+    } else if (whichData == "yesterday") {
+      doc.text(`${stationName} qurilmaning kecha kelgan ma'lumotlar`, 20, 10);
+
+      doc.autoTable({
+        theme: "grid",
+        columns: [
+          { header: "Sath (sm)", dataKey: "level" },
+          { header: "Sho'rlanish (g/l)", dataKey: "conductivity" },
+          { header: "Temperatura (°C)", dataKey: "temp" },
+          { header: "Sana", dataKey: "date" },
+        ],
+        body: yesterdayData,
+      });
+
+      if (yesterdayData.length > 0) {
+        doc.save(`${stationName} ning kecha kelgan ma'lumotlari.pdf`);
       }
     }
   };
@@ -172,6 +286,18 @@ const UserLastDataNews = () => {
           `${stationName} ning bugungi ma'lumotlari.xlsx`
         );
       }
+    } else if (whichData == "daily") {
+      const workBook = XLSX.utils.book_new();
+      const workSheet = XLSX.utils.json_to_sheet(dailyData);
+
+      XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
+
+      if (dailyData.length > 0) {
+        XLSX.writeFile(
+          workBook,
+          `${stationName} ning kunlik ma'lumotlari.xlsx`
+        );
+      }
     } else if (whichData == "monthly") {
       const workBook = XLSX.utils.book_new();
       const workSheet = XLSX.utils.json_to_sheet(monthData);
@@ -181,7 +307,34 @@ const UserLastDataNews = () => {
       if (monthData.length > 0) {
         XLSX.writeFile(workBook, `${stationName} ning oylik ma'lumotlari.xlsx`);
       }
+    } else if (whichData == "yesterday") {
+      const workBook = XLSX.utils.book_new();
+      const workSheet = XLSX.utils.json_to_sheet(yesterdayData);
+
+      XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
+
+      if (yesterdayData.length > 0) {
+        XLSX.writeFile(
+          workBook,
+          `${stationName} ning kecha kelgan ma'lumotlari.xlsx`
+        );
+      }
     }
+  };
+
+  const changeDailyData = (month) => {
+    fetch(
+      `${api}/dailyData/getStationDailyDataById?stationId=${news}&month=${month}`,
+      {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
+          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
+        },
+      }
+    )
+      .then((res) => res.json())
+      .then((data) => setDailyData(data.data));
   };
 
   return (
@@ -452,6 +605,184 @@ const UserLastDataNews = () => {
                               </div>{" "}
                             </div>
                           )
+                        ) : whichData == "daily" ? (
+                          dailyData.length > 0 ? (
+                            <div>
+                              <h3 className="fw-semibold text-success fs-6">
+                                {stationName}
+                              </h3>
+
+                              <div className="d-flex align-items-center mb-1">
+                                <img
+                                  src={circleBlue}
+                                  alt="circleBlue"
+                                  width={12}
+                                  height={12}
+                                />
+                                <p className="infowindow-desc m-0 ms-1 me-1">
+                                  Sath:
+                                </p>{" "}
+                                <span className="infowindow-span">
+                                  {Number(dailyData[0].level).toFixed(2)} sm
+                                </span>
+                              </div>
+
+                              <div className="d-flex align-items-center mb-1">
+                                <img
+                                  src={circleBlue}
+                                  alt="circleBlue"
+                                  width={12}
+                                  height={12}
+                                />
+                                <p className="m-0 infowindow-desc ms-1 me-1 ">
+                                  Sho'rlanish:
+                                </p>{" "}
+                                <span className="infowindow-span">
+                                  {Number(dailyData[0].conductivity).toFixed(2)}{" "}
+                                  g/l
+                                </span>
+                              </div>
+
+                              <div className="d-flex align-items-center mb-1">
+                                <img
+                                  src={circleBlue}
+                                  alt="circleBlue"
+                                  width={12}
+                                  height={12}
+                                />
+                                <p className="m-0 infowindow-desc ms-1 me-1 ">
+                                  Temperatura:
+                                </p>{" "}
+                                <span className="infowindow-span">
+                                  {Number(dailyData[0].temp).toFixed(2)} °C
+                                </span>
+                              </div>
+
+                              <div className="d-flex align-items-center">
+                                <img
+                                  src={circleBlue}
+                                  alt="circleBlue"
+                                  width={12}
+                                  height={12}
+                                />
+                                <p className="m-0 infowindow-desc ms-1 me-1">
+                                  Oy:
+                                </p>{" "}
+                                <span className="infowindow-span">
+                                  {
+                                    moment(dailyData[0].date)
+                                      .format("LL")
+                                      .split(" ")[1]
+                                  }
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div>
+                              <h3 className="fw-semibold text-success fs-6 text-center">
+                                {stationName}
+                              </h3>
+                              <div className="d-flex align-items-center justify-content-center">
+                                <img
+                                  src={circleRed}
+                                  alt="circleBlue"
+                                  width={18}
+                                  height={18}
+                                />
+                                <p className="m-0 infowindow-desc-not-last-data fs-6 ms-1 me-1 ">
+                                  Ma'lumot kelmagan...
+                                </p>
+                              </div>{" "}
+                            </div>
+                          )
+                        ) : whichData == "yesterday" ? (
+                          yesterdayData.length > 0 ? (
+                            <div>
+                              <h3 className="fw-semibold text-success fs-6">
+                                {stationName}
+                              </h3>
+
+                              <div className="d-flex align-items-center mb-1">
+                                <img
+                                  src={circleBlue}
+                                  alt="circleBlue"
+                                  width={12}
+                                  height={12}
+                                />
+                                <p className="infowindow-desc m-0 ms-1 me-1">
+                                  Sath:
+                                </p>{" "}
+                                <span className="infowindow-span">
+                                  {Number(yesterdayData[0].level).toFixed(2)} sm
+                                </span>
+                              </div>
+
+                              <div className="d-flex align-items-center mb-1">
+                                <img
+                                  src={circleBlue}
+                                  alt="circleBlue"
+                                  width={12}
+                                  height={12}
+                                />
+                                <p className="m-0 infowindow-desc ms-1 me-1 ">
+                                  Sho'rlanish:
+                                </p>{" "}
+                                <span className="infowindow-span">
+                                  {Number(
+                                    yesterdayData[0].conductivity
+                                  ).toFixed(2)}{" "}
+                                  g/l
+                                </span>
+                              </div>
+
+                              <div className="d-flex align-items-center mb-1">
+                                <img
+                                  src={circleBlue}
+                                  alt="circleBlue"
+                                  width={12}
+                                  height={12}
+                                />
+                                <p className="m-0 infowindow-desc ms-1 me-1 ">
+                                  Temperatura:
+                                </p>{" "}
+                                <span className="infowindow-span">
+                                  {Number(yesterdayData[0].temp).toFixed(2)} °C
+                                </span>
+                              </div>
+
+                              <div className="d-flex align-items-center">
+                                <img
+                                  src={circleBlue}
+                                  alt="circleBlue"
+                                  width={12}
+                                  height={12}
+                                />
+                                <p className="m-0 infowindow-desc ms-1 me-1">
+                                  Oy:
+                                </p>{" "}
+                                <span className="infowindow-span">
+                                  {yesterdayData[0].date.split(" ")[1]}
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div>
+                              <h3 className="fw-semibold text-success fs-6 text-center">
+                                {stationName}
+                              </h3>
+                              <div className="d-flex align-items-center justify-content-center">
+                                <img
+                                  src={circleRed}
+                                  alt="circleBlue"
+                                  width={18}
+                                  height={18}
+                                />
+                                <p className="m-0 infowindow-desc-not-last-data fs-6 ms-1 me-1 ">
+                                  Ma'lumot kelmagan...
+                                </p>
+                              </div>{" "}
+                            </div>
+                          )
                         ) : null}
                       </InfoWindowF>
                     ) : null}
@@ -462,266 +793,375 @@ const UserLastDataNews = () => {
           </div>
         </div>
       </div>
+      <section className="home-section py-3">
+        <div className="container-fluid">
+          <div className="card">
+            <div className="card-body pt-3">
+              <ul className="nav nav-tabs nav-tabs-bordered">
+                <li className="nav-item">
+                  <button
+                    className="nav-link active"
+                    data-bs-toggle="tab"
+                    data-bs-target="#profile-hour"
+                    onClick={() => setWhichData("hour")}
+                  >
+                    Soatlik
+                  </button>
+                </li>
 
-      <div className="card">
-        <div className="card-body pt-3">
-          <ul className="nav nav-tabs nav-tabs-bordered">
-            <li className="nav-item">
-              <button
-                className="nav-link"
-                data-bs-toggle="tab"
-                data-bs-target="#profile-users-ten"
-                onClick={() => setWhichData("yesterday")}
-              >
-                Kecha
-              </button>
-            </li>
+                <li className="nav-item">
+                  <button
+                    className="nav-link"
+                    data-bs-toggle="tab"
+                    data-bs-target="#profile-users-ten"
+                    onClick={() => setWhichData("yesterday")}
+                  >
+                    Kecha kelgan
+                  </button>
+                </li>
 
-            <li className="nav-item">
-              <button
-                className="nav-link active"
-                data-bs-toggle="tab"
-                data-bs-target="#profile-hour"
-                onClick={() => setWhichData("hour")}
-              >
-                Soatlik
-              </button>
-            </li>
+                <li className="nav-item">
+                  <button
+                    className="nav-link"
+                    data-bs-toggle="tab"
+                    data-bs-target="#profile-users"
+                    onClick={() => setWhichData("daily")}
+                  >
+                    Kunlik
+                  </button>
+                </li>
 
-            <li className="nav-item">
-              <button
-                className="nav-link"
-                data-bs-toggle="tab"
-                data-bs-target="#profile-users"
-                onClick={() => setWhichData("daily")}
-              >
-                Kunlik
-              </button>
-            </li>
+                <li className="nav-item">
+                  <button
+                    className="nav-link"
+                    data-bs-toggle="tab"
+                    data-bs-target="#profile-overview"
+                    onClick={() => setWhichData("monthly")}
+                  >
+                    Oylik
+                  </button>
+                </li>
+              </ul>
 
-            <li className="nav-item">
-              <button
-                className="nav-link"
-                data-bs-toggle="tab"
-                data-bs-target="#profile-overview"
-                onClick={() => setWhichData("monthly")}
-              >
-                Oylik
-              </button>
-            </li>
-          </ul>
-
-          <div className="tab-content">
-            <div
-              className="tab-pane fade show active profile-hour"
-              id="profile-hour"
-            >
-              <div className="dashboard-table dashboard-table-user-last-data-news mt-2">
-                <div className="d-flex justify-content-between align-items-center">
-                  <h2 className="m-0 mb-3">
-                    {stationName} ning kunlik ma'lumotlari
-                  </h2>
-                  <div className="d-flex align-items-center ms-auto">
-                    <a
-                      className="ms-4"
-                      href="#"
-                      data-bs-toggle="modal"
-                      data-bs-target="#staticBackdrop"
-                    >
-                      <img src={statistic} alt="pdf" width={25} height={30} />
-                    </a>
-                    <a
-                      className="ms-4"
-                      data-bs-toggle="modal"
-                      data-bs-target="#modalMapId"
-                      href="#"
-                    >
-                      <img src={location} alt="pdf" width={30} height={30} />
-                    </a>
-                    <button
-                      onClick={() => exportNewsByPdf()}
-                      className="ms-4 border border-0"
-                    >
-                      <img src={pdf} alt="pdf" width={23} height={30} />
-                    </button>
-                    <button
-                      onClick={() => exportDataToExcel()}
-                      className="ms-4 border border-0"
-                    >
-                      <img src={excel} alt="excel" width={26} height={30} />
-                    </button>
+              <div className="tab-content">
+                <div
+                  className="tab-pane fade show active profile-hour"
+                  id="profile-hour"
+                >
+                  <div className="dashboard-table dashboard-table-user-last-data-news mt-2">
+                    <div className="d-flex justify-content-between align-items-center">
+                      <h2 className="m-0 mb-3">
+                        {stationName} ning soatlik ma'lumotlari
+                      </h2>
+                      <div className="d-flex align-items-center ms-auto">
+                        <a
+                          className="ms-4"
+                          href="#"
+                          data-bs-toggle="modal"
+                          data-bs-target="#staticBackdrop"
+                        >
+                          <img
+                            src={statistic}
+                            alt="pdf"
+                            width={25}
+                            height={30}
+                          />
+                        </a>
+                        <a
+                          className="ms-4"
+                          data-bs-toggle="modal"
+                          data-bs-target="#modalMapId"
+                          href="#"
+                        >
+                          <img
+                            src={location}
+                            alt="pdf"
+                            width={30}
+                            height={30}
+                          />
+                        </a>
+                        <button
+                          onClick={() => exportNewsByPdf()}
+                          className="ms-4 border border-0"
+                        >
+                          <img src={pdf} alt="pdf" width={23} height={30} />
+                        </button>
+                        <button
+                          onClick={() => exportDataToExcel()}
+                          className="ms-4 border border-0"
+                        >
+                          <img src={excel} alt="excel" width={26} height={30} />
+                        </button>
+                      </div>
+                    </div>
+                    <table className="table mt-4">
+                      <thead>
+                        <tr>
+                          <th scope="col">Sath (sm)</th>
+                          <th scope="col">Sho'rlanish (g/l) </th>
+                          <th scope="col">Temperatura (°C)</th>
+                          <th scope="col">Sana</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {todayData.map((e, i) => {
+                          return (
+                            <tr key={i}>
+                              <td>{Number(e.level).toFixed(2)}</td>
+                              <td>{Number(e.conductivity).toFixed(2)}</td>
+                              <td>{Number(e.temp).toFixed(2)}</td>
+                              <td>{e.date?.split(" ")[1]}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
-                <table className="table mt-4">
-                  <thead>
-                    <tr>
-                      <th scope="col">Sath (sm)</th>
-                      <th scope="col">Sho'rlanish (g/l) </th>
-                      <th scope="col">Temperatura (°C)</th>
-                      <th scope="col">Sana</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {todayData.map((e, i) => {
-                      return (
-                        <tr key={i}>
-                          <td>{Number(e.level).toFixed(2)}</td>
-                          <td>{Number(e.conductivity).toFixed(2)}</td>
-                          <td>{Number(e.temp).toFixed(2)}</td>
-                          <td>{e.date?.split(" ")[1]}</td>
+
+                <div className="tab-pane fade profile-users" id="profile-users">
+                  <div className="dashboard-table dashboard-table-user-last-data-news mt-2">
+                    <h2 className="m-0 mb-3">
+                      {stationName} ning kunlik ma'lumotlari
+                    </h2>
+                    <div className="d-flex justify-content-between align-items-center">
+                      <div className="d-flex align-items-center ms-auto">
+                        <input
+                          onChange={(e) => changeDailyData(e.target.value)}
+                          type="month"
+                          className="form-control"
+                          id="dateMonth"
+                          name="dateDaily"
+                          required
+                          defaultValue={new Date()
+                            .toISOString()
+                            .substring(0, 7)}
+                        />
+                        <a
+                          className="ms-4"
+                          href="#"
+                          data-bs-toggle="modal"
+                          data-bs-target="#staticBackdrop"
+                        >
+                          <img
+                            src={statistic}
+                            alt="pdf"
+                            width={25}
+                            height={30}
+                          />
+                        </a>
+                        <a
+                          className="ms-4"
+                          data-bs-toggle="modal"
+                          data-bs-target="#modalMapId"
+                          href="#"
+                        >
+                          <img
+                            src={location}
+                            alt="pdf"
+                            width={30}
+                            height={30}
+                          />
+                        </a>
+                        <button
+                          className="ms-4 border border-0"
+                          onClick={() => exportNewsByPdf()}
+                        >
+                          <img src={pdf} alt="pdf" width={23} height={30} />
+                        </button>
+                        <button
+                          className="ms-4 border border-0"
+                          onClick={() => exportDataToExcel()}
+                        >
+                          <img src={excel} alt="excel" width={26} height={30} />
+                        </button>
+                      </div>
+                    </div>
+                    <table className="table mt-4">
+                      <thead>
+                        <tr>
+                          <th scope="col">Sath (sm)</th>
+                          <th scope="col">Sho'rlanish (g/l) </th>
+                          <th scope="col">Temperatura (°C)</th>
+                          <th scope="col">Oy</th>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                      </thead>
+                      <tbody>
+                        {dailyData.map((e, i) => {
+                          return (
+                            <tr key={i}>
+                              <td>{Number(e.level).toFixed(2)}</td>
+                              <td>{Number(e.conductivity).toFixed(2)}</td>
+                              <td>{Number(e.temp).toFixed(2)}</td>
+                              <td>
+                                {moment(e.date).format("LL").split(" ")[1]}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div
+                  className="tab-pane fade profile-users-ten"
+                  id="profile-users-ten"
+                >
+                  <div className="dashboard-table dashboard-table-user-last-data-news mt-2">
+                    <div className="d-flex justify-content-between align-items-center">
+                      <h2 className="m-0 mb-3">
+                        {stationName} ning kecha kelgan ma'lumotlari
+                      </h2>
+                      <div className="d-flex align-items-center ms-auto">
+                        <a
+                          className="ms-4"
+                          href="#"
+                          data-bs-toggle="modal"
+                          data-bs-target="#staticBackdrop"
+                        >
+                          <img
+                            src={statistic}
+                            alt="pdf"
+                            width={25}
+                            height={30}
+                          />
+                        </a>
+                        <a
+                          className="ms-4"
+                          data-bs-toggle="modal"
+                          data-bs-target="#modalMapId"
+                          href="#"
+                        >
+                          <img
+                            src={location}
+                            alt="pdf"
+                            width={30}
+                            height={30}
+                          />
+                        </a>
+                        <button
+                          className="ms-4 border border-0"
+                          onClick={() => exportNewsByPdf()}
+                        >
+                          <img src={pdf} alt="pdf" width={23} height={30} />
+                        </button>
+                        <button
+                          className="ms-4 border border-0"
+                          onClick={() => exportDataToExcel()}
+                        >
+                          <img src={excel} alt="excel" width={26} height={30} />
+                        </button>
+                      </div>
+                    </div>
+                    <table className="table mt-4">
+                      <thead>
+                        <tr>
+                          <th scope="col">Sath (sm)</th>
+                          <th scope="col">Sho'rlanish (g/l) </th>
+                          <th scope="col">Temperatura (°C)</th>
+                          <th scope="col">Sana</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {yesterdayData.map((e, i) => {
+                          return (
+                            <tr key={i}>
+                              <td>{Number(e.level).toFixed(2)}</td>
+                              <td>{Number(e.conductivity).toFixed(2)}</td>
+                              <td>{Number(e.temp).toFixed(2)}</td>
+                              <td>{e.date.split(" ")[1]}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div
+                  className="tab-pane fade profile-overview"
+                  id="profile-overview"
+                >
+                  <div className="dashboard-table dashboard-table-user-last-data-news mt-2">
+                    <div className="d-flex justify-content-between align-items-center">
+                      <h2 className="m-0 mb-3">
+                        {stationName} ning oylik ma'lumotlari
+                      </h2>
+                      <div className="d-flex align-items-center ms-auto">
+                        <a
+                          className="ms-4"
+                          href="#"
+                          data-bs-toggle="modal"
+                          data-bs-target="#staticBackdrop"
+                        >
+                          <img
+                            src={statistic}
+                            alt="pdf"
+                            width={25}
+                            height={30}
+                          />
+                        </a>
+                        <a
+                          className="ms-4"
+                          data-bs-toggle="modal"
+                          data-bs-target="#modalMapId"
+                          href="#"
+                        >
+                          <img
+                            src={location}
+                            alt="pdf"
+                            width={30}
+                            height={30}
+                          />
+                        </a>
+                        <button
+                          onClick={() => exportNewsByPdf()}
+                          className="ms-4 border border-0"
+                        >
+                          <img src={pdf} alt="pdf" width={23} height={30} />
+                        </button>
+                        <button
+                          onClick={() => exportDataToExcel()}
+                          className="ms-4 border border-0"
+                        >
+                          <img src={excel} alt="excel" width={26} height={30} />
+                        </button>
+                      </div>
+                    </div>
+                    <table className="table mt-4">
+                      <thead>
+                        <tr>
+                          <th scope="col">Sath (sm)</th>
+                          <th scope="col">Sho'rlanish (g/l) </th>
+                          <th scope="col">Temperatura (°C)</th>
+                          <th scope="col">Oy</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {monthData.map((e, i) => {
+                          return (
+                            <tr key={i}>
+                              <td>{Number(e.level).toFixed(2)}</td>
+                              <td>{Number(e.conductivity).toFixed(2)}</td>
+                              <td>{Number(e.temp).toFixed(2)}</td>
+                              <td>{e.monthNumber}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="tab-pane fade profile-users" id="profile-users">
-              <div className="dashboard-table dashboard-table-user-last-data-news mt-2">
-                <h2 className="m-0 mb-3">{stationName}</h2>
-                <div className="d-flex justify-content-between align-items-center">
-                  <input
-                    className="form-control user-lastdata-news-search"
-                    type="text"
-                    placeholder="Search..."
-                  />
-                  <div className="d-flex align-items-center ms-auto">
-                    <input
-                      type="date"
-                      className="form-control"
-                      id="dateMonth"
-                      name="dateDaily"
-                      required
-                      defaultValue={new Date().toISOString().substring(0, 10)}
-                    />
-                    <a
-                      className="ms-4"
-                      href="#"
-                      data-bs-toggle="modal"
-                      data-bs-target="#staticBackdrop"
-                    >
-                      <img src={statistic} alt="pdf" width={25} height={30} />
-                    </a>
-                    <a
-                      className="ms-4"
-                      data-bs-toggle="modal"
-                      data-bs-target="#modalMapId"
-                      href="#"
-                    >
-                      <img src={location} alt="pdf" width={30} height={30} />
-                    </a>
-                    <a className="ms-4" href="#">
-                      <img src={pdf} alt="pdf" width={23} height={30} />
-                    </a>
-                    <a className="ms-4" href="#">
-                      <img src={excel} alt="excel" width={26} height={30} />
-                    </a>
-                  </div>
-                </div>
-                <table className="table mt-4">
-                  <thead>
-                    <tr>
-                      <th scope="col">Sath (sm)</th>
-                      <th scope="col">Sho'rlanish (g/l) </th>
-                      <th scope="col">Temperatura (°C)</th>
-                      <th scope="col">Sana</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {todayData.map((e, i) => {
-                      return (
-                        <tr key={i}>
-                          <td>{e.level}</td>
-                          <td>{Number(e.conductivity).toFixed(2)}</td>
-                          <td>{e.temp}</td>
-                          <td>{e.date?.split(" ")[1]}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div
-              className="tab-pane fade profile-users-ten"
-              id="profile-users-ten"
-            >
-              10
-            </div>
-
-            <div
-              className="tab-pane fade profile-overview"
-              id="profile-overview"
-            >
-              <div className="dashboard-table dashboard-table-user-last-data-news mt-2">
-                <div className="d-flex justify-content-between align-items-center">
-                  <h2 className="m-0 mb-3">
-                    {stationName} ning oylik ma'lumotlari
-                  </h2>
-                  <div className="d-flex align-items-center ms-auto">
-                    <a
-                      className="ms-4"
-                      href="#"
-                      data-bs-toggle="modal"
-                      data-bs-target="#staticBackdrop"
-                    >
-                      <img src={statistic} alt="pdf" width={25} height={30} />
-                    </a>
-                    <a
-                      className="ms-4"
-                      data-bs-toggle="modal"
-                      data-bs-target="#modalMapId"
-                      href="#"
-                    >
-                      <img src={location} alt="pdf" width={30} height={30} />
-                    </a>
-                    <button
-                      onClick={() => exportNewsByPdf()}
-                      className="ms-4 border border-0"
-                    >
-                      <img src={pdf} alt="pdf" width={23} height={30} />
-                    </button>
-                    <button
-                      onClick={() => exportDataToExcel()}
-                      className="ms-4 border border-0"
-                    >
-                      <img src={excel} alt="excel" width={26} height={30} />
-                    </button>
-                  </div>
-                </div>
-                <table className="table mt-4">
-                  <thead>
-                    <tr>
-                      <th scope="col">Sath (sm)</th>
-                      <th scope="col">Sho'rlanish (g/l) </th>
-                      <th scope="col">Temperatura (°C)</th>
-                      <th scope="col">Oy</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {monthData.map((e, i) => {
-                      return (
-                        <tr key={i}>
-                          <td>{Number(e.level).toFixed(2)}</td>
-                          <td>{Number(e.conductivity).toFixed(2)}</td>
-                          <td>{Number(e.temp).toFixed(2)}</td>
-                          <td>{e.monthNumber}</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <Helmet>
+              <script src="../../src/assets/js/Admin.js"></script>
+            </Helmet>
           </div>
         </div>
-
-        <Helmet>
-          <script src="../../src/assets/js/Admin.js"></script>
-        </Helmet>
-      </div>
+      </section>
     </HelmetProvider>
   );
 };

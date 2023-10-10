@@ -89,6 +89,19 @@
   border-radius: 5px;
 }
 
+.user-dashboard-top-wrapper {
+  padding: 30px 15px 110px 15px;
+  background: #0CC0CE;  /* fallback for old browsers */
+  background: -webkit-linear-gradient(to right, #daf8ff, #0CC0CE);  /* Chrome 10-25, Safari 5.1-6 */
+  background: linear-gradient(to right, #daf8ff, #0CC0CE); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+
+}
+
+.table-char-wrapperlist {
+  padding: 0 15px;
+  padding-bottom: 25px;
+}
+
 @media (max-width: 1800px) {
 
   .table-char-wrapperlist {

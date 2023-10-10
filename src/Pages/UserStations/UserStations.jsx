@@ -539,7 +539,9 @@ const UserStations = () => {
 
   return (
     <HelmetProvider>
-      <div>
+      <section className="home-section py-3">
+        <div className="container-fluid">
+        <div>
         {/* ToastContainer */}
         <ToastContainer
           position="top-center"
@@ -1940,6 +1942,8 @@ const UserStations = () => {
           <script src="../src/assets/js/table.js"></script>
         </Helmet>
       </div>
+        </div>
+      </section>
     </HelmetProvider>
   );
 };

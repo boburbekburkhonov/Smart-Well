@@ -410,470 +410,499 @@ const UserDashboard = (prop) => {
   };
 
   return (
-    <section className="section-dashboard">
-      {/* MODAL */}
-      <div
-        className="modal fade"
-        data-bs-backdrop="static"
-        data-bs-keyboard="false"
-        tabIndex="-1"
-        id="exampleModal"
-        aria-labelledby="exampleModalLabel"
-        aria-hidden="true"
-      >
-        <div className="modal-dialog table-dashboard-width modal-dialog-centered  modal-dialog-scrollable">
-          <div className="modal-content table-location-scroll">
-            <div className="modal-header">
-              <h1 className="modal-title fs-4" id="exampleModalLabel">
-                {tableTitle}
-              </h1>
-              <button
-                type="button"
-                className="btn-close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              ></button>
-            </div>
-            <div className="modal-body">
-              {dataOrStation == "data" ? (
-                <table className="table mt-4">
-                  <thead>
-                    <tr>
-                      <th scope="col" className="text-center">
-                        Nomi
-                      </th>
-                      <th scope="col" className="text-center">
-                        Sath (sm)
-                      </th>
-                      <th scope="col" className="text-center">
-                        Sho'rlanish (g/l)
-                      </th>
-                      <th scope="col" className="text-center">
-                        Temperatura (°C)
-                      </th>
-                      <th scope="col" className="text-center">
-                        {whichStation == "todayStation" ? "Vaqt" : "Sana"}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {viewStation?.map((e, i) => {
-                      return (
-                        <tr key={i}>
-                          <td className="text-center">
-                            {whichStation == "allStation" ||
-                            whichStation == "notWorkStation"
-                              ? e?.name
-                              : e.stations?.name}
-                          </td>
-                          <td className="text-center">
-                            {whichStation == "allStation" &&
-                            e.lastData?.level != undefined
-                              ? Number(e.lastData?.level).toFixed(2)
-                              : e.level != undefined
-                              ? Number(e.level).toFixed(2)
-                              : "-"}
-                          </td>
-                          <td className="text-center">
-                            {whichStation == "allStation" &&
-                            e.lastData?.conductivity != undefined
-                              ? Number(e.lastData?.conductivity).toFixed(2)
-                              : e.conductivity != undefined
-                              ? Number(e.conductivity).toFixed(2)
-                              : "-"}
-                          </td>
-                          <td className="text-center">
-                            {whichStation == "allStation" &&
-                            e.lastData?.temp != undefined
-                              ? Number(e.lastData?.temp).toFixed(2)
-                              : e.temp != undefined
-                              ? Number(e.temp).toFixed(2)
-                              : "-"}
-                          </td>
-                          <td className="text-center">
-                            {whichStation == "allStation"
-                              ? filteredStationDate(e.lastData?.date)
-                              : filteredStationDate(e?.date)}
-                          </td>
+    <section className="home-section p-0">
+      <div className="container-fluid p-0">
+        <section className="section-dashboard">
+          {/* MODAL */}
+          <div
+            className="modal fade"
+            data-bs-backdrop="static"
+            data-bs-keyboard="false"
+            tabIndex="-1"
+            id="exampleModal"
+            aria-labelledby="exampleModalLabel"
+            aria-hidden="true"
+          >
+            <div className="modal-dialog table-dashboard-width modal-dialog-centered  modal-dialog-scrollable">
+              <div className="modal-content table-location-scroll">
+                <div className="modal-header">
+                  <h1 className="modal-title fs-4" id="exampleModalLabel">
+                    {tableTitle}
+                  </h1>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                  ></button>
+                </div>
+                <div className="modal-body">
+                  {dataOrStation == "data" ? (
+                    <table className="table mt-4">
+                      <thead>
+                        <tr>
+                          <th scope="col" className="text-center">
+                            Nomi
+                          </th>
+                          <th scope="col" className="text-center">
+                            Sath (sm)
+                          </th>
+                          <th scope="col" className="text-center">
+                            Sho'rlanish (g/l)
+                          </th>
+                          <th scope="col" className="text-center">
+                            Temperatura (°C)
+                          </th>
+                          <th scope="col" className="text-center">
+                            {whichStation == "todayStation" ? "Vaqt" : "Sana"}
+                          </th>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              ) : (
-                <table className="table mt-4">
-                  <thead>
-                    <tr>
-                      <th scope="col" className="text-center">
-                        Nomi
-                      </th>
-                      <th scope="col" className="text-center">
-                        Imei
-                      </th>
-                      <th scope="col" className="text-center">
-                        Batareya (%)
-                      </th>
-                      <th scope="col" className="text-center">
-                        Signal
-                      </th>
-                      <th scope="col" className="text-center">
-                        Status
-                      </th>
-                      <th scope="col" className="text-center">
-                        {whichStation == "todayStation" ? "Vaqt" : "Sana"}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {viewStationByChar?.map((e, i) => {
-                      return (
-                        <tr key={i}>
-                          <td className="text-center">{e?.name}</td>
-                          <td className="text-center">{e.imel}</td>
-                          <td className="text-center">{e.battery}</td>
-                          <td className="text-center">{e.signal}</td>
-                          <td className="text-center">{e.status}</td>
-                          <td className="text-center">
-                            {filteredStationDateByChar(e?.date)}
-                          </td>
+                      </thead>
+                      <tbody>
+                        {viewStation?.map((e, i) => {
+                          return (
+                            <tr key={i}>
+                              <td className="text-center">
+                                {whichStation == "allStation" ||
+                                whichStation == "notWorkStation"
+                                  ? e?.name
+                                  : e.stations?.name}
+                              </td>
+                              <td className="text-center">
+                                {whichStation == "allStation" &&
+                                e.lastData?.level != undefined
+                                  ? Number(e.lastData?.level).toFixed(2)
+                                  : e.level != undefined
+                                  ? Number(e.level).toFixed(2)
+                                  : "-"}
+                              </td>
+                              <td className="text-center">
+                                {whichStation == "allStation" &&
+                                e.lastData?.conductivity != undefined
+                                  ? Number(e.lastData?.conductivity).toFixed(2)
+                                  : e.conductivity != undefined
+                                  ? Number(e.conductivity).toFixed(2)
+                                  : "-"}
+                              </td>
+                              <td className="text-center">
+                                {whichStation == "allStation" &&
+                                e.lastData?.temp != undefined
+                                  ? Number(e.lastData?.temp).toFixed(2)
+                                  : e.temp != undefined
+                                  ? Number(e.temp).toFixed(2)
+                                  : "-"}
+                              </td>
+                              <td className="text-center">
+                                {whichStation == "allStation"
+                                  ? filteredStationDate(e.lastData?.date)
+                                  : filteredStationDate(e?.date)}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <table className="table mt-4">
+                      <thead>
+                        <tr>
+                          <th scope="col" className="text-center">
+                            Nomi
+                          </th>
+                          <th scope="col" className="text-center">
+                            Imei
+                          </th>
+                          <th scope="col" className="text-center">
+                            Batareya (%)
+                          </th>
+                          <th scope="col" className="text-center">
+                            Signal
+                          </th>
+                          <th scope="col" className="text-center">
+                            Status
+                          </th>
+                          <th scope="col" className="text-center">
+                            {whichStation == "todayStation" ? "Vaqt" : "Sana"}
+                          </th>
                         </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              )}
+                      </thead>
+                      <tbody>
+                        {viewStationByChar?.map((e, i) => {
+                          return (
+                            <tr key={i}>
+                              <td className="text-center">{e?.name}</td>
+                              <td className="text-center">{e.imel}</td>
+                              <td className="text-center">{e.battery}</td>
+                              <td className="text-center">{e.signal}</td>
+                              <td className="text-center">{e.status}</td>
+                              <td className="text-center">
+                                {filteredStationDateByChar(e?.date)}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-      <div className="container-fluid">
-        <div className="d-flex align-items-center mb-4 pt-3">
-          <h1 className="dashboard-heading ms-2">
-            {balanceOrg.length == 0
-              ? `${name} ga biriktirilgan qurilmalar`
-              : `${
-                  balanceOrg.find((e) => {
-                    if (e.id == name) {
-                      return e.name;
-                    }
-                  })?.name
-                } ga biriktirilgan qurilmalar`}
-          </h1>
-        </div>
-
-        <ul className="dashboard-list list-unstyled m-0 d-flex flex-wrap align-items-center justify-content-between">
-          {stationStatistic?.totalStationsCount > 0 ? (
-            <li
-              className="dashboard-list-item mt-3 d-flex"
-              onClick={() => {
-                setWhichStation("allStation");
-                setTableTitle("Umumiy stansiyalar soni");
-                setDataOrStation("data");
-              }}
-            >
-              <img src={circleBlue} alt="circleBlue" width={30} height={30} />
-              <div className="ms-2">
-                <p className="dashboard-list-number m-0">
-                  {stationStatistic?.totalStationsCount} ta
-                </p>
-                <p className="dashboard-list-desc m-0">
-                  Umumiy stansiyalar soni
-                </p>
-                <p className="dashboard-list-desc-percentage text-info m-0 text-end">
-                  100%
-                </p>
+          <div className="container-fluid p-0">
+            <div className="user-dashboard-top-wrapper">
+              <div className="d-flex align-items-center mb-4 pt-3">
+                <h1 className="dashboard-heading ms-2">
+                  {balanceOrg.length == 0
+                    ? `${name} ga biriktirilgan qurilmalar`
+                    : `${
+                        balanceOrg.find((e) => {
+                          if (e.id == name) {
+                            return e.name;
+                          }
+                        })?.name
+                      } ga biriktirilgan qurilmalar`}
+                </h1>
               </div>
-            </li>
-          ) : null}
 
-          {stationStatistic?.totalTodayWorkStationsCount > 0 ? (
-            <li
-              className="dashboard-list-item d-flex mt-3"
-              onClick={() => {
-                setWhichStation("todayStation");
-                setTableTitle("Bugun ishlayotganlar stansiyalar");
-                setDataOrStation("data");
-              }}
-            >
-              <img src={circleGreen} alt="circleGreen" width={30} height={30} />
-              <div className="ms-2">
-                <p className="dashboard-list-number m-0">
-                  {stationStatistic?.totalTodayWorkStationsCount} ta
-                </p>
-                <p className="dashboard-list-desc m-0">
-                  Bugun ishlayotganlar stansiyalar
-                </p>
-                <p className="dashboard-list-desc-percentage text-info m-0 text-end">
-                  {(
-                    (stationStatistic?.totalTodayWorkStationsCount * 100) /
-                    stationStatistic?.totalStationsCount
-                  ).toFixed()}
-                  %
-                </p>
-              </div>
-            </li>
-          ) : null}
+              <ul className="dashboard-list list-unstyled m-0 d-flex flex-wrap align-items-center justify-content-between">
+                {stationStatistic?.totalStationsCount > 0 ? (
+                  <li
+                    className="dashboard-list-item mt-3 d-flex"
+                    onClick={() => {
+                      setWhichStation("allStation");
+                      setTableTitle("Umumiy stansiyalar soni");
+                      setDataOrStation("data");
+                    }}
+                  >
+                    <img
+                      src={circleBlue}
+                      alt="circleBlue"
+                      width={30}
+                      height={30}
+                    />
+                    <div className="ms-2">
+                      <p className="dashboard-list-number m-0">
+                        {stationStatistic?.totalStationsCount} ta
+                      </p>
+                      <p className="dashboard-list-desc m-0">
+                        Umumiy stansiyalar soni
+                      </p>
+                      <p className="dashboard-list-desc-percentage text-info m-0 text-end">
+                        100%
+                      </p>
+                    </div>
+                  </li>
+                ) : null}
 
-          {stationStatistic?.totalThreeDayWorkStationsCount > 0 ? (
-            <li
-              className="dashboard-list-item mt-3 d-flex"
-              onClick={() => {
-                setWhichStation("withinThreeDayStation");
-                setTableTitle("3 kun ichida ishlagan stansiyalar");
-                setDataOrStation("data");
-              }}
-            >
-              <img
-                src={circleGreenBlue}
-                alt="circleGreen"
-                width={30}
-                height={30}
-              />
-              <div className="ms-2">
-                <p className="dashboard-list-number m-0">
-                  {stationStatistic?.totalThreeDayWorkStationsCount} ta
-                </p>
-                <p className="dashboard-list-desc m-0">
-                  3 kun ichida ishlagan stansiyalar
-                </p>
-                <p className="dashboard-list-desc-percentage text-info m-0 text-end">
-                  {(
-                    (stationStatistic?.totalThreeDayWorkStationsCount * 100) /
-                    stationStatistic?.totalStationsCount
-                  ).toFixed()}
-                  %
-                </p>
-              </div>
-            </li>
-          ) : null}
+                {stationStatistic?.totalTodayWorkStationsCount > 0 ? (
+                  <li
+                    className="dashboard-list-item d-flex mt-3"
+                    onClick={() => {
+                      setWhichStation("todayStation");
+                      setTableTitle("Bugun ishlayotganlar stansiyalar");
+                      setDataOrStation("data");
+                    }}
+                  >
+                    <img
+                      src={circleGreen}
+                      alt="circleGreen"
+                      width={30}
+                      height={30}
+                    />
+                    <div className="ms-2">
+                      <p className="dashboard-list-number m-0">
+                        {stationStatistic?.totalTodayWorkStationsCount} ta
+                      </p>
+                      <p className="dashboard-list-desc m-0">
+                        Bugun ishlayotganlar stansiyalar
+                      </p>
+                      <p className="dashboard-list-desc-percentage text-info m-0 text-end">
+                        {(
+                          (stationStatistic?.totalTodayWorkStationsCount *
+                            100) /
+                          stationStatistic?.totalStationsCount
+                        ).toFixed()}
+                        %
+                      </p>
+                    </div>
+                  </li>
+                ) : null}
 
-          {stationStatistic?.totalMonthWorkStationsCount > 0 ? (
-            <li
-              className="dashboard-list-item mt-3 d-flex"
-              onClick={() => {
-                setWhichStation("totalMonthWorkStation");
-                setTableTitle("Oxirgi oy ishlagan stansiyalar");
-                setDataOrStation("data");
-              }}
-            >
-              <img
-                src={circleYellow}
-                alt="circleGreen"
-                width={30}
-                height={30}
-              />
-              <div className="ms-2">
-                <p className="dashboard-list-number m-0">
-                  {stationStatistic?.totalMonthWorkStationsCount}
-                  ta
-                </p>
-                <p className="dashboard-list-desc m-0">
-                  Oxirgi oy ishlagan stansiyalar
-                </p>
-                <p className="dashboard-list-desc-percentage text-info m-0 text-end">
-                  {(
-                    (stationStatistic?.totalMonthWorkStationsCount * 100) /
-                    stationStatistic?.totalStationsCount
-                  ).toFixed()}
-                  %
-                </p>
-              </div>
-            </li>
-          ) : null}
+                {stationStatistic?.totalThreeDayWorkStationsCount > 0 ? (
+                  <li
+                    className="dashboard-list-item mt-3 d-flex"
+                    onClick={() => {
+                      setWhichStation("withinThreeDayStation");
+                      setTableTitle("3 kun ichida ishlagan stansiyalar");
+                      setDataOrStation("data");
+                    }}
+                  >
+                    <img
+                      src={circleGreenBlue}
+                      alt="circleGreen"
+                      width={30}
+                      height={30}
+                    />
+                    <div className="ms-2">
+                      <p className="dashboard-list-number m-0">
+                        {stationStatistic?.totalThreeDayWorkStationsCount} ta
+                      </p>
+                      <p className="dashboard-list-desc m-0">
+                        3 kun ichida ishlagan stansiyalar
+                      </p>
+                      <p className="dashboard-list-desc-percentage text-info m-0 text-end">
+                        {(
+                          (stationStatistic?.totalThreeDayWorkStationsCount *
+                            100) /
+                          stationStatistic?.totalStationsCount
+                        ).toFixed()}
+                        %
+                      </p>
+                    </div>
+                  </li>
+                ) : null}
 
-          {stationStatistic?.totalMoreWorkStationsCount > 0 ? (
-            <li
-              className="dashboard-list-item mt-3 d-flex"
-              onClick={() => {
-                setWhichStation("totalMoreWorkStations");
-                setTableTitle("Uzoq vaqt ishlamagan qurilmalar");
-                setDataOrStation("data");
-              }}
-            >
-              <img
-                src={circleOrange}
-                alt="circleGreen"
-                width={30}
-                height={30}
-              />
-              <div className="ms-2">
-                <p className="dashboard-list-number m-0">
-                  {stationStatistic?.totalMoreWorkStationsCount}
-                  ta
-                </p>
-                <p className="dashboard-list-desc m-0">
-                  Uzoq vaqt ishlamagan qurilmalar
-                </p>
-                <p className="dashboard-list-desc-percentage text-info m-0 text-end">
-                  {(
-                    (stationStatistic?.totalMoreWorkStationsCount * 100) /
-                    stationStatistic?.totalStationsCount
-                  ).toFixed()}
-                  %
-                </p>
-              </div>
-            </li>
-          ) : null}
+                {stationStatistic?.totalMonthWorkStationsCount > 0 ? (
+                  <li
+                    className="dashboard-list-item mt-3 d-flex"
+                    onClick={() => {
+                      setWhichStation("totalMonthWorkStation");
+                      setTableTitle("Oxirgi oy ishlagan stansiyalar");
+                      setDataOrStation("data");
+                    }}
+                  >
+                    <img
+                      src={circleYellow}
+                      alt="circleGreen"
+                      width={30}
+                      height={30}
+                    />
+                    <div className="ms-2">
+                      <p className="dashboard-list-number m-0">
+                        {stationStatistic?.totalMonthWorkStationsCount}
+                        ta
+                      </p>
+                      <p className="dashboard-list-desc m-0">
+                        Oxirgi oy ishlagan stansiyalar
+                      </p>
+                      <p className="dashboard-list-desc-percentage text-info m-0 text-end">
+                        {(
+                          (stationStatistic?.totalMonthWorkStationsCount *
+                            100) /
+                          stationStatistic?.totalStationsCount
+                        ).toFixed()}
+                        %
+                      </p>
+                    </div>
+                  </li>
+                ) : null}
 
-          {stationStatistic?.totalNotDataStationsCount > 0 ? (
-            <li
-              className="dashboard-list-item mt-3 d-flex"
-              onClick={() => {
-                setWhichStation("notWorkStation");
-                setTableTitle("Umuman ishlamagan stansiyalar");
-                setDataOrStation("data");
-              }}
-            >
-              <img src={circleRed} alt="circleGreen" width={30} height={30} />
-              <div className="ms-2">
-                <p className="dashboard-list-number m-0">
-                  {stationStatistic?.totalNotDataStationsCount} ta
-                </p>
-                <p className="dashboard-list-desc m-0">
-                  Umuman ishlamagan stansiyalar
-                </p>
-                <p className="dashboard-list-desc-percentage text-info m-0 text-end">
-                  {(
-                    (stationStatistic?.totalNotDataStationsCount * 100) /
-                    stationStatistic?.totalStationsCount
-                  ).toFixed()}
-                  %
-                </p>
-              </div>
-            </li>
-          ) : null}
-        </ul>
+                {stationStatistic?.totalMoreWorkStationsCount > 0 ? (
+                  <li
+                    className="dashboard-list-item mt-3 d-flex"
+                    onClick={() => {
+                      setWhichStation("totalMoreWorkStations");
+                      setTableTitle("Uzoq vaqt ishlamagan qurilmalar");
+                      setDataOrStation("data");
+                    }}
+                  >
+                    <img
+                      src={circleOrange}
+                      alt="circleGreen"
+                      width={30}
+                      height={30}
+                    />
+                    <div className="ms-2">
+                      <p className="dashboard-list-number m-0">
+                        {stationStatistic?.totalMoreWorkStationsCount}
+                        ta
+                      </p>
+                      <p className="dashboard-list-desc m-0">
+                        Uzoq vaqt ishlamagan qurilmalar
+                      </p>
+                      <p className="dashboard-list-desc-percentage text-info m-0 text-end">
+                        {(
+                          (stationStatistic?.totalMoreWorkStationsCount * 100) /
+                          stationStatistic?.totalStationsCount
+                        ).toFixed()}
+                        %
+                      </p>
+                    </div>
+                  </li>
+                ) : null}
 
-        <div className="table-char-wrapperlist d-flex flex-wrap justify-content-between">
-          <div className="dashboard-table mt-5">
-            <div className="d-flex justify-content-between align-items-center">
-              <h2>{tableTitle}</h2>
-              <span
-                data-bs-toggle="modal"
-                data-bs-target="#exampleModal"
-                className="dashboard-fullscreen-wrapper"
-              >
-                <img src={fullScreen} alt="fullScreen" width={20} height={20} />
-              </span>
+                {stationStatistic?.totalNotDataStationsCount > 0 ? (
+                  <li
+                    className="dashboard-list-item mt-3 d-flex"
+                    onClick={() => {
+                      setWhichStation("notWorkStation");
+                      setTableTitle("Umuman ishlamagan stansiyalar");
+                      setDataOrStation("data");
+                    }}
+                  >
+                    <img
+                      src={circleRed}
+                      alt="circleGreen"
+                      width={30}
+                      height={30}
+                    />
+                    <div className="ms-2">
+                      <p className="dashboard-list-number m-0">
+                        {stationStatistic?.totalNotDataStationsCount} ta
+                      </p>
+                      <p className="dashboard-list-desc m-0">
+                        Umuman ishlamagan stansiyalar
+                      </p>
+                      <p className="dashboard-list-desc-percentage text-info m-0 text-end">
+                        {(
+                          (stationStatistic?.totalNotDataStationsCount * 100) /
+                          stationStatistic?.totalStationsCount
+                        ).toFixed()}
+                        %
+                      </p>
+                    </div>
+                  </li>
+                ) : null}
+              </ul>
             </div>
-            {dataOrStation == "data" ? (
-              <table className="table mt-4">
-                <thead>
-                  <tr>
-                    <th scope="col" className="text-center">
-                      Nomi
-                    </th>
-                    <th scope="col" className="text-center">
-                      Sath (sm)
-                    </th>
-                    <th scope="col" className="text-center">
-                      Sho'rlanish (g/l)
-                    </th>
-                    <th scope="col" className="text-center">
-                      Temperatura (°C)
-                    </th>
-                    <th scope="col" className="text-center">
-                      {whichStation == "todayStation" ? "Vaqt" : "Sana"}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {viewStationLimit?.map((e, i) => {
-                    return (
-                      <tr key={i}>
-                        <td className="text-center">
-                          {whichStation == "allStation" ||
-                          whichStation == "notWorkStation"
-                            ? e?.name
-                            : e.stations?.name}
-                        </td>
-                        <td className="text-center">
-                          {whichStation == "allStation" &&
-                          e.lastData?.level != undefined
-                            ? Number(e.lastData?.level).toFixed(2)
-                            : e.level != undefined
-                            ? Number(e.level).toFixed(2)
-                            : "-"}
-                        </td>
-                        <td className="text-center">
-                          {whichStation == "allStation" &&
-                          e.lastData?.conductivity != undefined
-                            ? Number(e.lastData?.conductivity).toFixed(2)
-                            : e.conductivity != undefined
-                            ? Number(e.conductivity).toFixed(2)
-                            : "-"}
-                        </td>
-                        <td className="text-center">
-                          {whichStation == "allStation" &&
-                          e.lastData?.temp != undefined
-                            ? Number(e.lastData?.temp).toFixed(2)
-                            : e.temp != undefined
-                            ? Number(e.temp).toFixed(2)
-                            : "-"}
-                        </td>
-                        <td className="text-center">
-                          {whichStation == "allStation"
-                            ? filteredStationDate(e.lastData?.date)
-                            : filteredStationDate(e?.date)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            ) : (
-              <table className="table mt-4">
-                <thead>
-                  <tr>
-                    <th scope="col" className="text-center">
-                      Nomi
-                    </th>
-                    <th scope="col" className="text-center">
-                      Batareya (%)
-                    </th>
-                    <th scope="col" className="text-center">
-                      Signal
-                    </th>
-                    <th scope="col" className="text-center">
-                      Status
-                    </th>
-                    <th scope="col" className="text-center">
-                      {whichStation == "todayStation" ? "Vaqt" : "Sana"}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {viewStationByCharLimit?.map((e, i) => {
-                    return (
-                      <tr key={i}>
-                        <td className="text-center">{e?.name}</td>
-                        <td className="text-center">{e.battery}</td>
-                        <td className="text-center">{e.signal}</td>
-                        <td className="text-center">{e.status}</td>
-                        <td className="text-center">
-                          {filteredStationDateByChar(e?.date)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
-          </div>
 
-          <div className="dashboard-dought-wrapper mt-5">
-            <h3 className="dashboard-dought-wrapper-heading m-0">
-              Qurilmalarning batareya quvvatlari
-            </h3>
-            <Doughnut
-              className="mx-3"
-              data={data}
-              options={options}
-              onClick={onClick}
-              ref={chartRef}
-            ></Doughnut>
+            <div className="table-char-wrapperlist d-flex flex-wrap justify-content-between">
+              <div className="dashboard-table mt-5">
+                <div className="d-flex justify-content-between align-items-center">
+                  <h2>{tableTitle}</h2>
+                  <span
+                    data-bs-toggle="modal"
+                    data-bs-target="#exampleModal"
+                    className="dashboard-fullscreen-wrapper"
+                  >
+                    <img
+                      src={fullScreen}
+                      alt="fullScreen"
+                      width={20}
+                      height={20}
+                    />
+                  </span>
+                </div>
+                {dataOrStation == "data" ? (
+                  <table className="table mt-4">
+                    <thead>
+                      <tr>
+                        <th scope="col" className="text-center">
+                          Nomi
+                        </th>
+                        <th scope="col" className="text-center">
+                          Sath (sm)
+                        </th>
+                        <th scope="col" className="text-center">
+                          Sho'rlanish (g/l)
+                        </th>
+                        <th scope="col" className="text-center">
+                          Temperatura (°C)
+                        </th>
+                        <th scope="col" className="text-center">
+                          {whichStation == "todayStation" ? "Vaqt" : "Sana"}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {viewStationLimit?.map((e, i) => {
+                        return (
+                          <tr key={i}>
+                            <td className="text-center">
+                              {whichStation == "allStation" ||
+                              whichStation == "notWorkStation"
+                                ? e?.name
+                                : e.stations?.name}
+                            </td>
+                            <td className="text-center">
+                              {whichStation == "allStation" &&
+                              e.lastData?.level != undefined
+                                ? Number(e.lastData?.level).toFixed(2)
+                                : e.level != undefined
+                                ? Number(e.level).toFixed(2)
+                                : "-"}
+                            </td>
+                            <td className="text-center">
+                              {whichStation == "allStation" &&
+                              e.lastData?.conductivity != undefined
+                                ? Number(e.lastData?.conductivity).toFixed(2)
+                                : e.conductivity != undefined
+                                ? Number(e.conductivity).toFixed(2)
+                                : "-"}
+                            </td>
+                            <td className="text-center">
+                              {whichStation == "allStation" &&
+                              e.lastData?.temp != undefined
+                                ? Number(e.lastData?.temp).toFixed(2)
+                                : e.temp != undefined
+                                ? Number(e.temp).toFixed(2)
+                                : "-"}
+                            </td>
+                            <td className="text-center">
+                              {whichStation == "allStation"
+                                ? filteredStationDate(e.lastData?.date)
+                                : filteredStationDate(e?.date)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                ) : (
+                  <table className="table mt-4">
+                    <thead>
+                      <tr>
+                        <th scope="col" className="text-center">
+                          Nomi
+                        </th>
+                        <th scope="col" className="text-center">
+                          Batareya (%)
+                        </th>
+                        <th scope="col" className="text-center">
+                          Signal
+                        </th>
+                        <th scope="col" className="text-center">
+                          Status
+                        </th>
+                        <th scope="col" className="text-center">
+                          {whichStation == "todayStation" ? "Vaqt" : "Sana"}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {viewStationByCharLimit?.map((e, i) => {
+                        return (
+                          <tr key={i}>
+                            <td className="text-center">{e?.name}</td>
+                            <td className="text-center">{e.battery}</td>
+                            <td className="text-center">{e.signal}</td>
+                            <td className="text-center">{e.status}</td>
+                            <td className="text-center">
+                              {filteredStationDateByChar(e?.date)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              <div className="dashboard-dought-wrapper mt-5">
+                <h3 className="dashboard-dought-wrapper-heading m-0">
+                  Qurilmalarning batareya quvvatlari
+                </h3>
+                <Doughnut
+                  className="mx-3"
+                  data={data}
+                  options={options}
+                  onClick={onClick}
+                  ref={chartRef}
+                ></Doughnut>
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
       </div>
     </section>
   );

@@ -271,36 +271,26 @@ const User = () => {
           </div>
         </header>
 
-        <section className="home-section py-3">
-          <div className="container-fluid">
-            <Routes>
-              <Route
-                path="/*"
-                element={<UserDashboard balanceOrg={balanceOrg} />}
-              />
-              <Route
-                path="/lastdata"
-                element={<UserLastData balanceOrg={balanceOrg} />}
-              />
-              <Route
-                path="/lastdata/:news"
-                element={<UserLastDataNews balanceOrg={balanceOrg} />}
-              />
-              <Route
-                path="/data"
-                element={<UserData balanceOrg={balanceOrg} />}
-              />
-              <Route
-                path="/map"
-                element={<UserMap balanceOrg={balanceOrg} />}
-              />
-              <Route
-                path="/stations"
-                element={<UserStations balanceOrg={balanceOrg} />}
-              />
-            </Routes>
-          </div>
-        </section>
+        <Routes>
+          <Route
+            path="/*"
+            element={<UserDashboard balanceOrg={balanceOrg} />}
+          />
+          <Route
+            path="/lastdata"
+            element={<UserLastData balanceOrg={balanceOrg} />}
+          />
+          <Route
+            path="/lastdata/:news"
+            element={<UserLastDataNews balanceOrg={balanceOrg} />}
+          />
+          <Route path="/data" element={<UserData balanceOrg={balanceOrg} />} />
+          <Route path="/map" element={<UserMap balanceOrg={balanceOrg} />} />
+          <Route
+            path="/stations"
+            element={<UserStations balanceOrg={balanceOrg} />}
+          />
+        </Routes>
       </div>
 
       <Helmet>
