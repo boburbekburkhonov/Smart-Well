@@ -175,7 +175,11 @@ const UserData = () => {
       .then((res) => res.json())
       .then((data) => setTodayDataMain(data.data));
   };
-  console.log(todayDataMain);
+  console.log(
+    todayDataMain?.forEach((e) => {
+      console.log(e.allData);
+    })
+  );
   return (
     <HelmetProvider>
       {/* MODAL */}
