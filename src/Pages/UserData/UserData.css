@@ -123,20 +123,7 @@ td {
 	max-width: 500px !important;
 }
 
-/* .active {
-	background: #0CC0CE !important;
-} */
-
-/* .card--open .userlast-data-bottom-modal {
-  padding: 10px 20px;
-  display: inline-block;
-  position: relative;
-  right: 0;
-  bottom: -0;
-	max-width: 1050px;
-  width: 100%;
-  height: 40vh;
-  background: #ffffff;
-  border: 3px solid #32779C;
-	z-index: 4;
-} */
+.select-user-data-today {
+	max-width: 110px !important;
+	width: 100% !important;
+}

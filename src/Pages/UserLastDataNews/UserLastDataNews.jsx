@@ -37,7 +37,6 @@ const UserLastDataNews = () => {
   const locationStation = localStorage.getItem("location");
   const [whichData, setWhichData] = useState("hour");
   const date = new Date();
-  const currentMonth = `${date.getFullYear()}-${date.getMonth()}`;
 
   useEffect(() => {
     const todayData = async () => {

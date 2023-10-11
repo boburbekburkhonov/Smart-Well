@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import "./UserData.css";
 import location from "../../assets/images/location-red.png";
 import { Helmet, HelmetProvider } from "react-helmet-async";
@@ -7,8 +7,77 @@ import pdf from "../../assets/images/pdf.jpg";
 import close from "../../assets/images/close-black.png";
 import { GoogleMap, MarkerF, useLoadScript } from "@react-google-maps/api";
 import { Line } from "react-chartjs-2";
+import { api } from "../Api/Api";
+import { useState } from "react";
 
 const UserData = () => {
+  const [statisticsStation, setStatisticsStation] = useState([]);
+  const [todayDataMain, setTodayDataMain] = useState([]);
+  const [todayData, setTodayData] = useState([]);
+  const [valueTodayData, setValueTodayData] = useState("temp");
+
+  useEffect(() => {
+    const getStationFunc = async () => {
+      const requestStationStatistics = await fetch(
+        `${api}/last-data/getStatisticStations`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      );
+
+      const responseStationStatistic = await requestStationStatistics.json();
+
+      if (responseStationStatistic.statusCode == 401) {
+        const request = await fetch(`${api}/auth/signin`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            username: window.localStorage.getItem("username"),
+            password: window.localStorage.getItem("password"),
+          }),
+        });
+
+        const response = await request.json();
+
+        if (response.statusCode == 200) {
+          window.localStorage.setItem("accessToken", response.data.accessToken);
+          window.localStorage.setItem(
+            "refreshToken",
+            response.data.refreshToken
+          );
+        }
+      }
+
+      setStatisticsStation(responseStationStatistic);
+
+      const requestTodayData = await fetch(
+        `${api}/mqttDataWrite/getAllTodayData?page=1&perPage=${responseStationStatistic.data.totalStationsCount}`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      );
+
+      const responseTodayData = await requestTodayData.json();
+
+      setTodayDataMain(responseTodayData.data);
+      setTodayData(responseTodayData.data);
+    };
+
+    getStationFunc();
+  }, []);
+
   const { isLoaded } = useLoadScript({
     googleMapsApiKey:
       "AIzaSyC57hT2pRJZ4Gh85ai0sUjP72i7VYJxTHc&region=UZ&language=uz",
@@ -56,6 +125,57 @@ const UserData = () => {
     },
   };
 
+  const valueTodayTable = [
+    "00",
+    "01",
+    "02",
+    "03",
+    "04",
+    "05",
+    "06",
+    "07",
+    "08",
+    "09",
+    "10",
+    "11",
+    "12",
+    "13",
+    "14",
+    "15",
+    "16",
+    "17",
+    "18",
+    "19",
+    "20",
+    "21",
+    "22",
+    "23",
+  ];
+
+  const searchTodayDataWithInput = (inputValue) => {
+    const search = todayDataMain.filter((e) =>
+      e.name.toLowerCase().includes(inputValue)
+    );
+    setTodayData(search);
+  };
+
+  const searchTodayDataWithDate = (date) => {
+    console.log(date);
+    console.log(statisticsStation.data.totalStationsCount);
+    fetch(
+      `${api}/yesterdayData/getAllDataByDay?page=1&perPage=${statisticsStation.data.totalStationsCount}&day=${data}`,
+      {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
+          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
+        },
+      }
+    )
+      .then((res) => res.json())
+      .then((data) => setTodayDataMain(data.data));
+  };
+  console.log(todayDataMain);
   return (
     <HelmetProvider>
       {/* MODAL */}
@@ -179,6 +299,11 @@ const UserData = () => {
                           className="form-control user-lastdata-news-search"
                           type="text"
                           placeholder="Search..."
+                          onChange={(e) =>
+                            searchTodayDataWithInput(
+                              e.target.value.toLowerCase()
+                            )
+                          }
                         />
                         <div className="d-flex align-items-center ms-auto">
                           <input
@@ -190,7 +315,19 @@ const UserData = () => {
                             defaultValue={new Date()
                               .toISOString()
                               .substring(0, 10)}
+                            onChange={(e) =>
+                              searchTodayDataWithDate(e.target.value)
+                            }
                           />
+
+                          <select
+                            onChange={(e) => setValueTodayData(e.target.value)}
+                            className="form-select select-user-data-today ms-4"
+                          >
+                            <option value="level">Sathi</option>
+                            <option value="conductivity">Sho'rlanish</option>
+                            <option value="temp">Temperatura </option>
+                          </select>
                           <a className="ms-4" href="#">
                             <img src={pdf} alt="pdf" width={23} height={30} />
                           </a>
@@ -209,7 +346,7 @@ const UserData = () => {
                           <table className="table-style">
                             <thead className="">
                               <tr>
-                                <th rowSpan="2" className="sticky" style={{}}>
+                                <th rowSpan="2" className="sticky">
                                   T/R
                                 </th>
                                 <th
@@ -219,145 +356,78 @@ const UserData = () => {
                                 >
                                   Stantsiya nomi
                                 </th>
-                                <th colSpan="24">2023-09-30</th>
+                                <th colSpan="24">
+                                  {new Date().toISOString().substring(0, 10)}
+                                </th>
                               </tr>
                               <tr>
-                                <th>01</th>
-                                <th>02</th>
-                                <th>03</th>
-                                <th>04</th>
-                                <th>05</th>
-                                <th>06</th>
-                                <th>07</th>
-                                <th>08</th>
-                                <th>09</th>
-                                <th>10</th>
-                                <th>11</th>
-                                <th>12</th>
-                                <th>13</th>
-                                <th>14</th>
-                                <th>15</th>
-                                <th>16</th>
-                                <th>17</th>
-                                <th>18</th>
-                                <th>19</th>
-                                <th>20</th>
-                                <th>21</th>
-                                <th>22</th>
-                                <th>23</th>
-                                <th>24</th>
+                                {valueTodayTable.map((r, l) => {
+                                  return <th key={l}>{r}</th>;
+                                })}
                               </tr>
                             </thead>
                             <tbody>
-                              <tr
-                                className="tr0"
-                                data-bs-toggle="modal"
-                                data-bs-target="#exampleModal"
-                              >
-                                <td className="sticky" style={{}}>
-                                  1
-                                </td>
-                                <td
-                                  className="text-start sticky fix-with"
-                                  style={{ left: "57px" }}
-                                >
-                                  Bozsuv PK - 20+00
-                                </td>
-                                <td>-1</td>
-                                <td>1.657</td>
-                                <td>-1</td>
-                                <td>-1</td>
-                                <td>-1</td>
-                                <td>-1</td>
-                                <td>-1</td>
-                                <td>1.653</td>
-                                <td>1.688</td>
-                                <td>-1</td>
-                                <td>-1</td>
-                                <td>1.484</td>
-                                <td>1.484</td>
-                                <td>3</td>
-                                <td>5</td>
-                                <td>1.484</td>
-                                <td>1</td>
-                                <td>3</td>
-                                <td>6</td>
-                                <td></td>
-                                <td>8</td>
-                                <td>11</td>
-                                <td>1.484</td>
-                                <td>54</td>
-                              </tr>
-                              <tr className="tr0">
-                                <td className="sticky" style={{}}>
-                                  2
-                                </td>
-                                <td
-                                  className="text-start sticky fix-with"
-                                  style={{ left: "57px" }}
-                                >
-                                  Bozsuv PK - 20+00
-                                </td>
-                                <td>-1</td>
-                                <td>1.657</td>
-                                <td>-1</td>
-                                <td>-1</td>
-                                <td>-1</td>
-                                <td>-1</td>
-                                <td>-1</td>
-                                <td>1.653</td>
-                                <td>1.688</td>
-                                <td>-1</td>
-                                <td>-1</td>
-                                <td>1.484</td>
-                                <td>1.484</td>
-                                <td>3</td>
-                                <td>5</td>
-                                <td>1.484</td>
-                                <td>1</td>
-                                <td>3</td>
-                                <td>6</td>
-                                <td></td>
-                                <td>8</td>
-                                <td>11</td>
-                                <td>1.484</td>
-                                <td>54</td>
-                              </tr>
-                              <tr className="tr0">
-                                <td className="sticky" style={{}}>
-                                  3
-                                </td>
-                                <td
-                                  className="text-start sticky fix-with"
-                                  style={{ left: "57px" }}
-                                >
-                                  Qipchoq_arna_PK220+00
-                                </td>
-                                <td>-1</td>
-                                <td>1.657</td>
-                                <td>-1</td>
-                                <td>-1</td>
-                                <td>-1</td>
-                                <td>-1</td>
-                                <td>-1</td>
-                                <td>1.653</td>
-                                <td>1.688</td>
-                                <td>-1</td>
-                                <td>-1</td>
-                                <td>1.484</td>
-                                <td>1.484</td>
-                                <td>3</td>
-                                <td>5</td>
-                                <td>1.484</td>
-                                <td>1</td>
-                                <td>3</td>
-                                <td>6</td>
-                                <td></td>
-                                <td>8</td>
-                                <td>11</td>
-                                <td>1.484</td>
-                                <td>54</td>
-                              </tr>
+                              {todayData?.map((e, i) => {
+                                return (
+                                  <tr
+                                    className="tr0"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#exampleModal"
+                                    key={i}
+                                  >
+                                    <td className="sticky" style={{}}>
+                                      {i + 1}
+                                    </td>
+                                    <td
+                                      className="text-start sticky fix-with"
+                                      style={{ left: "57px" }}
+                                    >
+                                      {e.name}
+                                    </td>
+                                    {valueTodayTable.map((d, w) => {
+                                      const existedValue = e.todayData.find(
+                                        (a) =>
+                                          a.date.split(" ")[1].split(":")[0] ==
+                                          d
+                                      );
+
+                                      if (existedValue) {
+                                        return (
+                                          <td key={w}>
+                                            {Number(
+                                              existedValue[valueTodayData]
+                                            ).toFixed(2)}
+                                          </td>
+                                        );
+                                      } else {
+                                        return <td key={w}>-</td>;
+                                      }
+                                      if (e.name == "232A-Kuzatish Quduq") {
+                                      }
+                                      // if (1) {
+                                      //   return <td key={w}>1</td>;
+                                      // } else {
+                                      //   return <td key={w}>-</td>;
+                                      // }
+                                      // if (e.name == "Kuzatuv qudugi-80") {
+                                      //   const checkExistItem = e.todayData.find(
+                                      //     (t) =>
+                                      //       t.date
+                                      //         .split(" ")[1]
+                                      //         .split(":")[0]
+                                      //         .slice(0, 1) == w
+                                      //   );
+                                      //   console.log(checkExistItem);
+                                      //   if (checkExistItem) {
+                                      //     return <td key={w}>{w}</td>;
+                                      //   } else {
+                                      //     return <td key={w}>-</td>;
+                                      //   }
+                                      // }
+                                    })}
+                                  </tr>
+                                );
+                              })}
                             </tbody>
                           </table>
                         </div>
