@@ -5,19 +5,46 @@ import { Helmet, HelmetProvider } from "react-helmet-async";
 import excel from "../../assets/images/excel.png";
 import pdf from "../../assets/images/pdf.jpg";
 import close from "../../assets/images/close-black.png";
-import { GoogleMap, MarkerF, useLoadScript } from "@react-google-maps/api";
+import {
+  GoogleMap,
+  MarkerF,
+  useLoadScript,
+  InfoWindowF,
+} from "@react-google-maps/api";
 import { Line } from "react-chartjs-2";
 import { api } from "../Api/Api";
 import { useState } from "react";
+import * as XLSX from "xlsx";
+import circleRed from "../../assets/images/circle-red.png";
+import circleBlue from "../../assets/images/record.png";
+import locationRed from "../../assets/images/location-red.png";
+import locationGreen from "../../assets/images/location-green.png";
+import locationYellow from "../../assets/images/location-yellow.png";
+import locationOrange from "../../assets/images/location-orange.png";
+import moment from "moment";
+import "moment/dist/locale/uz-latn";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const UserData = () => {
+  const [activeMarker, setActiveMarker] = useState();
   const [statisticsStation, setStatisticsStation] = useState([]);
+  const [lastDataMain, setLastDataMain] = useState([]);
+  const [lastData, setLastData] = useState([]);
   const [todayDataMain, setTodayDataMain] = useState([]);
   const [todayData, setTodayData] = useState([]);
-  const [valueTodayData, setValueTodayData] = useState("temp");
+  const [todayDataStatistic, setTodayDataStatistic] = useState([]);
+  const [yesterdayDataMain, setYesterdayDataMain] = useState([]);
+  const [yesterdayData, setYesterdayData] = useState([]);
+  const [yesterdayDataStatistic, setYesterdayDataStatistic] = useState([]);
+  const [valueStatistic, setValueStatistic] = useState("level");
+  const [valueTodayData, setValueTodayData] = useState("level");
+  const [whichData, setWhichData] = useState("hour");
+  const nameUser = localStorage.getItem("name");
 
   useEffect(() => {
     const getStationFunc = async () => {
+      // ! STATISTICS
       const requestStationStatistics = await fetch(
         `${api}/last-data/getStatisticStations`,
         {
@@ -32,6 +59,7 @@ const UserData = () => {
 
       const responseStationStatistic = await requestStationStatistics.json();
 
+      // ! REFRESH TOKEN
       if (responseStationStatistic.statusCode == 401) {
         const request = await fetch(`${api}/auth/signin`, {
           method: "POST",
@@ -57,6 +85,7 @@ const UserData = () => {
 
       setStatisticsStation(responseStationStatistic);
 
+      // ! TODAY DATA
       const requestTodayData = await fetch(
         `${api}/mqttDataWrite/getAllTodayData?page=1&perPage=${responseStationStatistic.data.totalStationsCount}`,
         {
@@ -73,6 +102,42 @@ const UserData = () => {
 
       setTodayDataMain(responseTodayData.data);
       setTodayData(responseTodayData.data);
+
+      // ! LAST DATA
+      const requestLastData = await fetch(
+        `${api}/last-data/allLastData?page=1&perPage=${responseStationStatistic.data.totalStationsCount}`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      );
+
+      const responseLastData = await requestLastData.json();
+
+      setLastDataMain(responseLastData.data);
+      setLastData(responseLastData.data);
+
+      // ! YESTERDAY DATA
+      const requestYesterdayData = await fetch(
+        `${api}/yesterdayData/getAllYesterdayData?page=1&perPage=${responseStationStatistic.data.totalStationsCount}`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      );
+
+      const responseYesterdayData = await requestYesterdayData.json();
+
+      setYesterdayDataMain(responseYesterdayData.data);
+      setYesterdayData(responseYesterdayData.data);
     };
 
     getStationFunc();
@@ -83,20 +148,45 @@ const UserData = () => {
       "AIzaSyC57hT2pRJZ4Gh85ai0sUjP72i7VYJxTHc&region=UZ&language=uz",
   });
 
+  const handleActiveMarker = (marker) => {
+    if (marker === activeMarker) {
+      return;
+    }
+    setActiveMarker(marker);
+  };
+
   if (!isLoaded) return <div>Loading...</div>;
 
-  const labels = [
-    2, 4546, 65, 65, 4, 2, 3, 8, 6, 5, 4, 2, 4546, 65, 65, 4, 2, 3, 8, 6, 5, 4,
-  ];
+  const labels =
+    whichData == "hour"
+      ? todayDataStatistic.todayData?.map((e) => e.date.split(" ")[1])
+      : whichData == "yesterday"
+      ? yesterdayDataStatistic.yesterdayData?.map((e) => e.date.split(" ")[1])
+      : whichData == "daily"
+      ? dailyData.map((e) => moment(e.date).format("LL").split(" ")[1])
+      : whichData == "monthly"
+      ? monthData.map((e) => e.monthNumber)
+      : null;
 
   const data = {
     labels: labels,
     datasets: [
       {
         label: "Bugungi ma'lumotlar",
-        data: [
-          1, 2, 1, 4, 1, 6, 5, 3, 1, 11, 24, 1, 2, 1, 4, 1, 6, 5, 3, 1, 11, 24,
-        ],
+        data:
+          whichData == "hour"
+            ? todayDataStatistic.todayData?.map((e) =>
+                Number(e[valueStatistic]).toFixed(2)
+              )
+            : whichData == "yesterday"
+            ? yesterdayDataStatistic.yesterdayData?.map((e) =>
+                Number(e[valueStatistic]).toFixed(2)
+              )
+            : whichData == "daily"
+            ? dailyData.map((e) => e[valueStatistic])
+            : whichData == "monthly"
+            ? monthData.map((e) => e[valueStatistic])
+            : null,
         fill: true,
         borderColor: "#EE8A9D",
         backgroundColor: "#F3E5E7",
@@ -153,15 +243,20 @@ const UserData = () => {
   ];
 
   const searchTodayDataWithInput = (inputValue) => {
-    const search = todayDataMain.filter((e) =>
-      e.name.toLowerCase().includes(inputValue)
-    );
-    setTodayData(search);
+    if (whichData == "hour") {
+      const search = todayDataMain.filter((e) =>
+        e.name.toLowerCase().includes(inputValue)
+      );
+      setTodayData(search);
+    } else if (whichData == "yesterday") {
+      const search = yesterdayDataMain.filter((e) =>
+        e.name.toLowerCase().includes(inputValue)
+      );
+      setYesterdayData(search);
+    }
   };
 
   const searchTodayDataWithDate = (date) => {
-    console.log(date);
-    console.log(statisticsStation.data.totalStationsCount);
     fetch(
       `${api}/yesterdayData/getAllDataByDay?page=1&perPage=${statisticsStation.data.totalStationsCount}&day=${data}`,
       {
@@ -173,13 +268,169 @@ const UserData = () => {
       }
     )
       .then((res) => res.json())
-      .then((data) => setTodayDataMain(data.data));
+      .then((data) => console.log(data.data));
   };
-  console.log(
-    todayDataMain?.forEach((e) => {
-      console.log(e.allData);
-    })
-  );
+
+  const exportNewsByPdf = () => {
+    const doc = new jsPDF();
+
+    if (whichData == "hour") {
+      doc.text(
+        `${nameUser} ga tegishli qurilmalarning bugungi ma'lumotlar`,
+        20,
+        10
+      );
+
+      doc.autoTable({
+        theme: "grid",
+        columns: [
+          { header: "Stansiya nomi", dataKey: "name" },
+          { header: "Sana", dataKey: "date" },
+          todayData.map((e) => {
+            return { header: "Sath (sm)", dataKey: "level" };
+          }),
+        ],
+        body: todayData,
+      });
+
+      if (todayData.length > 0) {
+        doc.save(
+          `${nameUser} ga tegishli qurilmalarning bugungi ma'lumotlar.pdf`
+        );
+      }
+    } else if (whichData == "daily") {
+      doc.text(`${stationName} qurilmaning kunlik ma'lumotlar`, 20, 10);
+
+      doc.autoTable({
+        theme: "grid",
+        columns: [
+          { header: "Sath (sm)", dataKey: "level" },
+          { header: "Sho'rlanish (g/l)", dataKey: "conductivity" },
+          { header: "Temperatura (°C)", dataKey: "temp" },
+          { header: "Oy", dataKey: "date" },
+        ],
+        body: dailyData,
+      });
+
+      if (dailyData.length > 0) {
+        doc.save(`${stationName} ning kunlik ma'lumotlari.pdf`);
+      }
+    } else if (whichData == "monthly") {
+      doc.text(`${stationName} qurilmaning oylik ma'lumotlar`, 20, 10);
+
+      doc.autoTable({
+        theme: "grid",
+        columns: [
+          { header: "Sath (sm)", dataKey: "level" },
+          { header: "Sho'rlanish (g/l)", dataKey: "conductivity" },
+          { header: "Temperatura (°C)", dataKey: "temp" },
+          { header: "Oy", dataKey: "monthNumber" },
+        ],
+        body: monthData,
+      });
+
+      if (monthData.length > 0) {
+        doc.save(`${stationName} ning oylik ma'lumotlari.pdf`);
+      }
+    } else if (whichData == "yesterday") {
+      doc.text(`${stationName} qurilmaning kecha kelgan ma'lumotlar`, 20, 10);
+
+      doc.autoTable({
+        theme: "grid",
+        columns: [
+          { header: "Sath (sm)", dataKey: "level" },
+          { header: "Sho'rlanish (g/l)", dataKey: "conductivity" },
+          { header: "Temperatura (°C)", dataKey: "temp" },
+          { header: "Sana", dataKey: "date" },
+        ],
+        body: yesterdayData,
+      });
+
+      if (yesterdayData.length > 0) {
+        doc.save(`${stationName} ning kecha kelgan ma'lumotlari.pdf`);
+      }
+    }
+  };
+
+  // ! SAVE DATA
+  const exportDataToExcel = () => {
+    if (whichData == "hour") {
+      const workBook = XLSX.utils.book_new();
+      const workSheet = XLSX.utils.json_to_sheet(todayData);
+
+      XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
+
+      if (todayData.length > 0) {
+        XLSX.writeFile(workBook, `${nameUser} ning bugungi ma'lumotlari.xlsx`);
+      }
+    } else if (whichData == "daily") {
+      const workBook = XLSX.utils.book_new();
+      const workSheet = XLSX.utils.json_to_sheet(dailyData);
+
+      XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
+
+      if (dailyData.length > 0) {
+        XLSX.writeFile(workBook, `${nameUser} ning kunlik ma'lumotlari.xlsx`);
+      }
+    } else if (whichData == "monthly") {
+      const workBook = XLSX.utils.book_new();
+      const workSheet = XLSX.utils.json_to_sheet(monthData);
+
+      XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
+
+      if (monthData.length > 0) {
+        XLSX.writeFile(workBook, `${nameUser} ning oylik ma'lumotlari.xlsx`);
+      }
+    } else if (whichData == "yesterday") {
+      const workBook = XLSX.utils.book_new();
+      const workSheet = XLSX.utils.json_to_sheet(yesterdayData);
+
+      XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
+
+      if (yesterdayData.length > 0) {
+        XLSX.writeFile(
+          workBook,
+          `${nameUser} ning kecha kelgan ma'lumotlari.xlsx`
+        );
+      }
+    }
+  };
+
+  const checkStationWorkingOrNot = (value) => {
+    const presentDate = new Date();
+    let startDate = new Date(value?.date);
+    startDate.setHours(startDate.getHours() - 5);
+
+    if (value == undefined) {
+      return 404;
+    } else if (
+      startDate.getFullYear() == presentDate.getFullYear() &&
+      startDate.getMonth() == presentDate.getMonth()
+    ) {
+      return presentDate.getDate() - startDate.getDate();
+    } else if (
+      (startDate.getFullYear() == presentDate.getFullYear() &&
+        presentDate.getMonth() - startDate.getMonth() == 1 &&
+        presentDate.getDate() == 2 &&
+        30 <= startDate.getDate() &&
+        startDate.getDate() <= 31) ||
+      (startDate.getFullYear() == presentDate.getFullYear() &&
+        presentDate.getMonth() - startDate.getMonth() == 1 &&
+        presentDate.getDate() == 1 &&
+        29 <= startDate.getDate() &&
+        startDate.getDate() <= 31)
+    ) {
+      return 1;
+    }
+  };
+
+  const searchLastDataWithInput = (inputValue) => {
+    const search = lastDataMain.filter((e) =>
+      e.name.toLowerCase().includes(inputValue)
+    );
+    setLastData(search);
+  };
+
   return (
     <HelmetProvider>
       {/* MODAL */}
@@ -206,16 +457,426 @@ const UserData = () => {
             </div>
             <div className="modal-body d-flex justify-content-between flex-wrap">
               <GoogleMap
-                zoom={5.6}
-                center={{ lat: 42.00000000048624, lng: 63.999999999999986 }}
+                zoom={15}
+                center={{
+                  lat:
+                    whichData == "hour"
+                      ? todayDataStatistic.location?.split("-")[0] * 1
+                      : whichData == "yesterday"
+                      ? yesterdayDataStatistic.location?.split("-")[0] * 1
+                      : null,
+                  lng:
+                    whichData == "hour"
+                      ? todayDataStatistic.location?.split("-")[1] * 1
+                      : whichData == "yesterday"
+                      ? yesterdayDataStatistic.location?.split("-")[1] * 1
+                      : null,
+                }}
                 mapContainerClassName="user-data-map"
               >
                 <MarkerF
                   position={{
-                    lat: 42.00000000048624,
-                    lng: 63.999999999999986,
+                    lat:
+                      whichData == "hour"
+                        ? todayDataStatistic.location?.split("-")[0] * 1
+                        : whichData == "yesterday"
+                        ? yesterdayDataStatistic.location?.split("-")[0] * 1
+                        : null,
+                    lng:
+                      whichData == "hour"
+                        ? todayDataStatistic.location?.split("-")[1] * 1
+                        : whichData == "yesterday"
+                        ? yesterdayDataStatistic.location?.split("-")[1] * 1
+                        : null,
                   }}
-                />
+                  title={todayDataStatistic.name}
+                  onClick={() => handleActiveMarker(1)}
+                >
+                  {activeMarker == 1 ? (
+                    <InfoWindowF
+                      className="w-100"
+                      onCloseClick={() => {
+                        setActiveMarker(null);
+                      }}
+                      options={{ maxWidth: "240" }}
+                    >
+                      {whichData == "hour" ? (
+                        todayDataStatistic.todayData.length > 0 ? (
+                          <div>
+                            <h3 className="fw-semibold text-success fs-6">
+                              {todayDataStatistic.name}
+                            </h3>
+
+                            <div className="d-flex align-items-center mb-1">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="infowindow-desc m-0 ms-1 me-1">
+                                Sath:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {Number(
+                                  todayDataStatistic.todayData[0].level
+                                ).toFixed(2)}{" "}
+                                sm
+                              </span>
+                            </div>
+
+                            <div className="d-flex align-items-center mb-1">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="m-0 infowindow-desc ms-1 me-1 ">
+                                Sho'rlanish:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {Number(
+                                  todayDataStatistic.todayData[0].conductivity
+                                ).toFixed(2)}{" "}
+                                g/l
+                              </span>
+                            </div>
+
+                            <div className="d-flex align-items-center mb-1">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="m-0 infowindow-desc ms-1 me-1 ">
+                                Temperatura:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {Number(
+                                  todayDataStatistic.todayData[0].temp
+                                ).toFixed(2)}{" "}
+                                °C
+                              </span>
+                            </div>
+
+                            <div className="d-flex align-items-center">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="m-0 infowindow-desc ms-1 me-1">
+                                Sana:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {
+                                  todayDataStatistic.todayData[0].date?.split(
+                                    " "
+                                  )[1]
+                                }
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <h3 className="fw-semibold text-success fs-6 text-center">
+                              {todayDataStatistic.name}
+                            </h3>
+                            <div className="d-flex align-items-center justify-content-center">
+                              <img
+                                src={circleRed}
+                                alt="circleBlue"
+                                width={18}
+                                height={18}
+                              />
+                              <p className="m-0 infowindow-desc-not-last-data fs-6 ms-1 me-1 ">
+                                Ma'lumot kelmagan...
+                              </p>
+                            </div>{" "}
+                          </div>
+                        )
+                      ) : whichData == "monthly" ? (
+                        monthData.length > 0 ? (
+                          <div>
+                            <h3 className="fw-semibold text-success fs-6">
+                              {stationName}
+                            </h3>
+
+                            <div className="d-flex align-items-center mb-1">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="infowindow-desc m-0 ms-1 me-1">
+                                Sath:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {Number(monthData[0].level).toFixed(2)} sm
+                              </span>
+                            </div>
+
+                            <div className="d-flex align-items-center mb-1">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="m-0 infowindow-desc ms-1 me-1 ">
+                                Sho'rlanish:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {Number(monthData[0].conductivity).toFixed(2)}{" "}
+                                g/l
+                              </span>
+                            </div>
+
+                            <div className="d-flex align-items-center mb-1">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="m-0 infowindow-desc ms-1 me-1 ">
+                                Temperatura:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {Number(monthData[0].temp).toFixed(2)} °C
+                              </span>
+                            </div>
+
+                            <div className="d-flex align-items-center">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="m-0 infowindow-desc ms-1 me-1">
+                                Oy:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {monthData[0].monthNumber}
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <h3 className="fw-semibold text-success fs-6 text-center">
+                              {stationName}
+                            </h3>
+                            <div className="d-flex align-items-center justify-content-center">
+                              <img
+                                src={circleRed}
+                                alt="circleBlue"
+                                width={18}
+                                height={18}
+                              />
+                              <p className="m-0 infowindow-desc-not-last-data fs-6 ms-1 me-1 ">
+                                Ma'lumot kelmagan...
+                              </p>
+                            </div>{" "}
+                          </div>
+                        )
+                      ) : whichData == "daily" ? (
+                        dailyData.length > 0 ? (
+                          <div>
+                            <h3 className="fw-semibold text-success fs-6">
+                              {stationName}
+                            </h3>
+
+                            <div className="d-flex align-items-center mb-1">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="infowindow-desc m-0 ms-1 me-1">
+                                Sath:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {Number(dailyData[0].level).toFixed(2)} sm
+                              </span>
+                            </div>
+
+                            <div className="d-flex align-items-center mb-1">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="m-0 infowindow-desc ms-1 me-1 ">
+                                Sho'rlanish:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {Number(dailyData[0].conductivity).toFixed(2)}{" "}
+                                g/l
+                              </span>
+                            </div>
+
+                            <div className="d-flex align-items-center mb-1">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="m-0 infowindow-desc ms-1 me-1 ">
+                                Temperatura:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {Number(dailyData[0].temp).toFixed(2)} °C
+                              </span>
+                            </div>
+
+                            <div className="d-flex align-items-center">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="m-0 infowindow-desc ms-1 me-1">
+                                Oy:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {
+                                  moment(dailyData[0].date)
+                                    .format("LL")
+                                    .split(" ")[1]
+                                }
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <h3 className="fw-semibold text-success fs-6 text-center">
+                              {stationName}
+                            </h3>
+                            <div className="d-flex align-items-center justify-content-center">
+                              <img
+                                src={circleRed}
+                                alt="circleBlue"
+                                width={18}
+                                height={18}
+                              />
+                              <p className="m-0 infowindow-desc-not-last-data fs-6 ms-1 me-1 ">
+                                Ma'lumot kelmagan...
+                              </p>
+                            </div>{" "}
+                          </div>
+                        )
+                      ) : whichData == "yesterday" ? (
+                        yesterdayDataStatistic.yesterdayData.length > 0 ? (
+                          <div>
+                            <h3 className="fw-semibold text-success fs-6">
+                              {yesterdayDataStatistic.name}
+                            </h3>
+
+                            <div className="d-flex align-items-center mb-1">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="infowindow-desc m-0 ms-1 me-1">
+                                Sath:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {Number(
+                                  yesterdayDataStatistic.yesterdayData[0].level
+                                ).toFixed(2)}{" "}
+                                sm
+                              </span>
+                            </div>
+
+                            <div className="d-flex align-items-center mb-1">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="m-0 infowindow-desc ms-1 me-1 ">
+                                Sho'rlanish:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {Number(
+                                  yesterdayDataStatistic.yesterdayData[0]
+                                    .conductivity
+                                ).toFixed(2)}{" "}
+                                g/l
+                              </span>
+                            </div>
+
+                            <div className="d-flex align-items-center mb-1">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="m-0 infowindow-desc ms-1 me-1 ">
+                                Temperatura:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {Number(
+                                  yesterdayDataStatistic.yesterdayData[0].temp
+                                ).toFixed(2)}{" "}
+                                °C
+                              </span>
+                            </div>
+
+                            <div className="d-flex align-items-center">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="m-0 infowindow-desc ms-1 me-1">
+                                Oy:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {
+                                  yesterdayDataStatistic.yesterdayData[0].date.split(
+                                    " "
+                                  )[1]
+                                }
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <h3 className="fw-semibold text-success fs-6 text-center">
+                              {yesterdayDataStatistic.name}
+                            </h3>
+                            <div className="d-flex align-items-center justify-content-center">
+                              <img
+                                src={circleRed}
+                                alt="circleBlue"
+                                width={18}
+                                height={18}
+                              />
+                              <p className="m-0 infowindow-desc-not-last-data fs-6 ms-1 me-1 ">
+                                Ma'lumot kelmagan...
+                              </p>
+                            </div>{" "}
+                          </div>
+                        )
+                      ) : null}
+                    </InfoWindowF>
+                  ) : null}
+                </MarkerF>
               </GoogleMap>
 
               <div className="modal-body pt-0">
@@ -227,8 +888,13 @@ const UserData = () => {
                   />
                 </div>
 
-                <select className="form-select select-user-last-data">
-                  <option value="Sathi">Sathi</option>
+                <select
+                  onChange={(e) => setValueStatistic(e.target.value)}
+                  className="form-select select-user-last-data"
+                >
+                  <option value="level">Sathi</option>
+                  <option value="conductivity">Sho'rlanish</option>
+                  <option value="temp">Temperatura </option>
                 </select>
               </div>
             </div>
@@ -245,6 +911,7 @@ const UserData = () => {
                     className="nav-link active"
                     data-bs-toggle="tab"
                     data-bs-target="#profile-hour"
+                    onClick={() => setWhichData("hour")}
                   >
                     Soatlik
                   </button>
@@ -254,7 +921,19 @@ const UserData = () => {
                   <button
                     className="nav-link"
                     data-bs-toggle="tab"
+                    data-bs-target="#profile-users-ten"
+                    onClick={() => setWhichData("yesterday")}
+                  >
+                    Kecha kelgan
+                  </button>
+                </li>
+
+                <li className="nav-item">
+                  <button
+                    className="nav-link"
+                    data-bs-toggle="tab"
                     data-bs-target="#profile-users"
+                    onClick={() => setWhichData("daily")}
                   >
                     Kunlik
                   </button>
@@ -264,29 +943,10 @@ const UserData = () => {
                   <button
                     className="nav-link"
                     data-bs-toggle="tab"
-                    data-bs-target="#profile-users-ten"
-                  >
-                    10 Kunlik
-                  </button>
-                </li>
-
-                <li className="nav-item">
-                  <button
-                    className="nav-link"
-                    data-bs-toggle="tab"
                     data-bs-target="#profile-overview"
+                    onClick={() => setWhichData("monthly")}
                   >
                     Oylik
-                  </button>
-                </li>
-
-                <li className="nav-item">
-                  <button
-                    className="nav-link"
-                    data-bs-toggle="tab"
-                    data-bs-target="#profile-search"
-                  >
-                    Yillik
                   </button>
                 </li>
               </ul>
@@ -332,17 +992,23 @@ const UserData = () => {
                             <option value="conductivity">Sho'rlanish</option>
                             <option value="temp">Temperatura </option>
                           </select>
-                          <a className="ms-4" href="#">
+                          <button
+                            onClick={() => exportNewsByPdf()}
+                            className="ms-4 border border-0"
+                          >
                             <img src={pdf} alt="pdf" width={23} height={30} />
-                          </a>
-                          <a className="ms-4" href="#">
+                          </button>
+                          <button
+                            onClick={() => exportDataToExcel()}
+                            className="ms-4 border border-0"
+                          >
                             <img
                               src={excel}
                               alt="excel"
                               width={26}
                               height={30}
                             />
-                          </a>
+                          </button>
                         </div>
                       </div>
                       <div className="tableFlexible mt-3">
@@ -378,6 +1044,9 @@ const UserData = () => {
                                     data-bs-toggle="modal"
                                     data-bs-target="#exampleModal"
                                     key={i}
+                                    onClick={() => {
+                                      setTodayDataStatistic(e);
+                                    }}
                                   >
                                     <td className="sticky" style={{}}>
                                       {i + 1}
@@ -406,28 +1075,128 @@ const UserData = () => {
                                       } else {
                                         return <td key={w}>-</td>;
                                       }
-                                      if (e.name == "232A-Kuzatish Quduq") {
+                                    })}
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* YESTERDAY */}
+                <div
+                  className="tab-pane fade profile-users-ten"
+                  id="profile-users-ten"
+                >
+                  <div className="containerr">
+                    <div>
+                      <div className="d-flex justify-content-between align-items-center">
+                        <input
+                          className="form-control user-lastdata-news-search"
+                          type="text"
+                          placeholder="Search..."
+                          onChange={(e) =>
+                            searchTodayDataWithInput(
+                              e.target.value.toLowerCase()
+                            )
+                          }
+                        />
+                        <div className="d-flex align-items-center ms-auto">
+                          <select
+                            onChange={(e) => setValueTodayData(e.target.value)}
+                            className="form-select select-user-data-today ms-4"
+                          >
+                            <option value="level">Sathi</option>
+                            <option value="conductivity">Sho'rlanish</option>
+                            <option value="temp">Temperatura </option>
+                          </select>
+                          <button
+                            onClick={() => exportNewsByPdf()}
+                            className="ms-4 border border-0"
+                          >
+                            <img src={pdf} alt="pdf" width={23} height={30} />
+                          </button>
+                          <button
+                            onClick={() => exportDataToExcel()}
+                            className="ms-4 border border-0"
+                          >
+                            <img
+                              src={excel}
+                              alt="excel"
+                              width={26}
+                              height={30}
+                            />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="tableFlexible mt-3">
+                        <div className="tableFlexible-width">
+                          <table className="table-style">
+                            <thead className="">
+                              <tr>
+                                <th rowSpan="2" className="sticky">
+                                  T/R
+                                </th>
+                                <th
+                                  rowSpan="2"
+                                  className="sticky"
+                                  style={{ left: "57px" }}
+                                >
+                                  Stantsiya nomi
+                                </th>
+                                <th colSpan="24">
+                                  {new Date().toISOString().substring(0, 10)}
+                                </th>
+                              </tr>
+                              <tr>
+                                {valueTodayTable.map((r, l) => {
+                                  return <th key={l}>{r}</th>;
+                                })}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {yesterdayData?.map((e, i) => {
+                                return (
+                                  <tr
+                                    className="tr0"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#exampleModal"
+                                    key={i}
+                                    onClick={() => {
+                                      setYesterdayDataStatistic(e);
+                                    }}
+                                  >
+                                    <td className="sticky" style={{}}>
+                                      {i + 1}
+                                    </td>
+                                    <td
+                                      className="text-start sticky fix-with"
+                                      style={{ left: "57px" }}
+                                    >
+                                      {e.name}
+                                    </td>
+                                    {valueTodayTable.map((d, w) => {
+                                      const existedValue = e.yesterdayData.find(
+                                        (a) =>
+                                          a.date.split(" ")[1].split(":")[0] ==
+                                          d
+                                      );
+
+                                      if (existedValue) {
+                                        return (
+                                          <td key={w}>
+                                            {Number(
+                                              existedValue[valueTodayData]
+                                            ).toFixed(2)}
+                                          </td>
+                                        );
+                                      } else {
+                                        return <td key={w}>-</td>;
                                       }
-                                      // if (1) {
-                                      //   return <td key={w}>1</td>;
-                                      // } else {
-                                      //   return <td key={w}>-</td>;
-                                      // }
-                                      // if (e.name == "Kuzatuv qudugi-80") {
-                                      //   const checkExistItem = e.todayData.find(
-                                      //     (t) =>
-                                      //       t.date
-                                      //         .split(" ")[1]
-                                      //         .split(":")[0]
-                                      //         .slice(0, 1) == w
-                                      //   );
-                                      //   console.log(checkExistItem);
-                                      //   if (checkExistItem) {
-                                      //     return <td key={w}>{w}</td>;
-                                      //   } else {
-                                      //     return <td key={w}>-</td>;
-                                      //   }
-                                      // }
                                     })}
                                   </tr>
                                 );
@@ -441,14 +1210,135 @@ const UserData = () => {
                 </div>
 
                 <div className="tab-pane fade profile-users" id="profile-users">
-                  1
-                </div>
+                  <div className="containerr">
+                    <div>
+                      <div className="d-flex justify-content-between align-items-center">
+                        <input
+                          className="form-control user-lastdata-news-search"
+                          type="text"
+                          placeholder="Search..."
+                          onChange={(e) =>
+                            searchTodayDataWithInput(
+                              e.target.value.toLowerCase()
+                            )
+                          }
+                        />
+                        <div className="d-flex align-items-center ms-auto">
+                          <input
+                            type="date"
+                            className="form-control"
+                            id="dateMonth"
+                            name="dateDaily"
+                            required
+                            defaultValue={new Date()
+                              .toISOString()
+                              .substring(0, 10)}
+                            onChange={(e) =>
+                              searchTodayDataWithDate(e.target.value)
+                            }
+                          />
 
-                <div
-                  className="tab-pane fade profile-users-ten"
-                  id="profile-users-ten"
-                >
-                  10
+                          <select
+                            onChange={(e) => setValueTodayData(e.target.value)}
+                            className="form-select select-user-data-today ms-4"
+                          >
+                            <option value="level">Sathi</option>
+                            <option value="conductivity">Sho'rlanish</option>
+                            <option value="temp">Temperatura </option>
+                          </select>
+                          <button
+                            onClick={() => exportNewsByPdf()}
+                            className="ms-4 border border-0"
+                          >
+                            <img src={pdf} alt="pdf" width={23} height={30} />
+                          </button>
+                          <button
+                            onClick={() => exportDataToExcel()}
+                            className="ms-4 border border-0"
+                          >
+                            <img
+                              src={excel}
+                              alt="excel"
+                              width={26}
+                              height={30}
+                            />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="tableFlexible mt-3">
+                        <div className="tableFlexible-width">
+                          <table className="table-style">
+                            <thead className="">
+                              <tr>
+                                <th rowSpan="2" className="sticky">
+                                  T/R
+                                </th>
+                                <th
+                                  rowSpan="2"
+                                  className="sticky"
+                                  style={{ left: "57px" }}
+                                >
+                                  Stantsiya nomi
+                                </th>
+                                <th colSpan="24">
+                                  {new Date().toISOString().substring(0, 10)}
+                                </th>
+                              </tr>
+                              <tr>
+                                {valueTodayTable.map((r, l) => {
+                                  return <th key={l}>{r}</th>;
+                                })}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {todayData?.map((e, i) => {
+                                return (
+                                  <tr
+                                    className="tr0"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#exampleModal"
+                                    key={i}
+                                    onClick={() => {
+                                      setTodayDataStatistic(e);
+                                    }}
+                                  >
+                                    <td className="sticky" style={{}}>
+                                      {i + 1}
+                                    </td>
+                                    <td
+                                      className="text-start sticky fix-with"
+                                      style={{ left: "57px" }}
+                                    >
+                                      {e.name}
+                                    </td>
+                                    {valueTodayTable.map((d, w) => {
+                                      const existedValue = e.todayData.find(
+                                        (a) =>
+                                          a.date.split(" ")[1].split(":")[0] ==
+                                          d
+                                      );
+
+                                      if (existedValue) {
+                                        return (
+                                          <td key={w}>
+                                            {Number(
+                                              existedValue[valueTodayData]
+                                            ).toFixed(2)}
+                                          </td>
+                                        );
+                                      } else {
+                                        return <td key={w}>-</td>;
+                                      }
+                                    })}
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div
@@ -473,9 +1363,12 @@ const UserData = () => {
                         type="input"
                         placeholder="Kuzatuv stansiyasi..."
                         className="form-control search-user-data-input-observe"
+                        onChange={(e) =>
+                          searchLastDataWithInput(e.target.value)
+                        }
                       />
                       <span className="ms-3 me-3 text-danger">
-                        Soni: 481 / 208 ta
+                        Soni: {lastData.length} ta
                       </span>
                       <label htmlFor="bbr">
                         <span
@@ -500,142 +1393,44 @@ const UserData = () => {
                     </div>
                   </div>
 
-                  <div>
+                  <div className="user-data-right">
                     <ul className="list-group list-unstyled m-0 mt-3">
-                      <li className="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                        <div className="d-flex align-items-center">
-                          <img
-                            src={location}
-                            alt="location"
-                            width={23}
-                            height={20}
-                          />
+                      {lastData.map((e, i) => {
+                        return (
+                          <li
+                            className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                            key={i}
+                          >
+                            <div className="d-flex align-items-center">
+                              <img
+                                src={
+                                  checkStationWorkingOrNot(e.lastData) == 0
+                                    ? locationGreen
+                                    : checkStationWorkingOrNot(e.lastData) <= 3
+                                    ? locationYellow
+                                    : checkStationWorkingOrNot(e.lastData) ==
+                                      404
+                                    ? locationRed
+                                    : locationOrange
+                                }
+                                alt="location"
+                                width={23}
+                                height={20}
+                              />
 
-                          <p className="m-0 ms-2 fs-6">Qipchoq_arna_PK220+00</p>
-                        </div>
+                              <p className="m-0 ms-2 fs-6">{e.name}</p>
+                            </div>
 
-                        <p className="m-0 text-danger">1</p>
-                      </li>
-
-                      <li className="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                        <div className="d-flex align-items-center">
-                          <img
-                            src={location}
-                            alt="location"
-                            width={23}
-                            height={20}
-                          />
-
-                          <p className="m-0 ms-2 fs-6">Qipchoq_arna_PK220+00</p>
-                        </div>
-
-                        <p className="m-0 text-danger">1</p>
-                      </li>
-
-                      <li className="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                        <div className="d-flex align-items-center">
-                          <img
-                            src={location}
-                            alt="location"
-                            width={23}
-                            height={20}
-                          />
-
-                          <p className="m-0 ms-2 fs-6">Qipchoq_arna_PK220+00</p>
-                        </div>
-
-                        <p className="m-0 text-danger">1</p>
-                      </li>
-
-                      <li className="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                        <div className="d-flex align-items-center">
-                          <img
-                            src={location}
-                            alt="location"
-                            width={23}
-                            height={20}
-                          />
-
-                          <p className="m-0 ms-2 fs-6">Qipchoq_arna_PK220+00</p>
-                        </div>
-
-                        <p className="m-0 text-danger">1</p>
-                      </li>
-
-                      <li className="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                        <div className="d-flex align-items-center">
-                          <img
-                            src={location}
-                            alt="location"
-                            width={23}
-                            height={20}
-                          />
-
-                          <p className="m-0 ms-2 fs-6">Qipchoq_arna_PK220+00</p>
-                        </div>
-
-                        <p className="m-0 text-danger">1</p>
-                      </li>
-
-                      <li className="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                        <div className="d-flex align-items-center">
-                          <img
-                            src={location}
-                            alt="location"
-                            width={23}
-                            height={20}
-                          />
-
-                          <p className="m-0 ms-2 fs-6">Qipchoq_arna_PK220+00</p>
-                        </div>
-
-                        <p className="m-0 text-danger">1</p>
-                      </li>
-
-                      <li className="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                        <div className="d-flex align-items-center">
-                          <img
-                            src={location}
-                            alt="location"
-                            width={23}
-                            height={20}
-                          />
-
-                          <p className="m-0 ms-2 fs-6">Qipchoq_arna_PK220+00</p>
-                        </div>
-
-                        <p className="m-0 text-danger">1</p>
-                      </li>
-
-                      <li className="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                        <div className="d-flex align-items-center">
-                          <img
-                            src={location}
-                            alt="location"
-                            width={23}
-                            height={20}
-                          />
-
-                          <p className="m-0 ms-2 fs-6">Qipchoq_arna_PK220+00</p>
-                        </div>
-
-                        <p className="m-0 text-danger">1</p>
-                      </li>
+                            <p className="m-0 text-danger">
+                              {e.lastData?.level}
+                            </p>
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                 </div>
               </div>
-              {/* <div className="userlast-data-bottom-modal">
-            <div className="userlast-data-bottom-modal-header d-flex justify-content-end">
-              <img
-                className="ms-auto"
-                src={close}
-                alt="close"
-                width={20}
-                height={20}
-              />
-            </div>
-          </div> */}
             </div>
 
             <Helmet>

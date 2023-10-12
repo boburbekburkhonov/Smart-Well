@@ -127,3 +127,8 @@ td {
 	max-width: 110px !important;
 	width: 100% !important;
 }
+
+.user-data-right {
+	height: 68vh;
+	overflow: auto;
+}

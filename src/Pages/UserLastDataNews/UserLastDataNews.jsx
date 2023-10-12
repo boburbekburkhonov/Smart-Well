@@ -26,13 +26,13 @@ import autoTable from "jspdf-autotable";
 moment.locale("uz-latn");
 
 const UserLastDataNews = () => {
+  const { news } = useParams();
   const [todayData, setTodayData] = useState([]);
   const [yesterdayData, setYesterdayData] = useState([]);
   const [dailyData, setDailyData] = useState([]);
   const [monthData, setMonthData] = useState([]);
   const [valueStatistic, setValueStatistic] = useState("level");
   const [activeMarker, setActiveMarker] = useState();
-  const { news } = useParams();
   const stationName = localStorage.getItem("stationName");
   const locationStation = localStorage.getItem("location");
   const [whichData, setWhichData] = useState("hour");
