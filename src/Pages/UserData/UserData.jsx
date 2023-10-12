@@ -37,6 +37,9 @@ const UserData = () => {
   const [yesterdayDataMain, setYesterdayDataMain] = useState([]);
   const [yesterdayData, setYesterdayData] = useState([]);
   const [yesterdayDataStatistic, setYesterdayDataStatistic] = useState([]);
+  const [dailydayDataMain, setDailyDataMain] = useState([]);
+  const [dailyData, setDailyData] = useState([]);
+  const [dailyDataStatistic, setDailyDataStatistic] = useState([]);
   const [valueStatistic, setValueStatistic] = useState("level");
   const [valueTodayData, setValueTodayData] = useState("level");
   const [whichData, setWhichData] = useState("hour");
@@ -138,6 +141,26 @@ const UserData = () => {
 
       setYesterdayDataMain(responseYesterdayData.data);
       setYesterdayData(responseYesterdayData.data);
+
+      // ! DAILY DATA
+      const requestDailyData = await fetch(
+        `${api}/dailyData/getAllStationsDataByMonth?page=1&perPage=${
+          responseStationStatistic.data.totalStationsCount
+        }&month=${new Date().toISOString().substring(0, 7)}`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      );
+
+      const responseDailyData = await requestDailyData.json();
+
+      setDailyDataMain(responseDailyData.data);
+      setDailyData(responseDailyData.data);
     };
 
     getStationFunc();
@@ -163,9 +186,11 @@ const UserData = () => {
       : whichData == "yesterday"
       ? yesterdayDataStatistic.yesterdayData?.map((e) => e.date.split(" ")[1])
       : whichData == "daily"
-      ? dailyData.map((e) => moment(e.date).format("LL").split(" ")[1])
+      ? dailyDataStatistic.dailyData?.map(
+          (e) => moment(e.date).format("LL").split(" ")[1]
+        )
       : whichData == "monthly"
-      ? monthData.map((e) => e.monthNumber)
+      ? monthData?.map((e) => e.monthNumber)
       : null;
 
   const data = {
@@ -183,7 +208,9 @@ const UserData = () => {
                 Number(e[valueStatistic]).toFixed(2)
               )
             : whichData == "daily"
-            ? dailyData.map((e) => e[valueStatistic])
+            ? dailyDataStatistic.dailyData?.map((e) =>
+                Number(e[valueStatistic]).toFixed(2)
+              )
             : whichData == "monthly"
             ? monthData.map((e) => e[valueStatistic])
             : null,
@@ -431,6 +458,17 @@ const UserData = () => {
     setLastData(search);
   };
 
+  const lastDateOfMonth = moment()
+    .endOf("month")
+    .format("YYYY-MM-DD")
+    .split("-")[2];
+
+  const valueMonth = [];
+
+  for (let item = 1; item <= lastDateOfMonth; item++) {
+    valueMonth.push(String(item).length == 1 ? `0${item}` : item);
+  }
+  console.log(valueTodayData);
   return (
     <HelmetProvider>
       {/* MODAL */}
@@ -911,7 +949,10 @@ const UserData = () => {
                     className="nav-link active"
                     data-bs-toggle="tab"
                     data-bs-target="#profile-hour"
-                    onClick={() => setWhichData("hour")}
+                    onClick={() => {
+                      setWhichData("hour");
+                      setValueTodayData("level");
+                    }}
                   >
                     Soatlik
                   </button>
@@ -922,7 +963,10 @@ const UserData = () => {
                     className="nav-link"
                     data-bs-toggle="tab"
                     data-bs-target="#profile-users-ten"
-                    onClick={() => setWhichData("yesterday")}
+                    onClick={() => {
+                      setWhichData("yesterday");
+                      setValueTodayData("level");
+                    }}
                   >
                     Kecha kelgan
                   </button>
@@ -933,7 +977,10 @@ const UserData = () => {
                     className="nav-link"
                     data-bs-toggle="tab"
                     data-bs-target="#profile-users"
-                    onClick={() => setWhichData("daily")}
+                    onClick={() => {
+                      setWhichData("daily");
+                      setValueTodayData("level");
+                    }}
                   >
                     Kunlik
                   </button>
@@ -944,7 +991,10 @@ const UserData = () => {
                     className="nav-link"
                     data-bs-toggle="tab"
                     data-bs-target="#profile-overview"
-                    onClick={() => setWhichData("monthly")}
+                    onClick={() => {
+                      setWhichData("monthly");
+                      setValueTodayData("level");
+                    }}
                   >
                     Oylik
                   </button>
@@ -1209,6 +1259,7 @@ const UserData = () => {
                   </div>
                 </div>
 
+                {/* DAILY */}
                 <div className="tab-pane fade profile-users" id="profile-users">
                   <div className="containerr">
                     <div>
@@ -1280,18 +1331,18 @@ const UserData = () => {
                                 >
                                   Stantsiya nomi
                                 </th>
-                                <th colSpan="24">
-                                  {new Date().toISOString().substring(0, 10)}
+                                <th colSpan={lastDateOfMonth}>
+                                  {new Date().toISOString().substring(0, 7)}
                                 </th>
                               </tr>
                               <tr>
-                                {valueTodayTable.map((r, l) => {
+                                {valueMonth.map((r, l) => {
                                   return <th key={l}>{r}</th>;
                                 })}
                               </tr>
                             </thead>
                             <tbody>
-                              {todayData?.map((e, i) => {
+                              {dailyData?.map((e, i) => {
                                 return (
                                   <tr
                                     className="tr0"
@@ -1299,7 +1350,7 @@ const UserData = () => {
                                     data-bs-target="#exampleModal"
                                     key={i}
                                     onClick={() => {
-                                      setTodayDataStatistic(e);
+                                      setDailyDataStatistic(e);
                                     }}
                                   >
                                     <td className="sticky" style={{}}>
@@ -1311,11 +1362,9 @@ const UserData = () => {
                                     >
                                       {e.name}
                                     </td>
-                                    {valueTodayTable.map((d, w) => {
-                                      const existedValue = e.todayData.find(
-                                        (a) =>
-                                          a.date.split(" ")[1].split(":")[0] ==
-                                          d
+                                    {valueMonth.map((d, w) => {
+                                      const existedValue = e.dailyData.find(
+                                        (a) => a.date.split("-")[2] == d
                                       );
 
                                       if (existedValue) {
