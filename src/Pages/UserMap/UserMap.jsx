@@ -36,8 +36,24 @@ const UserMap = () => {
 
   useEffect(() => {
     const userMap = async () => {
+      // ! STATISTICS
+      const requestStationStatistics = await fetch(
+        `${api}/last-data/getStatisticStations`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      );
+
+      const responseStationStatistic = await requestStationStatistics.json();
+
+      // ! LAST DATA
       const request = await fetch(
-        `${api}/last-data/allLastData?page=1&perPage=100`,
+        `${api}/last-data/allLastData?page=1&perPage=${responseStationStatistic.data.totalStationsCount}`,
         {
           method: "GET",
           headers: {
@@ -72,9 +88,9 @@ const UserMap = () => {
           );
         }
       }
-
-      setLastData(response.docs);
-      setLastDataForList(response.docs);
+      console.log(response);
+      setLastData(response.data);
+      setLastDataForList(response.data);
     };
 
     userMap();
@@ -88,6 +104,7 @@ const UserMap = () => {
   };
 
   const checkStationWorkingOrNot = (value) => {
+    console.log(value);
     const presentDate = new Date();
     let startDate = new Date(value?.date);
     startDate.setHours(startDate.getHours() - 5);
@@ -168,7 +185,7 @@ const UserMap = () => {
                                 }}
                                 options={{ maxWidth: "240" }}
                               >
-                                {e.level != undefined ? (
+                                {e.lastData != undefined ? (
                                   <div>
                                     <h3 className="fw-semibold text-success fs-6">
                                       {e.name}
@@ -185,7 +202,7 @@ const UserMap = () => {
                                         Daraja:
                                       </p>{" "}
                                       <span className="infowindow-span">
-                                        {e.lastData.level}
+                                        {Number(e.lastData.level).toFixed(2)}
                                       </span>
                                     </div>
 
@@ -200,7 +217,9 @@ const UserMap = () => {
                                         O'tkazuvchanlik:
                                       </p>{" "}
                                       <span className="infowindow-span">
-                                        {e.lastData.conductivity}
+                                        {Number(
+                                          e.lastData.conductivity
+                                        ).toFixed(2)}
                                       </span>
                                     </div>
 
@@ -215,7 +234,7 @@ const UserMap = () => {
                                         Temperatura:
                                       </p>{" "}
                                       <span className="infowindow-span">
-                                        {e.lastData.temp} °C
+                                        {Number(e.lastData.temp).toFixed(2)} °C
                                       </span>
                                     </div>
 
@@ -300,7 +319,7 @@ const UserMap = () => {
                           }}
                           options={{ maxWidth: "240" }}
                         >
-                          {e.level != undefined ? (
+                          {e.lastData != undefined ? (
                             <div>
                               <h3 className="fw-semibold text-success fs-6">
                                 {e.name}
@@ -317,7 +336,7 @@ const UserMap = () => {
                                   Daraja:
                                 </p>{" "}
                                 <span className="infowindow-span">
-                                  {e.lastData.level}
+                                  {Number(e.lastData.level).toFixed(2)}
                                 </span>
                               </div>
 
@@ -332,7 +351,7 @@ const UserMap = () => {
                                   O'tkazuvchanlik:
                                 </p>{" "}
                                 <span className="infowindow-span">
-                                  {e.lastData.conductivity}
+                                  {Number(e.lastData.conductivity).toFixed(2)}
                                 </span>
                               </div>
 
@@ -347,7 +366,7 @@ const UserMap = () => {
                                   Temperatura:
                                 </p>{" "}
                                 <span className="infowindow-span">
-                                  {e.lastData.temp} °C
+                                  {Number(e.lastData.temp).toFixed(2)} °C
                                 </span>
                               </div>
 
@@ -433,11 +452,11 @@ const UserMap = () => {
                       >
                         <img
                           src={
-                            checkStationWorkingOrNot(e) == 0
+                            checkStationWorkingOrNot(e.lastData) == 0
                               ? locationGreen
-                              : checkStationWorkingOrNot(e) <= 3
+                              : checkStationWorkingOrNot(e.lastData) <= 3
                               ? locationYellow
-                              : checkStationWorkingOrNot(e) == 404
+                              : checkStationWorkingOrNot(e.lastData) == 404
                               ? locationRed
                               : locationOrange
                           }

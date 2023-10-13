@@ -31,6 +31,7 @@ const UserStations = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      // ! ALL STATIONS
       const request = await fetch(`${api}/stations/all?page=1&perPage=10`, {
         method: "GET",
         headers: {
@@ -65,7 +66,7 @@ const UserStations = () => {
       }
 
       setAllStation(response.data.data);
-      setTotalPages(response.metadata.lastPage);
+      setTotalPages(response.data.metadata.lastPage);
     };
 
     fetchData();
@@ -83,7 +84,7 @@ const UserStations = () => {
 
       const responseRegionAll = await requestRegionAll.json();
       setAllRegions(responseRegionAll.regions);
-
+      console.log(requestRegionAll);
       const request = await fetch(
         `${api}/balance-organizations/${responseRegionAll.regions[0].id}`,
         {
@@ -145,7 +146,7 @@ const UserStations = () => {
     })
       .then((res) => res.json())
       .then((data) => {
-        setAllStation(data.data);
+        setAllStation(data.data.data);
       });
   };
 
@@ -180,6 +181,7 @@ const UserStations = () => {
       }
     );
     const responseStationOne = await requestStationOne.json();
+    console.log(responseStationOne);
     setStationOne(responseStationOne?.data.data[0]);
 
     // REGION NAME

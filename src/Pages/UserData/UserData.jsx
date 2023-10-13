@@ -186,12 +186,10 @@ const UserData = () => {
       : whichData == "yesterday"
       ? yesterdayDataStatistic.yesterdayData?.map((e) => e.date.split(" ")[1])
       : whichData == "daily"
-      ? dailyDataStatistic.dailyData?.map(
-          (e) => moment(e.date).format("LL").split(" ")[1]
-        )
-      : whichData == "monthly"
-      ? monthData?.map((e) => e.monthNumber)
-      : null;
+      ? dailyDataStatistic.dailyData?.map((e) => e.date.split("-")[2])
+      : // : whichData == "monthly"
+        // ? monthData?.map((e) => moment(e.date).format("LL").split(" ")[1])
+        null;
 
   const data = {
     labels: labels,
@@ -211,9 +209,9 @@ const UserData = () => {
             ? dailyDataStatistic.dailyData?.map((e) =>
                 Number(e[valueStatistic]).toFixed(2)
               )
-            : whichData == "monthly"
-            ? monthData.map((e) => e[valueStatistic])
-            : null,
+            : // : whichData == "monthly"
+              // ? monthData.map((e) => e[valueStatistic])
+              null,
         fill: true,
         borderColor: "#EE8A9D",
         backgroundColor: "#F3E5E7",
@@ -280,6 +278,11 @@ const UserData = () => {
         e.name.toLowerCase().includes(inputValue)
       );
       setYesterdayData(search);
+    } else if (whichData == "daily") {
+      const search = dailydayDataMain.filter((e) =>
+        e.name.toLowerCase().includes(inputValue)
+      );
+      setDailyData(search);
     }
   };
 
@@ -382,39 +385,93 @@ const UserData = () => {
   // ! SAVE DATA
   const exportDataToExcel = () => {
     if (whichData == "hour") {
+      const resultTodayData = [];
+
+      todayData.forEach((e) => {
+        e.todayData.forEach((t) => {
+          resultTodayData.push({
+            name: e.name,
+            Sath: t.level,
+            Shurlanish: t.conductivity,
+            Temperatura: t.temp,
+            Sana: t.date,
+          });
+        });
+      });
       const workBook = XLSX.utils.book_new();
-      const workSheet = XLSX.utils.json_to_sheet(todayData);
+      const workSheet = XLSX.utils.json_to_sheet(resultTodayData);
 
       XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
 
-      if (todayData.length > 0) {
+      if (resultTodayData.length > 0) {
         XLSX.writeFile(workBook, `${nameUser} ning bugungi ma'lumotlari.xlsx`);
       }
     } else if (whichData == "daily") {
+      const resultDailyData = [];
+
+      dailyData.forEach((e) => {
+        e.dailyData.forEach((t) => {
+          resultDailyData.push({
+            name: e.name,
+            Sath: t.level,
+            Shurlanish: t.conductivity,
+            Temperatura: t.temp,
+            Sana: t.date,
+          });
+        });
+      });
       const workBook = XLSX.utils.book_new();
-      const workSheet = XLSX.utils.json_to_sheet(dailyData);
+      const workSheet = XLSX.utils.json_to_sheet(resultDailyData);
 
       XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
 
-      if (dailyData.length > 0) {
+      if (resultDailyData.length > 0) {
         XLSX.writeFile(workBook, `${nameUser} ning kunlik ma'lumotlari.xlsx`);
       }
     } else if (whichData == "monthly") {
+      const resultMonthlyData = [];
+
+      monthData.forEach((e) => {
+        e.monthData.forEach((t) => {
+          resultMonthlyData.push({
+            name: e.name,
+            Sath: t.level,
+            Shurlanish: t.conductivity,
+            Temperatura: t.temp,
+            Sana: t.date,
+          });
+        });
+      });
+
       const workBook = XLSX.utils.book_new();
-      const workSheet = XLSX.utils.json_to_sheet(monthData);
+      const workSheet = XLSX.utils.json_to_sheet(resultMonthlyData);
 
       XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
 
-      if (monthData.length > 0) {
+      if (resultMonthlyData.length > 0) {
         XLSX.writeFile(workBook, `${nameUser} ning oylik ma'lumotlari.xlsx`);
       }
     } else if (whichData == "yesterday") {
+      const resultYesterdayData = [];
+
+      yesterdayData.forEach((e) => {
+        e.yesterdayData.forEach((t) => {
+          resultYesterdayData.push({
+            name: e.name,
+            Sath: t.level,
+            Shurlanish: t.conductivity,
+            Temperatura: t.temp,
+            Sana: t.date,
+          });
+        });
+      });
+
       const workBook = XLSX.utils.book_new();
-      const workSheet = XLSX.utils.json_to_sheet(yesterdayData);
+      const workSheet = XLSX.utils.json_to_sheet(resultYesterdayData);
 
       XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
 
-      if (yesterdayData.length > 0) {
+      if (resultYesterdayData.length > 0) {
         XLSX.writeFile(
           workBook,
           `${nameUser} ning kecha kelgan ma'lumotlari.xlsx`
@@ -464,11 +521,25 @@ const UserData = () => {
     .split("-")[2];
 
   const valueMonth = [];
+  const valueYear = [
+    "Yanvar",
+    "Fevral",
+    "Mart",
+    "Aprel",
+    "May",
+    "Iyun",
+    "Iyul",
+    "Avgust",
+    "Sentyabr",
+    "Oktyabr",
+    "Noyabr",
+    "Dekabr",
+  ];
 
   for (let item = 1; item <= lastDateOfMonth; item++) {
     valueMonth.push(String(item).length == 1 ? `0${item}` : item);
   }
-  console.log(valueTodayData);
+
   return (
     <HelmetProvider>
       {/* MODAL */}
@@ -502,12 +573,16 @@ const UserData = () => {
                       ? todayDataStatistic.location?.split("-")[0] * 1
                       : whichData == "yesterday"
                       ? yesterdayDataStatistic.location?.split("-")[0] * 1
+                      : whichData == "daily"
+                      ? dailyDataStatistic.location?.split("-")[0] * 1
                       : null,
                   lng:
                     whichData == "hour"
                       ? todayDataStatistic.location?.split("-")[1] * 1
                       : whichData == "yesterday"
                       ? yesterdayDataStatistic.location?.split("-")[1] * 1
+                      : whichData == "daily"
+                      ? dailyDataStatistic.location?.split("-")[1] * 1
                       : null,
                 }}
                 mapContainerClassName="user-data-map"
@@ -519,15 +594,27 @@ const UserData = () => {
                         ? todayDataStatistic.location?.split("-")[0] * 1
                         : whichData == "yesterday"
                         ? yesterdayDataStatistic.location?.split("-")[0] * 1
+                        : whichData == "daily"
+                        ? dailyDataStatistic.location?.split("-")[0] * 1
                         : null,
                     lng:
                       whichData == "hour"
                         ? todayDataStatistic.location?.split("-")[1] * 1
                         : whichData == "yesterday"
                         ? yesterdayDataStatistic.location?.split("-")[1] * 1
+                        : whichData == "daily"
+                        ? dailyDataStatistic.location?.split("-")[1] * 1
                         : null,
                   }}
-                  title={todayDataStatistic.name}
+                  title={
+                    whichData == "hour"
+                      ? todayDataStatistic.name
+                      : whichData == "yesterday"
+                      ? yesterdayDataStatistic.name
+                      : whichData == "daily"
+                      ? dailyDataStatistic.name
+                      : null
+                  }
                   onClick={() => handleActiveMarker(1)}
                 >
                   {activeMarker == 1 ? (
@@ -726,7 +813,7 @@ const UserData = () => {
                         dailyData.length > 0 ? (
                           <div>
                             <h3 className="fw-semibold text-success fs-6">
-                              {stationName}
+                              {dailyDataStatistic.name}
                             </h3>
 
                             <div className="d-flex align-items-center mb-1">
@@ -740,7 +827,10 @@ const UserData = () => {
                                 Sath:
                               </p>{" "}
                               <span className="infowindow-span">
-                                {Number(dailyData[0].level).toFixed(2)} sm
+                                {Number(
+                                  dailyDataStatistic.dailyData[0].level
+                                ).toFixed(2)}{" "}
+                                sm
                               </span>
                             </div>
 
@@ -755,7 +845,9 @@ const UserData = () => {
                                 Sho'rlanish:
                               </p>{" "}
                               <span className="infowindow-span">
-                                {Number(dailyData[0].conductivity).toFixed(2)}{" "}
+                                {Number(
+                                  dailyDataStatistic.dailyData[0].conductivity
+                                ).toFixed(2)}{" "}
                                 g/l
                               </span>
                             </div>
@@ -771,7 +863,10 @@ const UserData = () => {
                                 Temperatura:
                               </p>{" "}
                               <span className="infowindow-span">
-                                {Number(dailyData[0].temp).toFixed(2)} °C
+                                {Number(
+                                  dailyDataStatistic.dailyData[0].temp
+                                ).toFixed(2)}{" "}
+                                °C
                               </span>
                             </div>
 
@@ -787,7 +882,7 @@ const UserData = () => {
                               </p>{" "}
                               <span className="infowindow-span">
                                 {
-                                  moment(dailyData[0].date)
+                                  moment(dailyDataStatistic.dailyData[0].date)
                                     .format("LL")
                                     .split(" ")[1]
                                 }
@@ -797,7 +892,7 @@ const UserData = () => {
                         ) : (
                           <div>
                             <h3 className="fw-semibold text-success fs-6 text-center">
-                              {stationName}
+                              {dailyDataStatistic.name}
                             </h3>
                             <div className="d-flex align-items-center justify-content-center">
                               <img
@@ -882,7 +977,7 @@ const UserData = () => {
                                 height={12}
                               />
                               <p className="m-0 infowindow-desc ms-1 me-1">
-                                Oy:
+                                Soat:
                               </p>{" "}
                               <span className="infowindow-span">
                                 {
@@ -952,6 +1047,7 @@ const UserData = () => {
                     onClick={() => {
                       setWhichData("hour");
                       setValueTodayData("level");
+                      setValueStatistic("level");
                     }}
                   >
                     Soatlik
@@ -966,6 +1062,7 @@ const UserData = () => {
                     onClick={() => {
                       setWhichData("yesterday");
                       setValueTodayData("level");
+                      setValueStatistic("level");
                     }}
                   >
                     Kecha kelgan
@@ -980,6 +1077,7 @@ const UserData = () => {
                     onClick={() => {
                       setWhichData("daily");
                       setValueTodayData("level");
+                      setValueStatistic("level");
                     }}
                   >
                     Kunlik
@@ -994,6 +1092,7 @@ const UserData = () => {
                     onClick={() => {
                       setWhichData("monthly");
                       setValueTodayData("level");
+                      setValueStatistic("level");
                     }}
                   >
                     Oylik
@@ -1390,18 +1489,138 @@ const UserData = () => {
                   </div>
                 </div>
 
+                {/* MONTHLY */}
                 <div
                   className="tab-pane fade profile-overview"
                   id="profile-overview"
                 >
-                  profile-overview
-                </div>
+                  <div className="containerr">
+                    <div>
+                      <div className="d-flex justify-content-between align-items-center">
+                        <input
+                          className="form-control user-lastdata-news-search"
+                          type="text"
+                          placeholder="Search..."
+                          onChange={(e) =>
+                            searchTodayDataWithInput(
+                              e.target.value.toLowerCase()
+                            )
+                          }
+                        />
+                        <div className="d-flex align-items-center ms-auto">
+                          <input
+                            type="date"
+                            className="form-control"
+                            id="dateMonth"
+                            name="dateDaily"
+                            required
+                            defaultValue={new Date()
+                              .toISOString()
+                              .substring(0, 10)}
+                            onChange={(e) =>
+                              searchTodayDataWithDate(e.target.value)
+                            }
+                          />
 
-                <div
-                  className="tab-pane fade profile-search profile-search-station"
-                  id="profile-search"
-                >
-                  profile-search
+                          <select
+                            onChange={(e) => setValueTodayData(e.target.value)}
+                            className="form-select select-user-data-today ms-4"
+                          >
+                            <option value="level">Sathi</option>
+                            <option value="conductivity">Sho'rlanish</option>
+                            <option value="temp">Temperatura </option>
+                          </select>
+                          <button
+                            onClick={() => exportNewsByPdf()}
+                            className="ms-4 border border-0"
+                          >
+                            <img src={pdf} alt="pdf" width={23} height={30} />
+                          </button>
+                          <button
+                            onClick={() => exportDataToExcel()}
+                            className="ms-4 border border-0"
+                          >
+                            <img
+                              src={excel}
+                              alt="excel"
+                              width={26}
+                              height={30}
+                            />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="tableFlexible mt-3">
+                        <div className="tableFlexible-width">
+                          <table className="table-style">
+                            <thead className="">
+                              <tr>
+                                <th rowSpan="2" className="sticky">
+                                  T/R
+                                </th>
+                                <th
+                                  rowSpan="2"
+                                  className="sticky"
+                                  style={{ left: "57px" }}
+                                >
+                                  Stantsiya nomi
+                                </th>
+                                <th colSpan={12}>
+                                  {new Date().toISOString().substring(0, 4)}
+                                </th>
+                              </tr>
+                              <tr>
+                                {valueYear.map((r, l) => {
+                                  return <th key={l}>{r}</th>;
+                                })}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {dailyData?.map((e, i) => {
+                                return (
+                                  <tr
+                                    className="tr0"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#exampleModal"
+                                    key={i}
+                                    onClick={() => {
+                                      setDailyDataStatistic(e);
+                                    }}
+                                  >
+                                    <td className="sticky" style={{}}>
+                                      {i + 1}
+                                    </td>
+                                    <td
+                                      className="text-start sticky fix-with"
+                                      style={{ left: "57px" }}
+                                    >
+                                      {e.name}
+                                    </td>
+                                    {valueMonth.map((d, w) => {
+                                      const existedValue = e.dailyData.find(
+                                        (a) => a.date.split("-")[2] == d
+                                      );
+
+                                      if (existedValue) {
+                                        return (
+                                          <td key={w}>
+                                            {Number(
+                                              existedValue[valueTodayData]
+                                            ).toFixed(2)}
+                                          </td>
+                                        );
+                                      } else {
+                                        return <td key={w}>-</td>;
+                                      }
+                                    })}
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div>
