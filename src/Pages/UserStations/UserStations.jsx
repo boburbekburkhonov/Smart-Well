@@ -84,7 +84,6 @@ const UserStations = () => {
 
       const responseRegionAll = await requestRegionAll.json();
       setAllRegions(responseRegionAll.regions);
-      console.log(requestRegionAll);
       const request = await fetch(
         `${api}/balance-organizations/${responseRegionAll.regions[0].id}`,
         {
@@ -181,7 +180,6 @@ const UserStations = () => {
       }
     );
     const responseStationOne = await requestStationOne.json();
-    console.log(responseStationOne);
     setStationOne(responseStationOne?.data.data[0]);
 
     // REGION NAME

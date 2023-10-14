@@ -28,6 +28,7 @@ import autoTable from "jspdf-autotable";
 
 const UserData = () => {
   const [activeMarker, setActiveMarker] = useState();
+  const [searchDate, setSearchDate] = useState(false);
   const [statisticsStation, setStatisticsStation] = useState([]);
   const [lastDataMain, setLastDataMain] = useState([]);
   const [lastData, setLastData] = useState([]);
@@ -50,6 +51,56 @@ const UserData = () => {
   );
   const [whichData, setWhichData] = useState("hour");
   const nameUser = localStorage.getItem("name");
+  const valueYear = [
+    "Yanvar",
+    "Fevral",
+    "Mart",
+    "Aprel",
+    "May",
+    "Iyun",
+    "Iyul",
+    "Avgust",
+    "Sentyabr",
+    "Oktyabr",
+    "Noyabr",
+    "Dekabr",
+  ];
+  const valueTodayTable = [
+    "00",
+    "01",
+    "02",
+    "03",
+    "04",
+    "05",
+    "06",
+    "07",
+    "08",
+    "09",
+    "10",
+    "11",
+    "12",
+    "13",
+    "14",
+    "15",
+    "16",
+    "17",
+    "18",
+    "19",
+    "20",
+    "21",
+    "22",
+    "23",
+  ];
+  const lastDateOfMonth = moment()
+    .endOf("month")
+    .format("YYYY-MM-DD")
+    .split("-")[2];
+
+  const valueMonth = [];
+
+  for (let item = 1; item <= lastDateOfMonth; item++) {
+    valueMonth.push(String(item).length == 1 ? `0${item}` : item);
+  }
 
   useEffect(() => {
     const getStationFunc = async () => {
@@ -190,7 +241,7 @@ const UserData = () => {
     };
 
     getStationFunc();
-  }, []);
+  }, [searchDate]);
 
   const { isLoaded } = useLoadScript({
     googleMapsApiKey:
@@ -214,7 +265,13 @@ const UserData = () => {
       : whichData == "daily"
       ? dailyDataStatistic.dailyData?.map((e) => e.date.split("-")[2])
       : whichData == "monthly"
-      ? monthlyDataStatistic.monthlyData?.map((e) => e.monthNumber)
+      ? monthlyDataStatistic.monthlyData?.map((e) => {
+          const foundNameMonth = valueYear.find(
+            (r, i) => i + 1 == e.monthNumber
+          );
+
+          return foundNameMonth;
+        })
       : null;
 
   const data = {
@@ -266,33 +323,6 @@ const UserData = () => {
     },
   };
 
-  const valueTodayTable = [
-    "00",
-    "01",
-    "02",
-    "03",
-    "04",
-    "05",
-    "06",
-    "07",
-    "08",
-    "09",
-    "10",
-    "11",
-    "12",
-    "13",
-    "14",
-    "15",
-    "16",
-    "17",
-    "18",
-    "19",
-    "20",
-    "21",
-    "22",
-    "23",
-  ];
-
   const searchTodayDataWithInput = (inputValue) => {
     if (whichData == "hour") {
       const search = todayDataMain.filter((e) =>
@@ -319,7 +349,7 @@ const UserData = () => {
 
   const searchTodayDataWithDate = (date) => {
     fetch(
-      `${api}/yesterdayData/getAllDataByDay?page=1&perPage=${statisticsStation.data.totalStationsCount}&day=${data}`,
+      `${api}/yesterdayData/getAllDataByDay?page=1&perPage=${statisticsStation.totalStationsCount}&day=${date}`,
       {
         method: "GET",
         headers: {
@@ -329,7 +359,9 @@ const UserData = () => {
       }
     )
       .then((res) => res.json())
-      .then((data) => console.log(data.data));
+      .then((data) => {
+        setTodayData(data.data);
+      });
   };
 
   const searchDailyDataWithDate = (date) => {
@@ -350,7 +382,21 @@ const UserData = () => {
       });
   };
 
+  // ! SAVE DATA PDF
   const exportNewsByPdf = () => {
+    const resultTodayDataPdf = [];
+
+    todayData.forEach((e) => {
+      e.todayData.forEach((t) => {
+        resultTodayDataPdf.push({
+          name: e.name,
+          level: t.level,
+          conductivity: t.conductivity,
+          temp: t.temp,
+          date: t.date,
+        });
+      });
+    });
     const doc = new jsPDF();
 
     if (whichData == "hour") {
@@ -364,74 +410,119 @@ const UserData = () => {
         theme: "grid",
         columns: [
           { header: "Stansiya nomi", dataKey: "name" },
+          { header: "Sath (sm)", dataKey: "level" },
+          { header: "Sho'rlanish (g/l)", dataKey: "conductivity" },
+          { header: "Temperatura (°C)", dataKey: "temp" },
           { header: "Sana", dataKey: "date" },
-          todayData.map((e) => {
-            return { header: "Sath (sm)", dataKey: "level" };
-          }),
         ],
-        body: todayData,
+        body: resultTodayDataPdf,
       });
 
-      if (todayData.length > 0) {
+      if (resultTodayDataPdf.length > 0) {
         doc.save(
           `${nameUser} ga tegishli qurilmalarning bugungi ma'lumotlar.pdf`
         );
       }
     } else if (whichData == "daily") {
-      doc.text(`${stationName} qurilmaning kunlik ma'lumotlar`, 20, 10);
+      const resultDailyDataPdf = [];
 
-      doc.autoTable({
-        theme: "grid",
-        columns: [
-          { header: "Sath (sm)", dataKey: "level" },
-          { header: "Sho'rlanish (g/l)", dataKey: "conductivity" },
-          { header: "Temperatura (°C)", dataKey: "temp" },
-          { header: "Oy", dataKey: "date" },
-        ],
-        body: dailyData,
+      dailyData.forEach((e) => {
+        e.dailyData.forEach((t) => {
+          resultDailyDataPdf.push({
+            name: e.name,
+            level: t.level,
+            conductivity: t.conductivity,
+            temp: t.temp,
+            date: t.date,
+          });
+        });
       });
 
-      if (dailyData.length > 0) {
-        doc.save(`${stationName} ning kunlik ma'lumotlari.pdf`);
-      }
-    } else if (whichData == "monthly") {
-      doc.text(`${stationName} qurilmaning oylik ma'lumotlar`, 20, 10);
+      doc.text(`${nameUser} qurilmaning kunlik ma'lumotlar`, 20, 10);
 
       doc.autoTable({
         theme: "grid",
         columns: [
-          { header: "Sath (sm)", dataKey: "level" },
-          { header: "Sho'rlanish (g/l)", dataKey: "conductivity" },
-          { header: "Temperatura (°C)", dataKey: "temp" },
-          { header: "Oy", dataKey: "monthNumber" },
-        ],
-        body: monthData,
-      });
-
-      if (monthData.length > 0) {
-        doc.save(`${stationName} ning oylik ma'lumotlari.pdf`);
-      }
-    } else if (whichData == "yesterday") {
-      doc.text(`${stationName} qurilmaning kecha kelgan ma'lumotlar`, 20, 10);
-
-      doc.autoTable({
-        theme: "grid",
-        columns: [
+          { header: "Stansiya nomi", dataKey: "name" },
           { header: "Sath (sm)", dataKey: "level" },
           { header: "Sho'rlanish (g/l)", dataKey: "conductivity" },
           { header: "Temperatura (°C)", dataKey: "temp" },
           { header: "Sana", dataKey: "date" },
         ],
-        body: yesterdayData,
+        body: resultDailyDataPdf,
       });
 
-      if (yesterdayData.length > 0) {
-        doc.save(`${stationName} ning kecha kelgan ma'lumotlari.pdf`);
+      if (resultDailyDataPdf.length > 0) {
+        doc.save(`${nameUser} ning kunlik ma'lumotlari.pdf`);
+      }
+    } else if (whichData == "monthly") {
+      const resultMonthlyDataPdf = [];
+
+      monthlyData.forEach((e) => {
+        e.monthlyData.forEach((t) => {
+          resultMonthlyDataPdf.push({
+            name: e.name,
+            level: t.level,
+            conductivity: t.conductivity,
+            temp: t.temp,
+            date: t.monthNumber,
+          });
+        });
+      });
+
+      doc.text(`${nameUser} qurilmaning oylik ma'lumotlar`, 20, 10);
+
+      doc.autoTable({
+        theme: "grid",
+        columns: [
+          { header: "Stansiya nomi", dataKey: "name" },
+          { header: "Sath (sm)", dataKey: "level" },
+          { header: "Sho'rlanish (g/l)", dataKey: "conductivity" },
+          { header: "Temperatura (°C)", dataKey: "temp" },
+          { header: "Oy", dataKey: "date" },
+        ],
+        body: resultMonthlyDataPdf,
+      });
+
+      if (resultMonthlyDataPdf.length > 0) {
+        doc.save(`${nameUser} ning oylik ma'lumotlari.pdf`);
+      }
+    } else if (whichData == "yesterday") {
+      const resultYesterdayDataPdf = [];
+
+      yesterdayData.forEach((e) => {
+        e.yesterdayData.forEach((t) => {
+          resultYesterdayDataPdf.push({
+            name: e.name,
+            level: t.level,
+            conductivity: t.conductivity,
+            temp: t.temp,
+            date: t.date,
+          });
+        });
+      });
+
+      doc.text(`${nameUser} qurilmaning kecha kelgan ma'lumotlar`, 20, 10);
+
+      doc.autoTable({
+        theme: "grid",
+        columns: [
+          { header: "Stansiya nomi", dataKey: "name" },
+          { header: "Sath (sm)", dataKey: "level" },
+          { header: "Sho'rlanish (g/l)", dataKey: "conductivity" },
+          { header: "Temperatura (°C)", dataKey: "temp" },
+          { header: "Sana", dataKey: "date" },
+        ],
+        body: resultYesterdayDataPdf,
+      });
+
+      if (resultYesterdayDataPdf.length > 0) {
+        doc.save(`${nameUser} ning kecha kelgan ma'lumotlari.pdf`);
       }
     }
   };
 
-  // ! SAVE DATA
+  // ! SAVE DATA EXCEL
   const exportDataToExcel = () => {
     if (whichData == "hour") {
       const resultTodayData = [];
@@ -564,30 +655,11 @@ const UserData = () => {
     setLastData(search);
   };
 
-  const lastDateOfMonth = moment()
-    .endOf("month")
-    .format("YYYY-MM-DD")
-    .split("-")[2];
+  const foundNameMonthForMap = (month) => {
+    const foundNameMonth = valueYear.find((e, i) => i + 1 == month);
 
-  const valueMonth = [];
-  const valueYear = [
-    "Yanvar",
-    "Fevral",
-    "Mart",
-    "Aprel",
-    "May",
-    "Iyun",
-    "Iyul",
-    "Avgust",
-    "Sentyabr",
-    "Oktyabr",
-    "Noyabr",
-    "Dekabr",
-  ];
-
-  for (let item = 1; item <= lastDateOfMonth; item++) {
-    valueMonth.push(String(item).length == 1 ? `0${item}` : item);
-  }
+    return foundNameMonth;
+  };
 
   return (
     <HelmetProvider>
@@ -855,10 +927,10 @@ const UserData = () => {
                                 Oy:
                               </p>{" "}
                               <span className="infowindow-span">
-                                {
+                                {foundNameMonthForMap(
                                   monthlyDataStatistic.monthlyData[0]
                                     .monthNumber
-                                }
+                                )}
                               </span>
                             </div>
                           </div>
@@ -1094,11 +1166,11 @@ const UserData = () => {
 
                 <select
                   onChange={(e) => setValueStatistic(e.target.value)}
-                  className="form-select select-user-last-data"
+                  className="form-select select-user-last-data select-user-last-data-width"
                 >
-                  <option value="level">Sathi</option>
-                  <option value="conductivity">Sho'rlanish</option>
-                  <option value="temp">Temperatura </option>
+                  <option value="level">Sathi (sm)</option>
+                  <option value="conductivity">Sho'rlanish (g/l)</option>
+                  <option value="temp">Temperatura (°C)</option>
                 </select>
               </div>
             </div>
@@ -1119,6 +1191,7 @@ const UserData = () => {
                       setWhichData("hour");
                       setValueTodayData("level");
                       setValueStatistic("level");
+                      setSearchDate(false);
                     }}
                   >
                     Soatlik
@@ -1134,6 +1207,7 @@ const UserData = () => {
                       setWhichData("yesterday");
                       setValueTodayData("level");
                       setValueStatistic("level");
+                      setSearchDate(false);
                     }}
                   >
                     Kecha kelgan
@@ -1149,6 +1223,7 @@ const UserData = () => {
                       setWhichData("daily");
                       setValueTodayData("level");
                       setValueStatistic("level");
+                      setSearchDate(false);
                     }}
                   >
                     Kunlik
@@ -1164,6 +1239,7 @@ const UserData = () => {
                       setWhichData("monthly");
                       setValueTodayData("level");
                       setValueStatistic("level");
+                      setSearchDate(false);
                     }}
                   >
                     Oylik
@@ -1199,18 +1275,21 @@ const UserData = () => {
                             defaultValue={new Date()
                               .toISOString()
                               .substring(0, 10)}
-                            onChange={(e) =>
-                              searchTodayDataWithDate(e.target.value)
-                            }
+                            onChange={(e) => {
+                              searchTodayDataWithDate(e.target.value);
+                              setSearchDate(true);
+                            }}
                           />
 
                           <select
                             onChange={(e) => setValueTodayData(e.target.value)}
                             className="form-select select-user-data-today ms-4"
                           >
-                            <option value="level">Sathi</option>
-                            <option value="conductivity">Sho'rlanish</option>
-                            <option value="temp">Temperatura </option>
+                            <option value="level">Sathi (sm)</option>
+                            <option value="conductivity">
+                              Sho'rlanish (g/l)
+                            </option>
+                            <option value="temp">Temperatura (°C)</option>
                           </select>
                           <button
                             onClick={() => exportNewsByPdf()}
@@ -1278,11 +1357,19 @@ const UserData = () => {
                                       {e.name}
                                     </td>
                                     {valueTodayTable.map((d, w) => {
-                                      const existedValue = e.todayData.find(
-                                        (a) =>
-                                          a.date.split(" ")[1].split(":")[0] ==
-                                          d
-                                      );
+                                      const existedValue = !searchDate
+                                        ? e.todayData?.find(
+                                            (a) =>
+                                              a.date
+                                                .split(" ")[1]
+                                                .split(":")[0] == d
+                                          )
+                                        : e.allData?.find(
+                                            (a) =>
+                                              a.date
+                                                .split(" ")[1]
+                                                .split(":")[0] == d
+                                          );
 
                                       if (existedValue) {
                                         return (
@@ -1330,9 +1417,11 @@ const UserData = () => {
                             onChange={(e) => setValueTodayData(e.target.value)}
                             className="form-select select-user-data-today ms-4"
                           >
-                            <option value="level">Sathi</option>
-                            <option value="conductivity">Sho'rlanish</option>
-                            <option value="temp">Temperatura </option>
+                            <option value="level">Sathi (sm)</option>
+                            <option value="conductivity">
+                              Sho'rlanish (g/l)
+                            </option>
+                            <option value="temp">Temperatura (°C)</option>
                           </select>
                           <button
                             onClick={() => exportNewsByPdf()}
@@ -1464,9 +1553,11 @@ const UserData = () => {
                             onChange={(e) => setValueTodayData(e.target.value)}
                             className="form-select select-user-data-today ms-4"
                           >
-                            <option value="level">Sathi</option>
-                            <option value="conductivity">Sho'rlanish</option>
-                            <option value="temp">Temperatura </option>
+                            <option value="level">Sathi (sm)</option>
+                            <option value="conductivity">
+                              Sho'rlanish (g/l)
+                            </option>
+                            <option value="temp">Temperatura (°C)</option>
                           </select>
                           <button
                             onClick={() => exportNewsByPdf()}
@@ -1584,9 +1675,11 @@ const UserData = () => {
                             onChange={(e) => setValueTodayData(e.target.value)}
                             className="form-select select-user-data-today ms-4"
                           >
-                            <option value="level">Sathi</option>
-                            <option value="conductivity">Sho'rlanish</option>
-                            <option value="temp">Temperatura </option>
+                            <option value="level">Sathi (sm)</option>
+                            <option value="conductivity">
+                              Sho'rlanish (g/l)
+                            </option>
+                            <option value="temp">Temperatura (°C)</option>
                           </select>
                           <button
                             onClick={() => exportNewsByPdf()}

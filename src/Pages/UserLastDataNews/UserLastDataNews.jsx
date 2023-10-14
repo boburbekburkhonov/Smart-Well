@@ -36,7 +36,20 @@ const UserLastDataNews = () => {
   const stationName = localStorage.getItem("stationName");
   const locationStation = localStorage.getItem("location");
   const [whichData, setWhichData] = useState("hour");
-  const date = new Date();
+  const valueYear = [
+    "Yanvar",
+    "Fevral",
+    "Mart",
+    "Aprel",
+    "May",
+    "Iyun",
+    "Iyul",
+    "Avgust",
+    "Sentyabr",
+    "Oktyabr",
+    "Noyabr",
+    "Dekabr",
+  ];
 
   useEffect(() => {
     const todayData = async () => {
@@ -151,7 +164,13 @@ const UserLastDataNews = () => {
       : whichData == "daily"
       ? dailyData.map((e) => e.date.split("-")[2].slice(0, 2))
       : whichData == "monthly"
-      ? monthData.map((e) => e.monthNumber)
+      ? monthData?.map((e) => {
+          const foundNameMonth = valueYear.find(
+            (r, i) => i + 1 == e.monthNumber
+          );
+
+          return foundNameMonth;
+        })
       : null;
 
   const data = {
@@ -348,7 +367,7 @@ const UserLastDataNews = () => {
         aria-labelledby="staticBackdropLabel"
         aria-hidden="true"
       >
-        <div className="modal-dialog table-location-width modal-dialog-centered">
+        <div className="modal-dialog table-location-width-user-last-data-news modal-dialog-centered">
           <div className="modal-content modal-content-user-last-data">
             <div className="modal-header">
               <h1 className="modal-title fs-5" id="staticBackdropLabel">
@@ -493,7 +512,7 @@ const UserLastDataNews = () => {
                                   height={12}
                                 />
                                 <p className="m-0 infowindow-desc ms-1 me-1">
-                                  Sana:
+                                  Soat:
                                 </p>{" "}
                                 <span className="infowindow-span">
                                   {todayData[0].date?.split(" ")[1]}
@@ -582,7 +601,9 @@ const UserLastDataNews = () => {
                                   Oy:
                                 </p>{" "}
                                 <span className="infowindow-span">
-                                  {monthData[0].monthNumber}
+                                  {valueYear.find(
+                                    (e, i) => i + 1 == monthData[0].monthNumber
+                                  )}
                                 </span>
                               </div>
                             </div>
@@ -753,7 +774,7 @@ const UserLastDataNews = () => {
                                   height={12}
                                 />
                                 <p className="m-0 infowindow-desc ms-1 me-1">
-                                  Oy:
+                                  Soat:
                                 </p>{" "}
                                 <span className="infowindow-span">
                                   {yesterdayData[0].date.split(" ")[1]}
@@ -1138,7 +1159,11 @@ const UserLastDataNews = () => {
                               <td>{Number(e.level).toFixed(2)}</td>
                               <td>{Number(e.conductivity).toFixed(2)}</td>
                               <td>{Number(e.temp).toFixed(2)}</td>
-                              <td>{e.monthNumber}</td>
+                              <td>
+                                {valueYear.find(
+                                  (r, i) => i + 1 == e.monthNumber
+                                )}
+                              </td>
                             </tr>
                           );
                         })}

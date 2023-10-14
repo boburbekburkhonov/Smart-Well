@@ -124,11 +124,16 @@ td {
 }
 
 .select-user-data-today {
-	max-width: 110px !important;
+	max-width: 195px !important;
 	width: 100% !important;
 }
 
 .user-data-right {
 	height: 68vh;
 	overflow: auto;
+}
+
+.select-user-last-data-width {
+	max-width: 195px !important;
+	width: 100% !important;
 }
