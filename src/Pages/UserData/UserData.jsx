@@ -40,8 +40,14 @@ const UserData = () => {
   const [dailydayDataMain, setDailyDataMain] = useState([]);
   const [dailyData, setDailyData] = useState([]);
   const [dailyDataStatistic, setDailyDataStatistic] = useState([]);
+  const [monthlydayDataMain, setMonthlyDataMain] = useState([]);
+  const [monthlyData, setMonthlyData] = useState([]);
+  const [monthlyDataStatistic, setMonthlyDataStatistic] = useState([]);
   const [valueStatistic, setValueStatistic] = useState("level");
   const [valueTodayData, setValueTodayData] = useState("level");
+  const [valueDailyDataTable, setValueDailyDataTable] = useState(
+    new Date().toISOString().substring(0, 7)
+  );
   const [whichData, setWhichData] = useState("hour");
   const nameUser = localStorage.getItem("name");
 
@@ -86,7 +92,7 @@ const UserData = () => {
         }
       }
 
-      setStatisticsStation(responseStationStatistic);
+      setStatisticsStation(responseStationStatistic.data);
 
       // ! TODAY DATA
       const requestTodayData = await fetch(
@@ -161,6 +167,26 @@ const UserData = () => {
 
       setDailyDataMain(responseDailyData.data);
       setDailyData(responseDailyData.data);
+
+      // ! MONTHLY DATA
+      const requestMonthlyData = await fetch(
+        `${api}/monthlyData/getAllStationDataByYear?page=1&perPage=${
+          responseStationStatistic.data.totalStationsCount
+        }&year=${new Date().toISOString().substring(0, 4)}`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      );
+
+      const responseMonthlyData = await requestMonthlyData.json();
+
+      setMonthlyDataMain(responseMonthlyData.stations.data);
+      setMonthlyData(responseMonthlyData.stations.data);
     };
 
     getStationFunc();
@@ -187,9 +213,9 @@ const UserData = () => {
       ? yesterdayDataStatistic.yesterdayData?.map((e) => e.date.split(" ")[1])
       : whichData == "daily"
       ? dailyDataStatistic.dailyData?.map((e) => e.date.split("-")[2])
-      : // : whichData == "monthly"
-        // ? monthData?.map((e) => moment(e.date).format("LL").split(" ")[1])
-        null;
+      : whichData == "monthly"
+      ? monthlyDataStatistic.monthlyData?.map((e) => e.monthNumber)
+      : null;
 
   const data = {
     labels: labels,
@@ -209,9 +235,9 @@ const UserData = () => {
             ? dailyDataStatistic.dailyData?.map((e) =>
                 Number(e[valueStatistic]).toFixed(2)
               )
-            : // : whichData == "monthly"
-              // ? monthData.map((e) => e[valueStatistic])
-              null,
+            : whichData == "monthly"
+            ? monthlyDataStatistic.monthlyData?.map((e) => e[valueStatistic])
+            : null,
         fill: true,
         borderColor: "#EE8A9D",
         backgroundColor: "#F3E5E7",
@@ -283,6 +309,11 @@ const UserData = () => {
         e.name.toLowerCase().includes(inputValue)
       );
       setDailyData(search);
+    } else if (whichData == "monthly") {
+      const search = monthlydayDataMain.filter((e) =>
+        e.name.toLowerCase().includes(inputValue)
+      );
+      setMonthlyData(search);
     }
   };
 
@@ -299,6 +330,24 @@ const UserData = () => {
     )
       .then((res) => res.json())
       .then((data) => console.log(data.data));
+  };
+
+  const searchDailyDataWithDate = (date) => {
+    fetch(
+      `${api}/dailyData/getAllStationsDataByMonth?page=1&perPage=${statisticsStation.totalStationsCount}&month=${date}`,
+      {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
+          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
+        },
+      }
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        setDailyDataMain(data.data);
+        setDailyData(data.data);
+      });
   };
 
   const exportNewsByPdf = () => {
@@ -431,14 +480,14 @@ const UserData = () => {
     } else if (whichData == "monthly") {
       const resultMonthlyData = [];
 
-      monthData.forEach((e) => {
-        e.monthData.forEach((t) => {
+      monthlyData.forEach((e) => {
+        e.monthlyData.forEach((t) => {
           resultMonthlyData.push({
             name: e.name,
             Sath: t.level,
             Shurlanish: t.conductivity,
             Temperatura: t.temp,
-            Sana: t.date,
+            Oy: valueYear[t.monthNumber - 1],
           });
         });
       });
@@ -575,6 +624,8 @@ const UserData = () => {
                       ? yesterdayDataStatistic.location?.split("-")[0] * 1
                       : whichData == "daily"
                       ? dailyDataStatistic.location?.split("-")[0] * 1
+                      : whichData == "monthly"
+                      ? monthlyDataStatistic.location?.split("-")[0] * 1
                       : null,
                   lng:
                     whichData == "hour"
@@ -583,6 +634,8 @@ const UserData = () => {
                       ? yesterdayDataStatistic.location?.split("-")[1] * 1
                       : whichData == "daily"
                       ? dailyDataStatistic.location?.split("-")[1] * 1
+                      : whichData == "monthly"
+                      ? monthlyDataStatistic.location?.split("-")[1] * 1
                       : null,
                 }}
                 mapContainerClassName="user-data-map"
@@ -596,6 +649,8 @@ const UserData = () => {
                         ? yesterdayDataStatistic.location?.split("-")[0] * 1
                         : whichData == "daily"
                         ? dailyDataStatistic.location?.split("-")[0] * 1
+                        : whichData == "monthly"
+                        ? monthlyDataStatistic.location?.split("-")[0] * 1
                         : null,
                     lng:
                       whichData == "hour"
@@ -604,6 +659,8 @@ const UserData = () => {
                         ? yesterdayDataStatistic.location?.split("-")[1] * 1
                         : whichData == "daily"
                         ? dailyDataStatistic.location?.split("-")[1] * 1
+                        : whichData == "monthly"
+                        ? monthlyDataStatistic.location?.split("-")[1] * 1
                         : null,
                   }}
                   title={
@@ -613,6 +670,8 @@ const UserData = () => {
                       ? yesterdayDataStatistic.name
                       : whichData == "daily"
                       ? dailyDataStatistic.name
+                      : whichData == "monthly"
+                      ? monthlyDataStatistic.name
                       : null
                   }
                   onClick={() => handleActiveMarker(1)}
@@ -694,7 +753,7 @@ const UserData = () => {
                                 height={12}
                               />
                               <p className="m-0 infowindow-desc ms-1 me-1">
-                                Sana:
+                                Soat:
                               </p>{" "}
                               <span className="infowindow-span">
                                 {
@@ -724,10 +783,10 @@ const UserData = () => {
                           </div>
                         )
                       ) : whichData == "monthly" ? (
-                        monthData.length > 0 ? (
+                        monthlyDataStatistic.monthlyData.length > 0 ? (
                           <div>
                             <h3 className="fw-semibold text-success fs-6">
-                              {stationName}
+                              {monthlyDataStatistic.name}
                             </h3>
 
                             <div className="d-flex align-items-center mb-1">
@@ -741,7 +800,10 @@ const UserData = () => {
                                 Sath:
                               </p>{" "}
                               <span className="infowindow-span">
-                                {Number(monthData[0].level).toFixed(2)} sm
+                                {Number(
+                                  monthlyDataStatistic.monthlyData[0].level
+                                ).toFixed(2)}{" "}
+                                sm
                               </span>
                             </div>
 
@@ -756,7 +818,10 @@ const UserData = () => {
                                 Sho'rlanish:
                               </p>{" "}
                               <span className="infowindow-span">
-                                {Number(monthData[0].conductivity).toFixed(2)}{" "}
+                                {Number(
+                                  monthlyDataStatistic.monthlyData[0]
+                                    .conductivity
+                                ).toFixed(2)}{" "}
                                 g/l
                               </span>
                             </div>
@@ -772,7 +837,10 @@ const UserData = () => {
                                 Temperatura:
                               </p>{" "}
                               <span className="infowindow-span">
-                                {Number(monthData[0].temp).toFixed(2)} °C
+                                {Number(
+                                  monthlyDataStatistic.monthlyData[0].temp
+                                ).toFixed(2)}{" "}
+                                °C
                               </span>
                             </div>
 
@@ -787,14 +855,17 @@ const UserData = () => {
                                 Oy:
                               </p>{" "}
                               <span className="infowindow-span">
-                                {monthData[0].monthNumber}
+                                {
+                                  monthlyDataStatistic.monthlyData[0]
+                                    .monthNumber
+                                }
                               </span>
                             </div>
                           </div>
                         ) : (
                           <div>
                             <h3 className="fw-semibold text-success fs-6 text-center">
-                              {stationName}
+                              {monthlyDataStatistic.name}
                             </h3>
                             <div className="d-flex align-items-center justify-content-center">
                               <img
@@ -878,13 +949,13 @@ const UserData = () => {
                                 height={12}
                               />
                               <p className="m-0 infowindow-desc ms-1 me-1">
-                                Oy:
+                                Kun:
                               </p>{" "}
                               <span className="infowindow-span">
                                 {
-                                  moment(dailyDataStatistic.dailyData[0].date)
-                                    .format("LL")
-                                    .split(" ")[1]
+                                  dailyDataStatistic.dailyData[0].date.split(
+                                    "-"
+                                  )[2]
                                 }
                               </span>
                             </div>
@@ -1375,17 +1446,18 @@ const UserData = () => {
                         />
                         <div className="d-flex align-items-center ms-auto">
                           <input
-                            type="date"
+                            type="month"
                             className="form-control"
                             id="dateMonth"
                             name="dateDaily"
                             required
                             defaultValue={new Date()
                               .toISOString()
-                              .substring(0, 10)}
-                            onChange={(e) =>
-                              searchTodayDataWithDate(e.target.value)
-                            }
+                              .substring(0, 7)}
+                            onChange={(e) => {
+                              searchDailyDataWithDate(e.target.value);
+                              setValueDailyDataTable(e.target.value);
+                            }}
                           />
 
                           <select
@@ -1431,7 +1503,7 @@ const UserData = () => {
                                   Stantsiya nomi
                                 </th>
                                 <th colSpan={lastDateOfMonth}>
-                                  {new Date().toISOString().substring(0, 7)}
+                                  {valueDailyDataTable}
                                 </th>
                               </tr>
                               <tr>
@@ -1508,20 +1580,6 @@ const UserData = () => {
                           }
                         />
                         <div className="d-flex align-items-center ms-auto">
-                          <input
-                            type="date"
-                            className="form-control"
-                            id="dateMonth"
-                            name="dateDaily"
-                            required
-                            defaultValue={new Date()
-                              .toISOString()
-                              .substring(0, 10)}
-                            onChange={(e) =>
-                              searchTodayDataWithDate(e.target.value)
-                            }
-                          />
-
                           <select
                             onChange={(e) => setValueTodayData(e.target.value)}
                             className="form-select select-user-data-today ms-4"
@@ -1575,7 +1633,7 @@ const UserData = () => {
                               </tr>
                             </thead>
                             <tbody>
-                              {dailyData?.map((e, i) => {
+                              {monthlyData?.map((e, i) => {
                                 return (
                                   <tr
                                     className="tr0"
@@ -1583,21 +1641,19 @@ const UserData = () => {
                                     data-bs-target="#exampleModal"
                                     key={i}
                                     onClick={() => {
-                                      setDailyDataStatistic(e);
+                                      setMonthlyDataStatistic(e);
                                     }}
                                   >
-                                    <td className="sticky" style={{}}>
-                                      {i + 1}
-                                    </td>
+                                    <td className="sticky">{i + 1}</td>
                                     <td
                                       className="text-start sticky fix-with"
                                       style={{ left: "57px" }}
                                     >
                                       {e.name}
                                     </td>
-                                    {valueMonth.map((d, w) => {
-                                      const existedValue = e.dailyData.find(
-                                        (a) => a.date.split("-")[2] == d
+                                    {valueYear.map((d, w) => {
+                                      const existedValue = e.monthlyData.find(
+                                        (a) => a.monthNumber == w + 1
                                       );
 
                                       if (existedValue) {

@@ -149,7 +149,7 @@ const UserLastDataNews = () => {
       : whichData == "yesterday"
       ? yesterdayData.map((e) => e.date.split(" ")[1])
       : whichData == "daily"
-      ? dailyData.map((e) => moment(e.date).format("LL").split(" ")[1])
+      ? dailyData.map((e) => e.date.split("-")[2].slice(0, 2))
       : whichData == "monthly"
       ? monthData.map((e) => e.monthNumber)
       : null;
@@ -665,14 +665,10 @@ const UserLastDataNews = () => {
                                   height={12}
                                 />
                                 <p className="m-0 infowindow-desc ms-1 me-1">
-                                  Oy:
+                                  Kun:
                                 </p>{" "}
                                 <span className="infowindow-span">
-                                  {
-                                    moment(dailyData[0].date)
-                                      .format("LL")
-                                      .split(" ")[1]
-                                  }
+                                  {dailyData[0].date.split("-")[2].slice(0, 2)}
                                 </span>
                               </div>
                             </div>
@@ -899,7 +895,7 @@ const UserLastDataNews = () => {
                           <th scope="col">Sath (sm)</th>
                           <th scope="col">Sho'rlanish (g/l) </th>
                           <th scope="col">Temperatura (°C)</th>
-                          <th scope="col">Sana</th>
+                          <th scope="col">Vaqt</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -982,7 +978,7 @@ const UserLastDataNews = () => {
                           <th scope="col">Sath (sm)</th>
                           <th scope="col">Sho'rlanish (g/l) </th>
                           <th scope="col">Temperatura (°C)</th>
-                          <th scope="col">Oy</th>
+                          <th scope="col">Kun</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -992,9 +988,7 @@ const UserLastDataNews = () => {
                               <td>{Number(e.level).toFixed(2)}</td>
                               <td>{Number(e.conductivity).toFixed(2)}</td>
                               <td>{Number(e.temp).toFixed(2)}</td>
-                              <td>
-                                {moment(e.date).format("LL").split(" ")[1]}
-                              </td>
+                              <td>{e.date.split("-")[2].slice(0, 2)}</td>
                             </tr>
                           );
                         })}
@@ -1059,7 +1053,7 @@ const UserLastDataNews = () => {
                           <th scope="col">Sath (sm)</th>
                           <th scope="col">Sho'rlanish (g/l) </th>
                           <th scope="col">Temperatura (°C)</th>
-                          <th scope="col">Sana</th>
+                          <th scope="col">Vaqt</th>
                         </tr>
                       </thead>
                       <tbody>

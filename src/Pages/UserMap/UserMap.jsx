@@ -88,7 +88,7 @@ const UserMap = () => {
           );
         }
       }
-      console.log(response);
+
       setLastData(response.data);
       setLastDataForList(response.data);
     };
@@ -104,7 +104,6 @@ const UserMap = () => {
   };
 
   const checkStationWorkingOrNot = (value) => {
-    console.log(value);
     const presentDate = new Date();
     let startDate = new Date(value?.date);
     startDate.setHours(startDate.getHours() - 5);
