@@ -101,7 +101,6 @@ const UserDashboard = (prop) => {
       )
         .then((res) => res.json())
         .then((data) => {
-          console.log(data);
           role == "USER"
             ? setViewStation(data.data)
             : setViewStation(data.data);

@@ -27,6 +27,9 @@ const UserLastData = (prop) => {
   const [stationStatistic, settationStatistic] = useState([]);
   const [whichStation, setWhichStation] = useState("allStation");
   const [tableTitle, setTableTitle] = useState("Umumiy stansiyalar soni");
+  const [colorCard, setColorCard] = useState(
+    "user-last-data-list-item-href-blue"
+  );
 
   useEffect(() => {
     const userDashboardFunc = async () => {
@@ -356,6 +359,49 @@ const UserLastData = (prop) => {
     return date;
   };
 
+  const checkStationWorkingOrNot = (value) => {
+    const presentDate = new Date();
+    let startDate = new Date(value?.date);
+    startDate.setHours(startDate.getHours() - 5);
+    console.log(value?.date, "@", startDate);
+    if (value?.level == undefined) {
+      return 404;
+    } else if (
+      startDate.getFullYear() == presentDate.getFullYear() &&
+      startDate.getMonth() == presentDate.getMonth()
+    ) {
+      return presentDate.getDate() - startDate.getDate();
+    } else if (
+      (startDate.getFullYear() == presentDate.getFullYear() &&
+        presentDate.getMonth() - startDate.getMonth() == 1 &&
+        presentDate.getDate() == 2 &&
+        30 <= startDate.getDate() &&
+        startDate.getDate() <= 31) ||
+      (startDate.getFullYear() == presentDate.getFullYear() &&
+        presentDate.getMonth() - startDate.getMonth() == 1 &&
+        presentDate.getDate() == 1 &&
+        29 <= startDate.getDate() &&
+        startDate.getDate() <= 31)
+    ) {
+      return 1;
+    } else if (
+      (startDate.getFullYear() == presentDate.getFullYear() &&
+        presentDate.getMonth() == startDate.getMonth() &&
+        presentDate.getDate() - startDate.getDate() > 3) ||
+      (startDate.getFullYear() == presentDate.getFullYear() &&
+        presentDate.getMonth() - startDate.getMonth() == 1 &&
+        presentDate.getDate() - startDate.getDate() <= 0)
+    ) {
+      return "one month";
+    } else if (
+      startDate.getFullYear() == presentDate.getFullYear() &&
+      presentDate.getMonth() - startDate.getMonth() == 1 &&
+      presentDate.getDate() - startDate.getDate() >= 0
+    ) {
+      return "after one month";
+    }
+  };
+
   return (
     <section className="home-section py-3">
       <div className="container-fluid">
@@ -386,6 +432,7 @@ const UserLastData = (prop) => {
                         onClick={() => {
                           setWhichStation("allStation");
                           setTableTitle("Umumiy stansiyalar soni");
+                          setColorCard("user-last-data-list-item-href-blue");
                         }}
                       >
                         <img
@@ -414,6 +461,7 @@ const UserLastData = (prop) => {
                         onClick={() => {
                           setWhichStation("todayStation");
                           setTableTitle("Bugun ishlayotganlar stansiyalar");
+                          setColorCard("user-last-data-list-item-href-green");
                         }}
                       >
                         <img
@@ -447,6 +495,9 @@ const UserLastData = (prop) => {
                         onClick={() => {
                           setWhichStation("withinThreeDayStation");
                           setTableTitle("3 kun ichida ishlagan stansiyalar");
+                          setColorCard(
+                            "user-last-data-list-item-href-lime-green"
+                          );
                         }}
                       >
                         <img
@@ -481,6 +532,7 @@ const UserLastData = (prop) => {
                         onClick={() => {
                           setWhichStation("totalMonthWorkStation");
                           setTableTitle("Oxirgi oy ishlagan stansiyalar");
+                          setColorCard("user-last-data-list-item-href-yellow");
                         }}
                       >
                         <img
@@ -515,6 +567,7 @@ const UserLastData = (prop) => {
                         onClick={() => {
                           setWhichStation("totalMoreWorkStations");
                           setTableTitle("Uzoq vaqt ishlamagan qurilmalar");
+                          setColorCard("user-last-data-list-item-href-orange");
                         }}
                       >
                         <img
@@ -542,39 +595,6 @@ const UserLastData = (prop) => {
                         </div>
                       </li>
                     ) : null}
-
-                    {/* {stationStatistic?.totalNotDataStationsCount > 0 ? (
-                      <li
-                        className="dashboard-list-item mt-3 d-flex border-red"
-                        onClick={() => {
-                          setWhichStation("notWorkStation");
-                          setTableTitle("Umuman ishlamagan stansiyalar");
-                        }}
-                      >
-                        <img
-                          src={circleRed}
-                          alt="circleGreen"
-                          width={30}
-                          height={30}
-                        />
-                        <div className="ms-2">
-                          <p className="dashboard-list-number m-0">
-                            {stationStatistic?.totalNotDataStationsCount} ta
-                          </p>
-                          <p className="dashboard-list-desc m-0">
-                            Umuman ishlamagan stansiyalar
-                          </p>
-                          <p className="dashboard-list-desc-percentage text-info m-0 text-end">
-                            {(
-                              (stationStatistic?.totalNotDataStationsCount *
-                                100) /
-                              stationStatistic?.totalStationsCount
-                            ).toFixed()}
-                            %
-                          </p>
-                        </div>
-                      </li>
-                    ) : null} */}
                   </ul>
                 </div>
 
@@ -676,37 +696,61 @@ const UserLastData = (prop) => {
                             </div>
                           </div>
 
-                          <span className="user-last-data-list-item-href"></span>
+                          {whichStation == "allStation" ? (
+                            <span
+                              className={
+                                checkStationWorkingOrNot(e.lastData) == 0
+                                  ? "user-last-data-list-item-href-green"
+                                  : checkStationWorkingOrNot(e.lastData) <= 3
+                                  ? "user-last-data-list-item-href-lime-green"
+                                  : checkStationWorkingOrNot(e.lastData) ==
+                                    "one month"
+                                  ? "user-last-data-list-item-href-yellow"
+                                  : checkStationWorkingOrNot(e.lastData) ==
+                                    "after one month"
+                                  ? "user-last-data-list-item-href-orange"
+                                  : "user-last-data-list-item-href-orange"
+                              }
+                            ></span>
+                          ) : (
+                            <span className={colorCard}></span>
+                          )}
 
                           <span className="">
                             <div className="text-end mt-2">
-                              <p className="m-0">
-                                Sath:{" "}
-                                <span className="fw-bold">
+                              <div className="d-flex align-items-center">
+                                <p className="m-0 user-lastdata-level-desc">
+                                  Sath:{" "}
+                                </p>
+                                <span className="fw-bold text-end w-100 user-lastdata-level-desc">
                                   {whichStation == "allStation"
                                     ? Number(e.lastData?.level).toFixed()
                                     : Number(e?.level).toFixed()}{" "}
                                   sm
                                 </span>
-                              </p>
-                              <p className="m-0">
-                                Sho'rlanish:{" "}
-                                <span className="fw-bold">
+                              </div>
+                              <div className="d-flex align-items-center">
+                                <p className="m-0 user-lastdata-level-desc">
+                                  Sho'rlanish:{" "}
+                                </p>
+                                <span className="fw-bold text-end w-100 user-lastdata-level-desc">
                                   {whichStation == "allStation"
                                     ? Number(e.lastData?.conductivity).toFixed()
                                     : Number(e?.conductivity).toFixed()}{" "}
                                   g/l
                                 </span>
-                              </p>
-                              <p className="m-0">
-                                Temperatura:{" "}
-                                <span className="fw-bold">
+                              </div>
+                              <div className="d-flex align-items-center">
+                                <p className="m-0 user-lastdata-level-desc">
+                                  Temperatura:{" "}
+                                </p>
+                                <span className="fw-bold text-end w-100 user-lastdata-level-desc">
                                   {whichStation == "allStation"
                                     ? Number(e.lastData?.temp).toFixed()
                                     : Number(e?.temp).toFixed()}{" "}
                                   °C
                                 </span>
-                              </p>
+                              </div>
                             </div>
 
                             <div className="mt-2">
@@ -734,29 +778,7 @@ const UserLastData = (prop) => {
                   activeClassName={"pagination__link--active"}
                 />
               </div>
-
-              {/* <div className="tab-pane fade profile-overview" id="profile-overview">
-            profile-overview
-          </div>
-
-          <div
-            className="tab-pane fade profile-search profile-search-station"
-            id="profile-search"
-          >
-            profile-search
-          </div> */}
             </div>
-            {/* <div className="userlast-data-bottom-modal">
-          <div className="userlast-data-bottom-modal-header d-flex justify-content-end">
-            <img
-              className="ms-auto"
-              src={close}
-              alt="close"
-              width={20}
-              height={20}
-            />
-          </div>
-        </div> */}
           </div>
         </div>
       </div>

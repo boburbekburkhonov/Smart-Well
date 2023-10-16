@@ -81,11 +81,10 @@ const User = () => {
           <ul className="nav-links">
             <li>
               <a
-                href="#"
                 className={
                   location.pathname == "/user"
-                    ? "sidebar-active sidebar-style"
-                    : "sidebar-style"
+                    ? "sidebar-active sidebar-style cursor-pointer"
+                    : "sidebar-style cursor-pointer"
                 }
                 onClick={() => navigate("/user")}
               >
@@ -102,20 +101,17 @@ const User = () => {
               </a>
               <ul className="sub-menu blank">
                 <li>
-                  <a className="link_name" href="#">
-                    Dashboard
-                  </a>
+                  <a className="link_name cursor-pointer">Dashboard</a>
                 </li>
               </ul>
             </li>
 
             <li className="mt-3">
               <a
-                href="#"
                 className={
                   location.pathname == "/user/lastdata"
-                    ? "sidebar-active sidebar-style"
-                    : "sidebar-style"
+                    ? "sidebar-active sidebar-style cursor-pointer"
+                    : "sidebar-style cursor-pointer"
                 }
                 onClick={() => navigate("/user/lastdata")}
               >
@@ -134,20 +130,17 @@ const User = () => {
               </a>
               <ul className="sub-menu blank">
                 <li>
-                  <a className="link_name" href="#">
-                    Oxirgi ma'lumotlar
-                  </a>
+                  <a className="link_name cursor-pointer">Oxirgi ma'lumotlar</a>
                 </li>
               </ul>
             </li>
 
             <li className="mt-3">
               <a
-                href="#"
                 className={
                   location.pathname == "/user/data"
-                    ? "sidebar-active sidebar-style"
-                    : "sidebar-style"
+                    ? "sidebar-active sidebar-style cursor-pointer"
+                    : "sidebar-style cursor-pointer"
                 }
                 onClick={() => navigate("/user/data")}
               >
@@ -162,20 +155,17 @@ const User = () => {
               </a>
               <ul className="sub-menu blank">
                 <li>
-                  <a className="link_name" href="#">
-                    Ma'lumotlar
-                  </a>
+                  <a className="link_name cursor-pointer">Ma'lumotlar</a>
                 </li>
               </ul>
             </li>
 
             <li className="mt-3">
               <a
-                href="#"
                 className={
                   location.pathname == "/user/map"
-                    ? "sidebar-active sidebar-style"
-                    : "sidebar-style"
+                    ? "sidebar-active sidebar-style cursor-pointer"
+                    : "sidebar-style cursor-pointer"
                 }
                 onClick={() => navigate("/user/map")}
               >
@@ -190,9 +180,7 @@ const User = () => {
               </a>
               <ul className="sub-menu blank">
                 <li>
-                  <a className="link_name" href="#">
-                    Xarita
-                  </a>
+                  <a className="link_name cursor-pointer">Xarita</a>
                 </li>
               </ul>
             </li>
@@ -200,11 +188,10 @@ const User = () => {
             <li className="mt-3">
               <div className="icon-link">
                 <a
-                  href="#"
                   className={
                     location.pathname == "/user/stations"
-                      ? "sidebar-active sidebar-style"
-                      : "sidebar-style"
+                      ? "sidebar-active sidebar-style cursor-pointer"
+                      : "sidebar-style cursor-pointer"
                   }
                   onClick={() => navigate("/user/stations")}
                 >
@@ -224,15 +211,16 @@ const User = () => {
               </div>
               <ul className="sub-menu">
                 <li>
-                  <a className="link_name" href="#">
-                    Stansiyalar
-                  </a>
+                  <a className="link_name cursor-pointer">Stansiyalar</a>
                 </li>
               </ul>
             </li>
 
             <li className="mt-3 logout-item-admin">
-              <a href="#" className="sidebar-style" onClick={logoutFunction}>
+              <a
+                className="sidebar-style cursor-pointer"
+                onClick={logoutFunction}
+              >
                 <img
                   className="bx bx-menu"
                   src={logout}
@@ -244,9 +232,7 @@ const User = () => {
               </a>
               <ul className="sub-menu blank">
                 <li>
-                  <a className="link_name" href="#">
-                    Logout
-                  </a>
+                  <a className="link_name cursor-pointer">Logout</a>
                 </li>
               </ul>
             </li>
