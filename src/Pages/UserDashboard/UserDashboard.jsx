@@ -100,9 +100,12 @@ const UserDashboard = (prop) => {
         }
       )
         .then((res) => res.json())
-        .then((data) =>
-          role == "USER" ? setViewStation(data.data) : setViewStation(data.docs)
-        );
+        .then((data) => {
+          console.log(data);
+          role == "USER"
+            ? setViewStation(data.data)
+            : setViewStation(data.data);
+        });
 
       // ! LIMIT
       fetch(`${api}/last-data/allLastData?page=1&perPage=8`, {
@@ -116,7 +119,7 @@ const UserDashboard = (prop) => {
         .then((data) =>
           role == "USER"
             ? setViewStationLimit(data.data)
-            : setViewStationLimit(data.docs)
+            : setViewStationLimit(data.data)
         );
     } else if (whichStation == "todayStation") {
       fetch(
@@ -550,7 +553,7 @@ const UserDashboard = (prop) => {
           </div>
           <div className="container-fluid p-0">
             <div className="user-dashboard-top-wrapper">
-              <div className="d-flex align-items-center mb-4 pt-3">
+              <div className="d-flex align-items-center mb-3 pt-3">
                 <h1 className="dashboard-heading ms-2">
                   {balanceOrg.length == 0
                     ? `${name} ga biriktirilgan qurilmalar`

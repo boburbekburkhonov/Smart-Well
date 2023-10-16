@@ -131,11 +131,11 @@ const UserLastData = (prop) => {
         },
       })
         .then((res) => res.json())
-        .then((data) =>
+        .then((data) => {
           role == "USER"
             ? `${setAllStation(data.data)} ${setTotalPages(data.totalPages)}`
-            : `${setAllStation(data.docs)} ${setTotalPages(data.totalPages)}`
-        );
+            : `${setAllStation(data.data)} ${setTotalPages(data.totalPages)}`;
+        });
     } else if (whichStation == "todayStation") {
       // ! LIMIT
 
@@ -148,8 +148,13 @@ const UserLastData = (prop) => {
       })
         .then((res) => res.json())
         .then((data) => {
-          setAllStation(data.data.docs);
-          setTotalPages(data.totalPages);
+          role == "USER"
+            ? `${setAllStation(data.data.docs)} ${setTotalPages(
+                data.totalPages
+              )}`
+            : `${setAllStation(data.data.docs)} ${setTotalPages(
+                data.data.totalPages
+              )}`;
         });
     } else if (whichStation == "withinThreeDayStation") {
       // ! LIMIT
@@ -163,8 +168,13 @@ const UserLastData = (prop) => {
       })
         .then((res) => res.json())
         .then((data) => {
-          setAllStation(data.data.docs);
-          setTotalPages(data.totalPages);
+          role == "USER"
+            ? `${setAllStation(data.data.docs)} ${setTotalPages(
+                data.totalPages
+              )}`
+            : `${setAllStation(data.data.docs)} ${setTotalPages(
+                data.data.totalPages
+              )}`;
         });
     } else if (whichStation == "totalMonthWorkStation") {
       // ! LIMIT
@@ -178,8 +188,13 @@ const UserLastData = (prop) => {
       })
         .then((res) => res.json())
         .then((data) => {
-          setAllStation(data.data.docs);
-          setTotalPages(data.totalPages);
+          role == "USER"
+            ? `${setAllStation(data.data.docs)} ${setTotalPages(
+                data.totalPages
+              )}`
+            : `${setAllStation(data.data.docs)} ${setTotalPages(
+                data.data.totalPages
+              )}`;
         });
     } else if (whichStation == "totalMoreWorkStations") {
       // ! LIMIT
@@ -193,8 +208,13 @@ const UserLastData = (prop) => {
       })
         .then((res) => res.json())
         .then((data) => {
-          setAllStation(data.data.docs);
-          setTotalPages(data.totalPages);
+          role == "USER"
+            ? `${setAllStation(data.data.docs)} ${setTotalPages(
+                data.totalPages
+              )}`
+            : `${setAllStation(data.data.docs)} ${setTotalPages(
+                data.data.totalPages
+              )}`;
         });
     } else if (whichStation == "notWorkStation") {
       // ! LIMIT
@@ -208,29 +228,120 @@ const UserLastData = (prop) => {
       })
         .then((res) => res.json())
         .then((data) => {
-          setAllStation(data.data.docs);
-          setTotalPages(data.totalPages);
+          role == "USER"
+            ? `${setAllStation(data.data.docs)} ${setTotalPages(
+                data.totalPages
+              )}`
+            : `${setAllStation(data.data.docs)} ${setTotalPages(
+                data.data.totalPages
+              )}`;
         });
     }
   }, [stationStatistic, whichStation]);
 
   const handlePageChange = (selectedPage) => {
-    fetch(
-      `${api}/last-data/allLastData?page=${
-        selectedPage.selected + 1
-      }&perPage=12`,
-      {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      }
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        setAllStation(data.data);
-      });
+    if (whichStation == "allStation") {
+      // ! LIMIT
+      fetch(
+        `${api}/last-data/allLastData?page=${
+          selectedPage.selected + 1
+        }&perPage=12`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      )
+        .then((res) => res.json())
+        .then((data) =>
+          role == "USER"
+            ? `${setAllStation(data.data)}`
+            : `${setAllStation(data.data)}`
+        );
+    } else if (whichStation == "todayStation") {
+      // ! LIMIT
+
+      fetch(
+        `${api}/last-data/todayWorkStations?page=${
+          selectedPage.selected + 1
+        }&perPage=12`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          setAllStation(data.data.docs);
+        });
+    } else if (whichStation == "withinThreeDayStation") {
+      // ! LIMIT
+
+      fetch(
+        `${api}/last-data/treeDaysWorkStations?page=${
+          selectedPage.selected + 1
+        }&perPage=12`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          setAllStation(data.data.docs);
+        });
+    } else if (whichStation == "totalMonthWorkStation") {
+      // ! LIMIT
+
+      fetch(
+        `${api}/last-data/lastMonthWorkStations?page=${
+          selectedPage.selected + 1
+        }&perPage=12`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          setAllStation(data.data.docs);
+        });
+    } else if (whichStation == "totalMoreWorkStations") {
+      // ! LIMIT
+
+      fetch(
+        `${api}/last-data/moreWorkStations?page=${
+          selectedPage.selected + 1
+        }&perPage=12`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          setAllStation(data.data.docs);
+        });
+    }
   };
 
   const returnFixdDate = (item) => {
@@ -432,7 +543,7 @@ const UserLastData = (prop) => {
                       </li>
                     ) : null}
 
-                    {stationStatistic?.totalNotDataStationsCount > 0 ? (
+                    {/* {stationStatistic?.totalNotDataStationsCount > 0 ? (
                       <li
                         className="dashboard-list-item mt-3 d-flex border-red"
                         onClick={() => {
@@ -463,13 +574,13 @@ const UserLastData = (prop) => {
                           </p>
                         </div>
                       </li>
-                    ) : null}
+                    ) : null} */}
                   </ul>
                 </div>
 
                 <h3 className="m-0 mt-5">{tableTitle} ning ma'lumotlari</h3>
                 <ol className="user-last-data-list list-unstyled m-0 mt-4 mb-4 d-flex align-items-center justify-content-between flex-wrap">
-                  {allStation.map((e, i) => {
+                  {allStation?.map((e, i) => {
                     return (
                       <li className="user-last-data-list-item mt-4" key={i}>
                         <a

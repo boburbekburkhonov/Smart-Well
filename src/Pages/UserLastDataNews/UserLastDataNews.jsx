@@ -385,9 +385,9 @@ const UserLastDataNews = () => {
                 onChange={(e) => setValueStatistic(e.target.value)}
                 className="form-select select-user-last-data"
               >
-                <option value="level">Sathi</option>
-                <option value="conductivity">Sho'rlanish</option>
-                <option value="temp">Temperatura </option>
+                <option value="level">Sathi (sm)</option>
+                <option value="conductivity">Sho'rlanish (g/l)</option>
+                <option value="temp">Temperatura (°C)</option>
               </select>
 
               <div className="char-statistic-frame m-auto">

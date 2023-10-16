@@ -33,6 +33,7 @@ const UserMap = () => {
       "AIzaSyC57hT2pRJZ4Gh85ai0sUjP72i7VYJxTHc&region=UZ&language=uz",
   });
   const center = useMemo(() => location, [count]);
+  const role = window.localStorage.getItem("role");
 
   useEffect(() => {
     const userMap = async () => {
@@ -89,8 +90,9 @@ const UserMap = () => {
         }
       }
 
-      setLastData(response.data);
-      setLastDataForList(response.data);
+      role == "USER"
+        ? `${setLastData(response.data)} ${setLastDataForList(response.data)}`
+        : `${setLastData(response.data)} ${setLastDataForList(response.data)}`;
     };
 
     userMap();

@@ -49,6 +49,7 @@ const UserData = () => {
   const [valueDailyDataTable, setValueDailyDataTable] = useState(
     new Date().toISOString().substring(0, 7)
   );
+  const role = window.localStorage.getItem("role");
   const [whichData, setWhichData] = useState("hour");
   const nameUser = localStorage.getItem("name");
   const valueYear = [
@@ -159,7 +160,6 @@ const UserData = () => {
       );
 
       const responseTodayData = await requestTodayData.json();
-
       setTodayDataMain(responseTodayData.data);
       setTodayData(responseTodayData.data);
 
@@ -178,8 +178,13 @@ const UserData = () => {
 
       const responseLastData = await requestLastData.json();
 
-      setLastDataMain(responseLastData.data);
-      setLastData(responseLastData.data);
+      role == "USER"
+        ? `${setLastData(responseLastData.data)} ${setLastDataMain(
+            responseLastData.data
+          )}`
+        : `${setLastData(responseLastData.data)} ${setLastDataMain(
+            responseLastData.data
+          )}`;
 
       // ! YESTERDAY DATA
       const requestYesterdayData = await fetch(
@@ -195,7 +200,6 @@ const UserData = () => {
       );
 
       const responseYesterdayData = await requestYesterdayData.json();
-
       setYesterdayDataMain(responseYesterdayData.data);
       setYesterdayData(responseYesterdayData.data);
 
@@ -215,7 +219,6 @@ const UserData = () => {
       );
 
       const responseDailyData = await requestDailyData.json();
-
       setDailyDataMain(responseDailyData.data);
       setDailyData(responseDailyData.data);
 
@@ -235,7 +238,6 @@ const UserData = () => {
       );
 
       const responseMonthlyData = await requestMonthlyData.json();
-
       setMonthlyDataMain(responseMonthlyData.stations.data);
       setMonthlyData(responseMonthlyData.stations.data);
     };
@@ -1785,7 +1787,7 @@ const UserData = () => {
                         }
                       />
                       <span className="ms-3 me-3 text-danger">
-                        Soni: {lastData.length} ta
+                        Soni: {lastData?.length} ta
                       </span>
                       <label htmlFor="bbr">
                         <span
@@ -1812,7 +1814,7 @@ const UserData = () => {
 
                   <div className="user-data-right">
                     <ul className="list-group list-unstyled m-0 mt-3">
-                      {lastData.map((e, i) => {
+                      {lastData?.map((e, i) => {
                         return (
                           <li
                             className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
