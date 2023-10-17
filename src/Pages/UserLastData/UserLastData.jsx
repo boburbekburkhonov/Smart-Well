@@ -8,13 +8,14 @@ import circleBlue from "../../assets/images/record.png";
 import circleGreen from "../../assets/images/circle.png";
 import circleGreenBlue from "../../assets/images/circle-green-blue.png";
 import circleOrange from "../../assets/images/circle-orange.png";
-import circleRed from "../../assets/images/circle-red.png";
 import circleYellow from "../../assets/images/circle-yellow.png";
 import "./UserLastData.css";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { api } from "../Api/Api";
 import ReactPaginate from "react-paginate";
+import * as XLSX from "xlsx";
+import excel from "../../assets/images/excel.png";
 
 const UserLastData = (prop) => {
   const [allStation, setAllStation] = useState([]);
@@ -348,12 +349,15 @@ const UserLastData = (prop) => {
   };
 
   const returnFixdDate = (item) => {
-    const date = `${new Date(item).getDate()}/${
-      new Date(item).getMonth() + 1
-    }/${new Date(item).getFullYear()} ${new Date(item).getHours()}:${
-      String(new Date(item).getMinutes()).length == 1
-        ? "0" + new Date(item).getMinutes()
-        : new Date(item).getMinutes()
+    const fixedDate = new Date(item);
+    fixedDate.setHours(fixedDate.getHours() - 5);
+
+    const date = `${fixedDate.getDate()}/${
+      fixedDate.getMonth() + 1
+    }/${fixedDate.getFullYear()} ${fixedDate.getHours()}:${
+      String(fixedDate.getMinutes()).length == 1
+        ? "0" + fixedDate.getMinutes()
+        : fixedDate.getMinutes()
     }`;
 
     return date;
@@ -363,7 +367,7 @@ const UserLastData = (prop) => {
     const presentDate = new Date();
     let startDate = new Date(value?.date);
     startDate.setHours(startDate.getHours() - 5);
-    console.log(value?.date, "@", startDate);
+
     if (value?.level == undefined) {
       return 404;
     } else if (
@@ -399,6 +403,189 @@ const UserLastData = (prop) => {
       presentDate.getDate() - startDate.getDate() >= 0
     ) {
       return "after one month";
+    }
+  };
+
+  // ! SAVE DATA EXCEL
+  const exportDataToExcel = () => {
+    const resultExcelData = [];
+
+    allStation.forEach((e) => {
+      resultExcelData.push({
+        name: whichStation == "allStation" ? e.name : e.stations.name,
+        imei: whichStation == "allStation" ? e.imel : e.stations.imel,
+        battery: whichStation == "allStation" ? e.battery : e.stations.battery,
+        level: whichStation == "allStation" ? e?.lastData.level : e.level,
+        conductivity:
+          whichStation == "allStation"
+            ? e?.lastData.conductivity
+            : e.conductivity,
+        temp: whichStation == "allStation" ? e?.lastData.temp : e.temp,
+        date: whichStation == "allStation" ? e?.lastData.date : e.date,
+        isIntegration:
+          whichStation == "allStation"
+            ? e?.isIntegration == true
+              ? "true"
+              : "false"
+            : e.stations.isIntegration == true
+            ? "true"
+            : "false",
+      });
+    });
+
+    const workBook = XLSX.utils.book_new();
+    const workSheet = XLSX.utils.json_to_sheet(resultExcelData);
+
+    XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
+
+    const fixedDate = new Date();
+
+    const resultDate = `${fixedDate.getDate()}/${
+      fixedDate.getMonth() + 1
+    }/${fixedDate.getFullYear()} ${fixedDate.getHours()}:${
+      String(fixedDate.getMinutes()).length == 1
+        ? "0" + fixedDate.getMinutes()
+        : fixedDate.getMinutes()
+    }`;
+
+    if (resultExcelData.length > 0 && whichStation == "allStation") {
+      XLSX.writeFile(
+        workBook,
+        `${
+          balanceOrg.find((e) => {
+            if (e.id == name) {
+              return e.name;
+            }
+          })?.name
+        } ning umumiy stansiya ma'lumotlari ${resultDate}.xlsx`
+      );
+    } else if (resultExcelData.length > 0 && whichStation == "todayStation") {
+      XLSX.writeFile(
+        workBook,
+        `${
+          balanceOrg.find((e) => {
+            if (e.id == name) {
+              return e.name;
+            }
+          })?.name
+        } ning bugun kelgan ma'lumotlari ${resultDate}.xlsx`
+      );
+    } else if (
+      resultExcelData.length > 0 &&
+      whichStation == "withinThreeDayStation"
+    ) {
+      XLSX.writeFile(
+        workBook,
+        `${
+          balanceOrg.find((e) => {
+            if (e.id == name) {
+              return e.name;
+            }
+          })?.name
+        } ning 3 ichida kelgan ma'lumotlari ${resultDate}.xlsx`
+      );
+    } else if (
+      resultExcelData.length > 0 &&
+      whichStation == "totalMonthWorkStation"
+    ) {
+      XLSX.writeFile(
+        workBook,
+        `${
+          balanceOrg.find((e) => {
+            if (e.id == name) {
+              return e.name;
+            }
+          })?.name
+        } ning so'ngi oy kelgan ma'lumotlari ${resultDate}.xlsx`
+      );
+    } else if (
+      resultExcelData.length > 0 &&
+      whichStation == "totalMoreWorkStations"
+    ) {
+      XLSX.writeFile(
+        workBook,
+        `${
+          balanceOrg.find((e) => {
+            if (e.id == name) {
+              return e.name;
+            }
+          })?.name
+        } ning uzoq ishlamagan stansiya ma'lumotlari ${resultDate}.xlsx`
+      );
+    }
+  };
+
+  const searchStationByInput = (value) => {
+    if (whichStation == "allStation") {
+      fetch(
+        `${api}/last-data/searchLastDataByStation?search=${value}&page=1&perPage=12`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      )
+        .then((res) => res.json())
+        .then((data) => setAllStation(data.data.data));
+    } else if (whichStation == "todayStation") {
+      fetch(
+        `${api}/last-data/searchTodayWorkingStations?search=${value}&page=1&perPage=12`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      )
+        .then((res) => res.json())
+        .then((data) => setAllStation(data.data.docs));
+    } else if (whichStation == "withinThreeDayStation") {
+      fetch(
+        `${api}/last-data/searchThreeDaysWorkingStations?search=${value}&page=1&perPage=12`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      )
+        .then((res) => res.json())
+        .then((data) => setAllStation(data.data.docs));
+    } else if (whichStation == "totalMonthWorkStation") {
+      fetch(
+        `${api}/last-data/searchLastMonthWorkingStations?search=${value}&page=1&perPage=12`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      )
+        .then((res) => res.json())
+        .then((data) => setAllStation(data.data.docs));
+    } else if (whichStation == "totalMoreWorkStations") {
+      fetch(
+        `${api}/last-data/searchMoreWorkingStations?search=${value}&page=1&perPage=12`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      )
+        .then((res) => res.json())
+        .then((data) => setAllStation(data.data.docs));
     }
   };
 
@@ -599,6 +786,22 @@ const UserLastData = (prop) => {
                 </div>
 
                 <h3 className="m-0 mt-5">{tableTitle} ning ma'lumotlari</h3>
+
+                <div className="d-flex align-items-center user-last-data-sort-wrapper justify-content-end">
+                  <input
+                    onChange={(e) => searchStationByInput(e.target.value)}
+                    type="text"
+                    className="form-control user-last-data-search-input"
+                    placeholder="Search..."
+                  />
+
+                  <button
+                    onClick={() => exportDataToExcel()}
+                    className="ms-4 border border-0"
+                  >
+                    <img src={excel} alt="excel" width={26} height={30} />
+                  </button>
+                </div>
                 <ol className="user-last-data-list list-unstyled m-0 mt-4 mb-4 d-flex align-items-center justify-content-between flex-wrap">
                   {allStation?.map((e, i) => {
                     return (
@@ -638,20 +841,20 @@ const UserLastData = (prop) => {
                                   "m-0 me-1 fw-semibold fs-5 " +
                                   ((whichStation == "allStation"
                                     ? e.battery
-                                    : e.stations?.battery) > 70
+                                    : e.stations?.battery) >= 70
                                     ? "text-success"
                                     : (whichStation == "allStation"
                                         ? e.battery
-                                        : e.stations?.battery) <= 70 &&
-                                      whichStation == "allStation"
-                                    ? e.battery
-                                    : e.stations?.battery >= 50
+                                        : e.stations?.battery) < 70 &&
+                                      (whichStation == "allStation"
+                                        ? e.battery
+                                        : e.stations?.battery) >= 30
                                     ? "text-warning"
-                                    : whichStation == "allStation"
-                                    ? e.battery
-                                    : e.stations?.battery < 50
+                                    : (whichStation == "allStation"
+                                        ? e.battery
+                                        : e.stations?.battery) < 30
                                     ? "text-danger"
-                                    : "")
+                                    : " ")
                                 }
                               >
                                 {whichStation == "allStation"
@@ -678,15 +881,15 @@ const UserLastData = (prop) => {
                                     ? batteryPow
                                     : (whichStation == "allStation"
                                         ? e.battery
-                                        : e.stations?.battery >= 30) &
+                                        : e.stations?.battery) < 30
+                                    ? batteryRed
+                                    : (whichStation == "allStation"
+                                        ? e.battery
+                                        : e.stations?.battery >= 30) &&
                                       (whichStation == "allStation"
                                         ? e.battery
                                         : e.stations?.battery < 70)
                                     ? batteryLow
-                                    : (whichStation == "allStation"
-                                        ? e.battery
-                                        : e.stations?.battery) < 30
-                                    ? batteryRed
                                     : null
                                 }
                                 alt="battery"
@@ -695,7 +898,6 @@ const UserLastData = (prop) => {
                               />
                             </div>
                           </div>
-
                           {whichStation == "allStation" ? (
                             <span
                               className={

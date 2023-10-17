@@ -176,3 +176,8 @@
 .user-lastdata-level-desc {
   font-size: 22px;
 }
+
+.user-last-data-search-input {
+  max-width: 250px;
+  width: 100%;
+}

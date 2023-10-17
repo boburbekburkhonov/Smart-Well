@@ -297,7 +297,7 @@ const UserDashboard = (prop) => {
       setTableTitle("Batareya quvvati 90% dan ko'p bo'lgan stansiyalar");
       // ! LIMIT
       fetch(
-        `${api}/stations/batteryGreaterThen?batteryStatus=90&page=1&perPage=8`,
+        `${api}/last-data/getGreaterAndLessByStations?great=90&page=1&perPage=10&less=100`,
         {
           method: "GET",
           headers: {
@@ -312,7 +312,7 @@ const UserDashboard = (prop) => {
 
       // !----------------------------------------------------------------
 
-      fetch(`${api}/stations/batteryGreaterThen?batteryStatus=90`, {
+      fetch(`${api}/last-data/getGreaterAndLessByStations?great=90&less=100`, {
         method: "GET",
         headers: {
           "content-type": "application/json",
@@ -326,7 +326,7 @@ const UserDashboard = (prop) => {
 
       // ! LIMIT
       fetch(
-        `${api}/stations/batteryLessThen?batteryStatus=75&page=1&perPage=8`,
+        `${api}/last-data/getGreaterAndLessByStations?great=75&page=1&perPage=10&less=90`,
         {
           method: "GET",
           headers: {
@@ -341,7 +341,7 @@ const UserDashboard = (prop) => {
 
       // !----------------------------------------------------------------
 
-      fetch(`${api}/stations/batteryLessThen?batteryStatus=75`, {
+      fetch(`${api}/last-data/getGreaterAndLessByStations?great=75&less=90`, {
         method: "GET",
         headers: {
           "content-type": "application/json",
@@ -355,7 +355,7 @@ const UserDashboard = (prop) => {
 
       // ! LIMIT
       fetch(
-        `${api}/stations/batteryLessThen?batteryStatus=50&page=1&perPage=8`,
+        `${api}/last-data/getGreaterAndLessByStations?great=50&page=1&perPage=10&less=75`,
         {
           method: "GET",
           headers: {
@@ -370,7 +370,7 @@ const UserDashboard = (prop) => {
 
       // !----------------------------------------------------------------
 
-      fetch(`${api}/stations/batteryLessThen?batteryStatus=50`, {
+      fetch(`${api}/last-data/getGreaterAndLessByStations?great=50&less=75`, {
         method: "GET",
         headers: {
           "content-type": "application/json",
@@ -384,7 +384,7 @@ const UserDashboard = (prop) => {
 
       // ! LIMIT
       fetch(
-        `${api}/stations/batteryLessThen?batteryStatus=25&page=1&perPage=8`,
+        `${api}/last-data/getGreaterAndLessByStations?great=25&page=1&perPage=10&less=50`,
         {
           method: "GET",
           headers: {
@@ -399,7 +399,36 @@ const UserDashboard = (prop) => {
 
       // !----------------------------------------------------------------
 
-      fetch(`${api}/stations/batteryLessThen?batteryStatus=25`, {
+      fetch(`${api}/last-data/getGreaterAndLessByStations?great=25&less=50`, {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
+          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => setViewStationByChar(data.data.data));
+    } else if (index == 4) {
+      setTableTitle("Batareya quvvati 25% dan kam bo'lgan stansiyalar");
+
+      // ! LIMIT
+      fetch(
+        `${api}/last-data/getGreaterAndLessByStations?great=0&page=1&perPage=10&less=25`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      )
+        .then((res) => res.json())
+        .then((data) => setViewStationByCharLimit(data.data.data));
+
+      // !----------------------------------------------------------------
+
+      fetch(`${api}/last-data/getGreaterAndLessByStations?great=0&less=25`, {
         method: "GET",
         headers: {
           "content-type": "application/json",
@@ -410,7 +439,7 @@ const UserDashboard = (prop) => {
         .then((data) => setViewStationByChar(data.data.data));
     }
   };
-
+  console.log(viewStation);
   return (
     <section className="home-section p-0">
       <div className="container-fluid p-0">
@@ -447,6 +476,9 @@ const UserDashboard = (prop) => {
                             Nomi
                           </th>
                           <th scope="col" className="text-center">
+                            Batareya (%)
+                          </th>
+                          <th scope="col" className="text-center">
                             Sath (sm)
                           </th>
                           <th scope="col" className="text-center">
@@ -457,6 +489,9 @@ const UserDashboard = (prop) => {
                           </th>
                           <th scope="col" className="text-center">
                             {whichStation == "todayStation" ? "Vaqt" : "Sana"}
+                          </th>
+                          <th scope="col" className="text-center">
+                            Vazirlik bilan integratsiya
                           </th>
                         </tr>
                       </thead>
@@ -469,6 +504,12 @@ const UserDashboard = (prop) => {
                                 whichStation == "notWorkStation"
                                   ? e?.name
                                   : e.stations?.name}
+                              </td>
+                              <td className="text-center">
+                                {whichStation == "allStation" ||
+                                whichStation == "notWorkStation"
+                                  ? e?.battery
+                                  : e.stations?.battery}
                               </td>
                               <td className="text-center">
                                 {whichStation == "allStation" &&
@@ -499,6 +540,16 @@ const UserDashboard = (prop) => {
                                   ? filteredStationDate(e.lastData?.date)
                                   : filteredStationDate(e?.date)}
                               </td>
+                              <td className="text-center">
+                                {whichStation == "allStation" ||
+                                whichStation == "notWorkStation"
+                                  ? (e?.isIntegration == true
+                                    ? "Ha"
+                                    : "Yo'q")
+                                  : (e.stations?.isIntegration == true
+                                  ? "Ha"
+                                  : "Yo'q")}
+                              </td>
                             </tr>
                           );
                         })}
@@ -526,6 +577,9 @@ const UserDashboard = (prop) => {
                           <th scope="col" className="text-center">
                             {whichStation == "todayStation" ? "Vaqt" : "Sana"}
                           </th>
+                          <th scope="col" className="text-center">
+                            Vazirlik bilan integratsiya
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -539,6 +593,9 @@ const UserDashboard = (prop) => {
                               <td className="text-center">{e.status}</td>
                               <td className="text-center">
                                 {filteredStationDateByChar(e?.date)}
+                              </td>
+                              <td className="text-center">
+                                {e.isIntegration == true ? "Ha" : "Yo'q"}
                               </td>
                             </tr>
                           );

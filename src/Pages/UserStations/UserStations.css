@@ -274,3 +274,8 @@ font-weight: 400;
 .file-atc-box:last-child{
   margin-bottom: 0;
 }
+
+.user-station-search-battery-label {
+  font-size: 20px;
+  color:#0CC0CE;
+}
