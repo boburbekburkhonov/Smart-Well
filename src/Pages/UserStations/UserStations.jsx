@@ -4,26 +4,28 @@ import "./UserStations.css";
 import circle from "../../assets/images/circle.png";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import close from "../../assets/images/close.png";
 import { Helmet, HelmetProvider } from "react-helmet-async";
-import excelImage from "../../assets/images/excel.png";
-import excelFileImage from "../../assets/images/excel-file.png";
 import moment from "moment";
 import { api } from "../Api/Api";
+import excel from "../../assets/images/excel.png";
+import * as XLSX from "xlsx";
 
 const UserStations = () => {
   const [count, setCount] = useState(0);
   const [allStation, setAllStation] = useState([]);
   const [allStationForBattery, setAllStationForBattery] = useState([]);
+  const [notWorkingStation, setNotWorkingStation] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
-  const [currentPageRegion, setCurrentPageRegion] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalPagesForBattery, setTotalPagesForBattery] = useState(0);
+  const [totalPagesForStatus, setTotalPagesForStatus] = useState(0);
   const [stationOne, setStationOne] = useState({});
   const [stationRegionName, setStationRegionName] = useState();
   const [stationDistrictName, setStationDistrictName] = useState([]);
   const [stationBalansOrgName, setStationBalansOrgName] = useState([]);
   const [sensorType, setSensorType] = useState([]);
+  const [whichData, setWhichData] = useState("allStation");
+  const name = window.localStorage.getItem("name");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -85,6 +87,19 @@ const UserStations = () => {
           setSensorType(data.data);
         }
       });
+    // ! NOT WORKING STATIONS
+    fetch(`${api}/stations/all/statusOff?&page=1&perPage=10`, {
+      method: "GET",
+      headers: {
+        "content-type": "application/json",
+        Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
+      },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setNotWorkingStation(data.data.data);
+        setTotalPagesForStatus(data.data.metadata.lastPage);
+      });
   }, []);
 
   const handlePageChange = (selectedPage) => {
@@ -102,12 +117,51 @@ const UserStations = () => {
   };
 
   const handlePageChangeForBattery = (selectedPage) => {
+    if (
+      nameOrImeiInputMax.value.length == 0 ||
+      nameOrImeiInputMin.value.length == 0
+    ) {
+      fetch(
+        `${api}/stations/all?page=${selectedPage.selected + 1}&perPage=10`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      )
+        .then((res) => res.json())
+        .then((data) => setAllStationForBattery(data.data.data));
+    } else {
+      fetch(
+        `${api}/last-data/getGreaterAndLessByStations?great=${
+          nameOrImeiInputMin.value
+        }&page=${selectedPage.selected + 1}&perPage=10&less=${
+          nameOrImeiInputMax.value
+        }`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          setAllStationForBattery(data.data.data);
+        });
+    }
+  };
+
+  const handlePageChangeForStatus = (selectedPage) => {
     fetch(
-      `${api}/last-data/getGreaterAndLessByStations?great=${
-        nameOrImeiInputMin.value
-      }&page=${selectedPage.selected + 1}&perPage=10&less=${
-        nameOrImeiInputMax.value
-      }`,
+      `${api}/stations/all/statusOff?&page=${
+        selectedPage.selected + 1
+      }&perPage=10`,
       {
         method: "GET",
         headers: {
@@ -118,7 +172,7 @@ const UserStations = () => {
     )
       .then((res) => res.json())
       .then((data) => {
-        setAllStationForBattery(data.data.data);
+        setNotWorkingStation(data.data.data);
       });
   };
 
@@ -235,8 +289,6 @@ const UserStations = () => {
 
     const { nameOrImeiInputMin, nameOrImeiInputMax } = e.target;
 
-    console.log(nameOrImeiInputMin.value, nameOrImeiInputMax.value);
-
     fetch(
       `${api}/last-data/getGreaterAndLessByStations?great=${nameOrImeiInputMin.value}&page=1&perPage=10&less=${nameOrImeiInputMax.value}`,
       {
@@ -252,6 +304,77 @@ const UserStations = () => {
         setAllStationForBattery(data.data.data);
         setTotalPagesForBattery(data.data.metadata.lastPage);
       });
+  };
+
+  // ! SAVE DATA EXCEL
+  const exportDataToExcel = () => {
+    if (whichData == "allStation") {
+      const workBook = XLSX.utils.book_new();
+      const workSheet = XLSX.utils.json_to_sheet(allStation);
+
+      XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
+
+      const fixedDate = new Date();
+
+      const resultDate = `${fixedDate.getDate()}/${
+        fixedDate.getMonth() + 1
+      }/${fixedDate.getFullYear()} ${fixedDate.getHours()}:${
+        String(fixedDate.getMinutes()).length == 1
+          ? "0" + fixedDate.getMinutes()
+          : fixedDate.getMinutes()
+      }`;
+
+      if (allStation.length > 0) {
+        XLSX.writeFile(
+          workBook,
+          `${name} ning umumiy stansiyalari ${resultDate}.xlsx`
+        );
+      }
+    } else if (whichData == "StationForBattery") {
+      const workBook = XLSX.utils.book_new();
+      const workSheet = XLSX.utils.json_to_sheet(allStationForBattery);
+
+      XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
+
+      const fixedDate = new Date();
+
+      const resultDate = `${fixedDate.getDate()}/${
+        fixedDate.getMonth() + 1
+      }/${fixedDate.getFullYear()} ${fixedDate.getHours()}:${
+        String(fixedDate.getMinutes()).length == 1
+          ? "0" + fixedDate.getMinutes()
+          : fixedDate.getMinutes()
+      }`;
+
+      if (allStationForBattery.length > 0) {
+        XLSX.writeFile(
+          workBook,
+          `${name} ning umumiy stansiyalari ${resultDate}.xlsx`
+        );
+      }
+    } else if (whichData == "StationForStatus") {
+      const workBook = XLSX.utils.book_new();
+      const workSheet = XLSX.utils.json_to_sheet(notWorkingStation);
+
+      XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
+
+      const fixedDate = new Date();
+
+      const resultDate = `${fixedDate.getDate()}/${
+        fixedDate.getMonth() + 1
+      }/${fixedDate.getFullYear()} ${fixedDate.getHours()}:${
+        String(fixedDate.getMinutes()).length == 1
+          ? "0" + fixedDate.getMinutes()
+          : fixedDate.getMinutes()
+      }`;
+
+      if (notWorkingStation.length > 0) {
+        XLSX.writeFile(
+          workBook,
+          `${name} ning ishlamagan stansiyalari ${resultDate}.xlsx`
+        );
+      }
+    }
   };
 
   return (
@@ -477,6 +600,7 @@ const UserStations = () => {
                       className="nav-link active"
                       data-bs-toggle="tab"
                       data-bs-target="#profile-users"
+                      onClick={() => setWhichData("allStation")}
                     >
                       Stansiyalar ro'yhati
                     </button>
@@ -487,20 +611,22 @@ const UserStations = () => {
                       className="nav-link"
                       data-bs-toggle="tab"
                       data-bs-target="#profile-overview"
+                      onClick={() => setWhichData("StationForBattery")}
                     >
                       Batareya bo'yicha qidirish
                     </button>
                   </li>
 
-                  {/* <li className="nav-item">
-                <button
-                  className="nav-link"
-                  data-bs-toggle="tab"
-                  data-bs-target="#profile-search"
-                >
-                  Viloyat bo'yicha qidirish
-                </button>
-              </li> */}
+                  <li className="nav-item">
+                    <button
+                      className="nav-link"
+                      data-bs-toggle="tab"
+                      data-bs-target="#profile-search"
+                      onClick={() => setWhichData("StationForStatus")}
+                    >
+                      Ishlamayotganlar stansiyalar
+                    </button>
+                  </li>
                 </ul>
                 <div className="tab-content pt-4">
                   <div
@@ -534,6 +660,15 @@ const UserStations = () => {
                         Qidirish
                       </button>
                     </form>
+
+                    <div className="text-end">
+                      <button
+                        onClick={() => exportDataToExcel()}
+                        className="ms-4 border border-0"
+                      >
+                        <img src={excel} alt="excel" width={26} height={30} />
+                      </button>
+                    </div>
 
                     {allStation?.length == 0 ? (
                       <h3 className="alert alert-dark text-center mt-5">
@@ -645,7 +780,7 @@ const UserStations = () => {
                           name="nameOrImeiInputMin"
                           type="text"
                           className="form-control"
-                          placeholder="25"
+                          placeholder="0"
                           required
                         />
                       </div>
@@ -662,7 +797,7 @@ const UserStations = () => {
                           name="nameOrImeiInputMax"
                           type="text"
                           className="form-control"
-                          placeholder="75"
+                          placeholder="100"
                           required
                         />
                       </div>
@@ -670,6 +805,15 @@ const UserStations = () => {
                         Qidirish
                       </button>
                     </form>
+
+                    <div className="text-end">
+                      <button
+                        onClick={() => exportDataToExcel()}
+                        className="ms-4 border border-0"
+                      >
+                        <img src={excel} alt="excel" width={26} height={30} />
+                      </button>
+                    </div>
 
                     {allStationForBattery?.length == 0 ? (
                       <h3 className="alert alert-dark text-center mt-5">
@@ -746,7 +890,6 @@ const UserStations = () => {
                         </tbody>
                       </table>
                     )}
-                    {console.log(totalPagesForBattery)}
                     <ReactPaginate
                       pageCount={totalPagesForBattery}
                       onPageChange={handlePageChangeForBattery}
@@ -757,178 +900,108 @@ const UserStations = () => {
                     />
                   </div>
 
-                  {/* <div
-                className="tab-pane fade profile-search profile-search-station"
-                id="profile-search"
-              >
-                <form className="search-region-wrapper d-flex align-items-end justify-content-between">
-                  <div className="search-region">
-                    <label
-                      htmlFor="region-select"
-                      className="search-label-region mb-2 cite-main-color"
-                    >
-                      Viloyat
-                    </label>
-                    <select
-                      className="form-select"
-                      name="nameOrImeiSelect"
-                      required
-                      onChange={(e) =>
-                        searchByRegionAndBalansOrg(e.target.value)
-                      }
-                    >
-                      {allRegions?.map((e, i) => {
-                        return (
-                          <option value={e.id} key={i}>
-                            {e.name}
-                          </option>
-                        );
-                      })}
-                    </select>
-                  </div>
+                  {/* STATUS */}
+                  <div
+                    className="tab-pane fade profile-search table-scroll"
+                    id="profile-search"
+                  >
+                    <h3 className="stations-search-heading">
+                      Ishlamayotganlar stansiyalar ro'yhati
+                    </h3>
 
-                  <div className="search-region">
-                    <label
-                      htmlFor="region-select"
-                      className="search-label-region mb-2 cite-main-color"
-                    >
-                      Balans tashkiloti
-                    </label>
-                    <select
-                      className="form-select"
-                      name="nameOrImeiSelect"
-                      required
-                      onChange={(e) => {
-                        setBalansOrgId(e.target.value);
-                        searchStationByBalansOrg(e.target.value);
-                      }}
-                    >
-                      {allBalansOrg?.length &&
-                        allBalansOrg?.map((e, i) => {
-                          return (
-                            <option value={e.id} key={i}>
-                              {e.name}
-                            </option>
-                          );
-                        })}
-                    </select>
-                  </div>
-                </form>
-
-                {allStationByBalansOrg?.length == 0 ? (
-                  <h3 className="alert alert-dark text-center mt-5">
-                    Hozircha stansiya yo'q...
-                  </h3>
-                ) : (
-                  <table className="c-table mt-4">
-                    <thead className="c-table__header">
-                      <tr>
-                        <th className="c-table__col-label text-center">Nomi</th>
-                        <th className="c-table__col-label text-center">Imei</th>
-                        <th className="c-table__col-label text-center">
-                          Status
-                        </th>
-                        <th className="c-table__col-label text-center">
-                          Temperatura
-                        </th>
-                        <th className="c-table__col-label text-center">
-                          Batareya
-                        </th>
-                        <th className="c-table__col-label text-center">
-                          Signal
-                        </th>
-                        <th className="c-table__col-label text-center">
-                          O'zgartirish
-                        </th>
-                        <th className="c-table__col-label text-center">
-                          O'chirish
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="c-table__body">
-                      {allStationByBalansOrg?.map((e, i) => {
-                        return (
-                          <tr
-                            className="fs-6 column-admin-station"
-                            key={i}
-                            data-bs-toggle="modal"
-                            data-bs-target="#exampleModal"
-                            onClick={() => {
-                              getStationWithImei(e.imel);
-                            }}
-                          >
-                            <td className="c-table__cell text-center">
-                              {e.name}
-                            </td>
-                            <td className="c-table__cell text-center">
-                              {e.imel}
-                            </td>
-                            <td className="c-table__cell text-center">
-                              {e.status}
-                            </td>
-                            <td className="c-table__cell text-center">
-                              {e.temperture}
-                            </td>
-                            <td
-                              className={
-                                "c-table__cell text-center " +
-                                (e.battery > 77
-                                  ? "text-success"
-                                  : e.battery <= 77 && e.battery >= 50
-                                  ? "text-warning"
-                                  : e.battery < 50
-                                  ? "text-danger"
-                                  : "")
-                              }
-                            >
-                              {e.battery}%
-                            </td>
-                            <td className="c-table__cell text-center">
-                              {e.signal}
-                            </td>
-                            <td className="c-table__cell text-center">
-                              <button
-                                className="btn-devices-edit"
-                                data-bs-toggle="modal"
-                                data-bs-target="#exampleModalLong"
-                              >
-                                <img
-                                  src="https://cdn-icons-png.flaticon.com/128/9458/9458280.png"
-                                  alt="update"
-                                  width="16"
-                                  height="16"
-                                />
-                              </button>
-                            </td>
-                            <td className="c-table__cell text-center">
-                              <button
-                                className="btn-devices-edit"
-                                data-bs-toggle="modal"
-                                data-bs-target="#staticBackdrop"
-                              >
-                                <img
-                                  src="https://cdn-icons-png.flaticon.com/128/9713/9713380.png"
-                                  alt="update"
-                                  width="16"
-                                  height="16"
-                                />
-                              </button>
-                            </td>
+                    <div className="text-end">
+                      <button
+                        onClick={() => exportDataToExcel()}
+                        className="ms-4 border border-0"
+                      >
+                        <img src={excel} alt="excel" width={26} height={30} />
+                      </button>
+                    </div>
+                    {notWorkingStation?.length == 0 ? (
+                      <h3 className="alert alert-dark text-center mt-5">
+                        Hozircha bunday stansiya yo'q...
+                      </h3>
+                    ) : (
+                      <table className="c-table mt-4">
+                        <thead className="c-table__header">
+                          <tr>
+                            <th className="c-table__col-label text-center">
+                              Nomi
+                            </th>
+                            <th className="c-table__col-label text-center">
+                              Imei
+                            </th>
+                            <th className="c-table__col-label text-center">
+                              Status
+                            </th>
+                            <th className="c-table__col-label text-center">
+                              Temperatura
+                            </th>
+                            <th className="c-table__col-label text-center">
+                              Batareya
+                            </th>
+                            <th className="c-table__col-label text-center">
+                              Signal
+                            </th>
                           </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                )}
+                        </thead>
+                        <tbody className="c-table__body">
+                          {notWorkingStation?.map((e, i) => {
+                            return (
+                              <tr
+                                className="fs-6 column-admin-station"
+                                key={i}
+                                data-bs-toggle="modal"
+                                data-bs-target="#exampleModal"
+                                onClick={() => {
+                                  getStationWithImei(e.imel);
+                                }}
+                              >
+                                <td className="c-table__cell text-center">
+                                  {e.name}
+                                </td>
+                                <td className="c-table__cell text-center">
+                                  {e.imel}
+                                </td>
+                                <td className="c-table__cell text-center">
+                                  {e.status}
+                                </td>
+                                <td className="c-table__cell text-center">
+                                  {e.temperture}
+                                </td>
+                                <td
+                                  className={
+                                    "c-table__cell text-center " +
+                                    (e.battery > 77
+                                      ? "text-success"
+                                      : e.battery <= 77 && e.battery >= 50
+                                      ? "text-warning"
+                                      : e.battery < 50
+                                      ? "text-danger"
+                                      : "")
+                                  }
+                                >
+                                  {e.battery}%
+                                </td>
+                                <td className="c-table__cell text-center">
+                                  {e.signal}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    )}
 
-                <ReactPaginate
-                  pageCount={totalPagesSearch}
-                  onPageChange={handlePageChangeSearch}
-                  forcePage={currentPageRegion}
-                  previousLabel={"<<"}
-                  nextLabel={">>"}
-                />
-              </div> */}
+                    <ReactPaginate
+                      pageCount={totalPagesForStatus}
+                      onPageChange={handlePageChangeForStatus}
+                      forcePage={currentPage}
+                      previousLabel={"<<"}
+                      nextLabel={">>"}
+                      activeClassName={"pagination__link--active"}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

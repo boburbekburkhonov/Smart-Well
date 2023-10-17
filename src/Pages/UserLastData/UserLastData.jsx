@@ -451,24 +451,13 @@ const UserLastData = (prop) => {
     if (resultExcelData.length > 0 && whichStation == "allStation") {
       XLSX.writeFile(
         workBook,
-        `${
-          balanceOrg.find((e) => {
-            if (e.id == name) {
-              return e.name;
-            }
-          })?.name
+        `${name
         } ning umumiy stansiya ma'lumotlari ${resultDate}.xlsx`
       );
     } else if (resultExcelData.length > 0 && whichStation == "todayStation") {
       XLSX.writeFile(
         workBook,
-        `${
-          balanceOrg.find((e) => {
-            if (e.id == name) {
-              return e.name;
-            }
-          })?.name
-        } ning bugun kelgan ma'lumotlari ${resultDate}.xlsx`
+        `${name} ning bugun kelgan ma'lumotlari ${resultDate}.xlsx`
       );
     } else if (
       resultExcelData.length > 0 &&
@@ -476,13 +465,7 @@ const UserLastData = (prop) => {
     ) {
       XLSX.writeFile(
         workBook,
-        `${
-          balanceOrg.find((e) => {
-            if (e.id == name) {
-              return e.name;
-            }
-          })?.name
-        } ning 3 ichida kelgan ma'lumotlari ${resultDate}.xlsx`
+        `${name} ning 3 ichida kelgan ma'lumotlari ${resultDate}.xlsx`
       );
     } else if (
       resultExcelData.length > 0 &&
@@ -490,13 +473,7 @@ const UserLastData = (prop) => {
     ) {
       XLSX.writeFile(
         workBook,
-        `${
-          balanceOrg.find((e) => {
-            if (e.id == name) {
-              return e.name;
-            }
-          })?.name
-        } ning so'ngi oy kelgan ma'lumotlari ${resultDate}.xlsx`
+        `${name} ning so'ngi oy kelgan ma'lumotlari ${resultDate}.xlsx`
       );
     } else if (
       resultExcelData.length > 0 &&
@@ -504,13 +481,7 @@ const UserLastData = (prop) => {
     ) {
       XLSX.writeFile(
         workBook,
-        `${
-          balanceOrg.find((e) => {
-            if (e.id == name) {
-              return e.name;
-            }
-          })?.name
-        } ning uzoq ishlamagan stansiya ma'lumotlari ${resultDate}.xlsx`
+        `${name} ning uzoq ishlamagan stansiya ma'lumotlari ${resultDate}.xlsx`
       );
     }
   };
