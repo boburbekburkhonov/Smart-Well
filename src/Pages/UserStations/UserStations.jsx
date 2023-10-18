@@ -661,10 +661,16 @@ const UserStations = () => {
                       </button>
                     </form>
 
-                    <div className="text-end">
+                    <div
+                      className="d-flex align-items-center justify-content-end cursor-pointer"
+                      onClick={() => exportDataToExcel()}
+                    >
+                      <p className="m-0 p-0 user-station-save-data-desc">
+                        Ma'lumotni saqlash
+                      </p>
                       <button
                         onClick={() => exportDataToExcel()}
-                        className="ms-4 border border-0"
+                        className="ms-3 border border-0"
                       >
                         <img src={excel} alt="excel" width={26} height={30} />
                       </button>
@@ -806,11 +812,15 @@ const UserStations = () => {
                       </button>
                     </form>
 
-                    <div className="text-end">
-                      <button
-                        onClick={() => exportDataToExcel()}
-                        className="ms-4 border border-0"
-                      >
+                    <div
+                      className="text-end d-flex align-items-center justify-content-end cursor-pointer"
+                      onClick={() => exportDataToExcel()}
+                    >
+                      <p className="m-0 p-0 user-station-save-data-desc">
+                        Ma'lumotni saqlash
+                      </p>
+
+                      <button className="ms-3 border border-0">
                         <img src={excel} alt="excel" width={26} height={30} />
                       </button>
                     </div>
@@ -909,11 +919,14 @@ const UserStations = () => {
                       Ishlamayotganlar stansiyalar ro'yhati
                     </h3>
 
-                    <div className="text-end">
-                      <button
-                        onClick={() => exportDataToExcel()}
-                        className="ms-4 border border-0"
-                      >
+                    <div
+                      className="text-end d-flex align-items-center justify-content-end cursor-pointer"
+                      onClick={() => exportDataToExcel()}
+                    >
+                      <p className="m-0 p-0 user-station-save-data-desc">
+                        Ma'lumotni saqlash
+                      </p>
+                      <button className="ms-4 border border-0">
                         <img src={excel} alt="excel" width={26} height={30} />
                       </button>
                     </div>

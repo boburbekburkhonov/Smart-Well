@@ -12,6 +12,8 @@ import fullScreen from "../../assets/images/fullscreen.png";
 import { useEffect } from "react";
 import { api } from "../Api/Api";
 import { useState } from "react";
+import excel from "../../assets/images/excel.png";
+import * as XLSX from "xlsx";
 
 Chartjs.register(ArcElement, Tooltip, Legend);
 
@@ -291,7 +293,7 @@ const UserDashboard = (prop) => {
 
   const onClick = (event) => {
     setDataOrStation("station");
-    const index = getElementsAtEvent(chartRef.current, event)[0].index;
+    const index = getElementsAtEvent(chartRef.current, event)[0]?.index;
 
     if (index == 0) {
       setTableTitle("Batareya quvvati 90% dan ko'p bo'lgan stansiyalar");
@@ -439,7 +441,56 @@ const UserDashboard = (prop) => {
         .then((data) => setViewStationByChar(data.data.data));
     }
   };
-  console.log(viewStation);
+
+  // ! SAVE DATA EXCEL
+  const exportDataToExcel = () => {
+    if (dataOrStation == "data") {
+      const workBook = XLSX.utils.book_new();
+      const workSheet = XLSX.utils.json_to_sheet(viewStation);
+
+      XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
+
+      const fixedDate = new Date();
+
+      const resultDate = `${fixedDate.getDate()}/${
+        fixedDate.getMonth() + 1
+      }/${fixedDate.getFullYear()} ${fixedDate.getHours()}:${
+        String(fixedDate.getMinutes()).length == 1
+          ? "0" + fixedDate.getMinutes()
+          : fixedDate.getMinutes()
+      }`;
+
+      if (viewStation.length > 0) {
+        XLSX.writeFile(
+          workBook,
+          `${name} ning ${tableTitle} ${resultDate}.xlsx`
+        );
+      }
+    } else if (dataOrStation == "station") {
+      const workBook = XLSX.utils.book_new();
+      const workSheet = XLSX.utils.json_to_sheet(viewStationByChar);
+
+      XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
+
+      const fixedDate = new Date();
+
+      const resultDate = `${fixedDate.getDate()}/${
+        fixedDate.getMonth() + 1
+      }/${fixedDate.getFullYear()} ${fixedDate.getHours()}:${
+        String(fixedDate.getMinutes()).length == 1
+          ? "0" + fixedDate.getMinutes()
+          : fixedDate.getMinutes()
+      }`;
+
+      if (viewStationByChar.length > 0) {
+        XLSX.writeFile(
+          workBook,
+          `${name} ning ${tableTitle} ${resultDate}.xlsx`
+        );
+      }
+    }
+  };
+
   return (
     <section className="home-section p-0">
       <div className="container-fluid p-0">
@@ -456,16 +507,30 @@ const UserDashboard = (prop) => {
           >
             <div className="modal-dialog table-dashboard-width modal-dialog-centered  modal-dialog-scrollable">
               <div className="modal-content table-location-scroll">
-                <div className="modal-header">
-                  <h1 className="modal-title fs-4" id="exampleModalLabel">
-                    {tableTitle}
-                  </h1>
-                  <button
-                    type="button"
-                    className="btn-close"
-                    data-bs-dismiss="modal"
-                    aria-label="Close"
-                  ></button>
+                <div className="modal-header d-flex flex-column">
+                  <div className="d-flex align-items-center justify-content-between w-100">
+                    <h1 className="modal-title fs-4" id="exampleModalLabel">
+                      {tableTitle}
+                    </h1>
+
+                    <button
+                      type="button"
+                      className="btn-close"
+                      data-bs-dismiss="modal"
+                      aria-label="Close"
+                    ></button>
+                  </div>
+                  <div
+                    className="ms-auto d-flex align-items-center justify-content-end cursor-pointer mt-2"
+                    onClick={() => exportDataToExcel()}
+                  >
+                    <p className="m-0 p-0 user-station-save-data-desc">
+                      Ma'lumotni saqlash
+                    </p>
+                    <button className="ms-3 border border-0">
+                      <img src={excel} alt="excel" width={26} height={30} />
+                    </button>
+                  </div>
                 </div>
                 <div className="modal-body">
                   {dataOrStation == "data" ? (
@@ -543,12 +608,12 @@ const UserDashboard = (prop) => {
                               <td className="text-center">
                                 {whichStation == "allStation" ||
                                 whichStation == "notWorkStation"
-                                  ? (e?.isIntegration == true
+                                  ? e?.isIntegration == true
                                     ? "Ha"
-                                    : "Yo'q")
-                                  : (e.stations?.isIntegration == true
+                                    : "Yo'q"
+                                  : e.stations?.isIntegration == true
                                   ? "Ha"
-                                  : "Yo'q")}
+                                  : "Yo'q"}
                               </td>
                             </tr>
                           );

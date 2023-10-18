@@ -6,7 +6,8 @@
 }
 
 .tableFlexible {
-	height: 70vh;
+	height: 60vh;
+	margin-bottom: 30px;
 }
 
 .tab-pane-hour {
@@ -129,11 +130,30 @@ td {
 }
 
 .user-data-right {
-	height: 68vh;
+	height: 64vh;
 	overflow: auto;
 }
 
 .select-user-last-data-width {
 	max-width: 195px !important;
 	width: 100% !important;
+}
+
+.user-data-hour-wrapper > ul {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+}
+
+.user-data-hour-wrapper > ul > li {
+  margin: 0 15px;
+  background: #0CC0CE;
+  color: #ffffff;
+  padding: 3px 10px;
+  border-radius: 10px;
+}
+.pagination__link--active {
+  background: #ffffff !important;
+  color: #0CC0CE !important;
+  border: 2px solid #0CC0CE;
 }

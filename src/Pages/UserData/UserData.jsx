@@ -25,8 +25,14 @@ import moment from "moment";
 import "moment/dist/locale/uz-latn";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import ReactPaginate from "react-paginate";
 
 const UserData = () => {
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPagesHour, setTotalPagesHour] = useState(0);
+  const [totalPagesYesterday, setTotalPagesYesterday] = useState(0);
+  const [totalPagesDaily, setTotalPagesDaily] = useState(0);
+  const [totalPagesMonthly, setTotalPagesMonthly] = useState(0);
   const [activeMarker, setActiveMarker] = useState();
   const [searchDate, setSearchDate] = useState(false);
   const [statisticsStation, setStatisticsStation] = useState([]);
@@ -148,7 +154,7 @@ const UserData = () => {
 
       // ! TODAY DATA
       const requestTodayData = await fetch(
-        `${api}/mqttDataWrite/getAllTodayData?page=1&perPage=${responseStationStatistic.data.totalStationsCount}`,
+        `${api}/mqttDataWrite/getAllTodayData?page=1&perPage=10`,
         {
           method: "GET",
           headers: {
@@ -162,6 +168,7 @@ const UserData = () => {
       const responseTodayData = await requestTodayData.json();
       setTodayDataMain(responseTodayData.data);
       setTodayData(responseTodayData.data);
+      setTotalPagesHour(responseTodayData.totalPages);
 
       // ! LAST DATA
       const requestLastData = await fetch(
@@ -188,7 +195,7 @@ const UserData = () => {
 
       // ! YESTERDAY DATA
       const requestYesterdayData = await fetch(
-        `${api}/yesterdayData/getAllYesterdayData?page=1&perPage=${responseStationStatistic.data.totalStationsCount}`,
+        `${api}/yesterdayData/getAllYesterdayData?page=1&perPage=10`,
         {
           method: "GET",
           headers: {
@@ -202,12 +209,11 @@ const UserData = () => {
       const responseYesterdayData = await requestYesterdayData.json();
       setYesterdayDataMain(responseYesterdayData.data);
       setYesterdayData(responseYesterdayData.data);
+      setTotalPagesYesterday(responseYesterdayData.totalPages);
 
       // ! DAILY DATA
       const requestDailyData = await fetch(
-        `${api}/dailyData/getAllStationsDataByMonth?page=1&perPage=${
-          responseStationStatistic.data.totalStationsCount
-        }&month=${new Date().toISOString().substring(0, 7)}`,
+        `${api}/dailyData/getAllStationsDataByMonth?page=1&perPage=10&month=${valueDailyDataTable}`,
         {
           method: "GET",
           headers: {
@@ -221,12 +227,13 @@ const UserData = () => {
       const responseDailyData = await requestDailyData.json();
       setDailyDataMain(responseDailyData.data);
       setDailyData(responseDailyData.data);
+      setTotalPagesDaily(responseDailyData.totalPages);
 
       // ! MONTHLY DATA
       const requestMonthlyData = await fetch(
-        `${api}/monthlyData/getAllStationDataByYear?page=1&perPage=${
-          responseStationStatistic.data.totalStationsCount
-        }&year=${new Date().toISOString().substring(0, 4)}`,
+        `${api}/monthlyData/getAllStationDataByYear?page=1&perPage=10&year=${new Date()
+          .toISOString()
+          .substring(0, 4)}`,
         {
           method: "GET",
           headers: {
@@ -240,6 +247,7 @@ const UserData = () => {
       const responseMonthlyData = await requestMonthlyData.json();
       setMonthlyDataMain(responseMonthlyData.stations.data);
       setMonthlyData(responseMonthlyData.stations.data);
+      setTotalPagesMonthly(responseMonthlyData.stations.totalPages);
     };
 
     getStationFunc();
@@ -350,6 +358,7 @@ const UserData = () => {
   };
 
   const searchTodayDataWithDate = (date) => {
+    console.log(date);
     fetch(
       `${api}/yesterdayData/getAllDataByDay?page=1&perPage=${statisticsStation.totalStationsCount}&day=${date}`,
       {
@@ -362,13 +371,14 @@ const UserData = () => {
     )
       .then((res) => res.json())
       .then((data) => {
+        console.log(data);
         setTodayData(data.data);
       });
   };
 
   const searchDailyDataWithDate = (date) => {
     fetch(
-      `${api}/dailyData/getAllStationsDataByMonth?page=1&perPage=${statisticsStation.totalStationsCount}&month=${date}`,
+      `${api}/dailyData/getAllStationsDataByMonth?page=1&perPage=10&month=${date}`,
       {
         method: "GET",
         headers: {
@@ -381,11 +391,22 @@ const UserData = () => {
       .then((data) => {
         setDailyDataMain(data.data);
         setDailyData(data.data);
+        setTotalPagesDaily(data.totalPages);
       });
   };
 
   // ! SAVE DATA PDF
   const exportNewsByPdf = () => {
+    const fixedDate = new Date();
+
+    const resultDate = `${fixedDate.getDate()}/${
+      fixedDate.getMonth() + 1
+    }/${fixedDate.getFullYear()} ${fixedDate.getHours()}:${
+      String(fixedDate.getMinutes()).length == 1
+        ? "0" + fixedDate.getMinutes()
+        : fixedDate.getMinutes()
+    }`;
+
     const resultTodayDataPdf = [];
 
     todayData.forEach((e) => {
@@ -422,7 +443,7 @@ const UserData = () => {
 
       if (resultTodayDataPdf.length > 0) {
         doc.save(
-          `${nameUser} ga tegishli qurilmalarning bugungi ma'lumotlar.pdf`
+          `${nameUser} ga tegishli qurilmalarning bugungi ma'lumotlar ${resultDate}.pdf`
         );
       }
     } else if (whichData == "daily") {
@@ -455,7 +476,7 @@ const UserData = () => {
       });
 
       if (resultDailyDataPdf.length > 0) {
-        doc.save(`${nameUser} ning kunlik ma'lumotlari.pdf`);
+        doc.save(`${nameUser} ning kunlik ma'lumotlari ${resultDate}.pdf`);
       }
     } else if (whichData == "monthly") {
       const resultMonthlyDataPdf = [];
@@ -487,7 +508,7 @@ const UserData = () => {
       });
 
       if (resultMonthlyDataPdf.length > 0) {
-        doc.save(`${nameUser} ning oylik ma'lumotlari.pdf`);
+        doc.save(`${nameUser} ning oylik ma'lumotlari ${resultDate}.pdf`);
       }
     } else if (whichData == "yesterday") {
       const resultYesterdayDataPdf = [];
@@ -519,13 +540,25 @@ const UserData = () => {
       });
 
       if (resultYesterdayDataPdf.length > 0) {
-        doc.save(`${nameUser} ning kecha kelgan ma'lumotlari.pdf`);
+        doc.save(
+          `${nameUser} ning kecha kelgan ma'lumotlari ${resultDate}.pdf`
+        );
       }
     }
   };
 
   // ! SAVE DATA EXCEL
   const exportDataToExcel = () => {
+    const fixedDate = new Date();
+
+    const resultDate = `${fixedDate.getDate()}/${
+      fixedDate.getMonth() + 1
+    }/${fixedDate.getFullYear()} ${fixedDate.getHours()}:${
+      String(fixedDate.getMinutes()).length == 1
+        ? "0" + fixedDate.getMinutes()
+        : fixedDate.getMinutes()
+    }`;
+
     if (whichData == "hour") {
       const resultTodayData = [];
 
@@ -546,7 +579,10 @@ const UserData = () => {
       XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
 
       if (resultTodayData.length > 0) {
-        XLSX.writeFile(workBook, `${nameUser} ning bugungi ma'lumotlari.xlsx`);
+        XLSX.writeFile(
+          workBook,
+          `${nameUser} ning bugungi ma'lumotlari ${resultDate}.xlsx`
+        );
       }
     } else if (whichData == "daily") {
       const resultDailyData = [];
@@ -568,7 +604,10 @@ const UserData = () => {
       XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
 
       if (resultDailyData.length > 0) {
-        XLSX.writeFile(workBook, `${nameUser} ning kunlik ma'lumotlari.xlsx`);
+        XLSX.writeFile(
+          workBook,
+          `${nameUser} ning kunlik ma'lumotlari ${resultDate}.xlsx`
+        );
       }
     } else if (whichData == "monthly") {
       const resultMonthlyData = [];
@@ -591,7 +630,10 @@ const UserData = () => {
       XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
 
       if (resultMonthlyData.length > 0) {
-        XLSX.writeFile(workBook, `${nameUser} ning oylik ma'lumotlari.xlsx`);
+        XLSX.writeFile(
+          workBook,
+          `${nameUser} ning oylik ma'lumotlari ${resultDate}.xlsx`
+        );
       }
     } else if (whichData == "yesterday") {
       const resultYesterdayData = [];
@@ -616,7 +658,7 @@ const UserData = () => {
       if (resultYesterdayData.length > 0) {
         XLSX.writeFile(
           workBook,
-          `${nameUser} ning kecha kelgan ma'lumotlari.xlsx`
+          `${nameUser} ning kecha kelgan ma'lumotlari ${resultDate}.xlsx`
         );
       }
     }
@@ -661,6 +703,86 @@ const UserData = () => {
     const foundNameMonth = valueYear.find((e, i) => i + 1 == month);
 
     return foundNameMonth;
+  };
+
+  const handlePageChangeHour = (selectedPage) => {
+    fetch(
+      `${api}/mqttDataWrite/getAllTodayData?page=${
+        selectedPage.selected + 1
+      }&perPage=10`,
+      {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
+          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
+        },
+      }
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        setTodayDataMain(data.data);
+        setTodayData(data.data);
+      });
+  };
+
+  const handlePageChangeDaily = (selectedPage) => {
+    fetch(
+      `${api}/dailyData/getAllStationsDataByMonth?page=${
+        selectedPage.selected + 1
+      }&perPage=10&month=${valueDailyDataTable}`,
+      {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
+          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
+        },
+      }
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        setDailyDataMain(data.data);
+        setDailyData(data.data);
+      });
+  };
+
+  const handlePageChangeMonthly = (selectedPage) => {
+    fetch(
+      `${api}/monthlyData/getAllStationDataByYear?page=${
+        selectedPage.selected + 1
+      }&perPage=10&year=${new Date().toISOString().substring(0, 4)}`,
+      {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
+          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
+        },
+      }
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        setMonthlyDataMain(data.stations.data);
+        setMonthlyData(data.stations.data);
+      });
+  };
+
+  const handlePageChangeYesterday = (selectedPage) => {
+    fetch(
+      `${api}/yesterdayData/getAllYesterdayData?page=${
+        selectedPage.selected + 1
+      }&perPage=10`,
+      {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
+          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
+        },
+      }
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        setYesterdayDataMain(data.data);
+        setYesterdayData(data.data);
+      });
   };
 
   return (
@@ -1255,7 +1377,7 @@ const UserData = () => {
                   id="profile-hour"
                 >
                   <div className="containerr">
-                    <div>
+                    <div className="user-data-hour-wrapper">
                       <div className="d-flex justify-content-between align-items-center">
                         <input
                           className="form-control user-lastdata-news-search"
@@ -1268,7 +1390,7 @@ const UserData = () => {
                           }
                         />
                         <div className="d-flex align-items-center ms-auto">
-                          <input
+                          {/* <input
                             type="date"
                             className="form-control"
                             id="dateMonth"
@@ -1281,7 +1403,7 @@ const UserData = () => {
                               searchTodayDataWithDate(e.target.value);
                               setSearchDate(true);
                             }}
-                          />
+                          /> */}
 
                           <select
                             onChange={(e) => setValueTodayData(e.target.value)}
@@ -1392,6 +1514,14 @@ const UserData = () => {
                           </table>
                         </div>
                       </div>
+                      <ReactPaginate
+                        pageCount={totalPagesHour}
+                        onPageChange={handlePageChangeHour}
+                        forcePage={currentPage}
+                        previousLabel={"<<"}
+                        nextLabel={">>"}
+                        activeClassName={"pagination__link--active"}
+                      />
                     </div>
                   </div>
                 </div>
@@ -1402,7 +1532,7 @@ const UserData = () => {
                   id="profile-users-ten"
                 >
                   <div className="containerr">
-                    <div>
+                    <div className="user-data-hour-wrapper">
                       <div className="d-flex justify-content-between align-items-center">
                         <input
                           className="form-control user-lastdata-news-search"
@@ -1516,6 +1646,14 @@ const UserData = () => {
                           </table>
                         </div>
                       </div>
+                      <ReactPaginate
+                        pageCount={totalPagesYesterday}
+                        onPageChange={handlePageChangeYesterday}
+                        forcePage={currentPage}
+                        previousLabel={"<<"}
+                        nextLabel={">>"}
+                        activeClassName={"pagination__link--active"}
+                      />
                     </div>
                   </div>
                 </div>
@@ -1523,7 +1661,7 @@ const UserData = () => {
                 {/* DAILY */}
                 <div className="tab-pane fade profile-users" id="profile-users">
                   <div className="containerr">
-                    <div>
+                    <div className="user-data-hour-wrapper">
                       <div className="d-flex justify-content-between align-items-center">
                         <input
                           className="form-control user-lastdata-news-search"
@@ -1650,6 +1788,14 @@ const UserData = () => {
                           </table>
                         </div>
                       </div>
+                      <ReactPaginate
+                        pageCount={totalPagesDaily}
+                        onPageChange={handlePageChangeDaily}
+                        forcePage={currentPage}
+                        previousLabel={"<<"}
+                        nextLabel={">>"}
+                        activeClassName={"pagination__link--active"}
+                      />
                     </div>
                   </div>
                 </div>
@@ -1660,7 +1806,7 @@ const UserData = () => {
                   id="profile-overview"
                 >
                   <div className="containerr">
-                    <div>
+                    <div className="user-data-hour-wrapper">
                       <div className="d-flex justify-content-between align-items-center">
                         <input
                           className="form-control user-lastdata-news-search"
@@ -1770,6 +1916,15 @@ const UserData = () => {
                           </table>
                         </div>
                       </div>
+
+                      <ReactPaginate
+                        pageCount={totalPagesMonthly}
+                        onPageChange={handlePageChangeMonthly}
+                        forcePage={currentPage}
+                        previousLabel={"<<"}
+                        nextLabel={">>"}
+                        activeClassName={"pagination__link--active"}
+                      />
                     </div>
                   </div>
                 </div>
