@@ -275,12 +275,16 @@ const UserDashboard = (prop) => {
   const options = {};
 
   const filteredStationDate = (item) => {
-    const time = item?.split("T")[1].split(".")[0];
-    const date = item?.split("T")[0].split("-");
-    if (whichStation == "todayStation") {
-      return time;
-    } else if (time != undefined) {
-      return `${date[1]}/${date[2]}/${date[0]} ${time}`;
+    if (item == undefined) {
+      return "-";
+    } else {
+      const time = item?.split("T")[1].split(".")[0];
+      const date = item?.split("T")[0].split("-");
+      if (whichStation == "todayStation") {
+        return time;
+      } else if (time != undefined) {
+        return `${date[1]}/${date[2]}/${date[0]} ${time}`;
+      }
     }
   };
 
@@ -491,6 +495,47 @@ const UserDashboard = (prop) => {
     }
   };
 
+  const checkStationWorkingOrNot = (value) => {
+    const presentDate = new Date();
+    let startDate = new Date(value);
+    startDate.setHours(startDate.getHours() - 5);
+
+    if (value == undefined) {
+      return "undefined";
+    } else if (
+      startDate.getFullYear() == presentDate.getFullYear() &&
+      startDate.getMonth() == presentDate.getMonth()
+    ) {
+      return presentDate.getDate() - startDate.getDate();
+    } else if (
+      (startDate.getFullYear() == presentDate.getFullYear() &&
+        presentDate.getMonth() - startDate.getMonth() == 1 &&
+        presentDate.getDate() == 2 &&
+        30 <= startDate.getDate() &&
+        startDate.getDate() <= 31) ||
+      (startDate.getFullYear() == presentDate.getFullYear() &&
+        presentDate.getMonth() - startDate.getMonth() == 1 &&
+        presentDate.getDate() == 1 &&
+        29 <= startDate.getDate() &&
+        startDate.getDate() <= 31)
+    ) {
+      return 1;
+    } else if (
+      startDate.getFullYear() == presentDate.getFullYear() &&
+      presentDate.getMonth() - startDate.getMonth() == 1 &&
+      presentDate.getDate() - startDate.getDate() <= 0
+    ) {
+      return 5;
+    } else if (
+      (startDate.getFullYear() == presentDate.getFullYear() &&
+        presentDate.getMonth() - startDate.getMonth() >= 1 &&
+        presentDate.getDate() - startDate.getDate() >= 0) ||
+      startDate.getFullYear() <= presentDate.getFullYear()
+    ) {
+      return "after one month";
+    }
+  };
+
   return (
     <section className="home-section p-0">
       <div className="container-fluid p-0">
@@ -532,86 +577,163 @@ const UserDashboard = (prop) => {
                     </button>
                   </div>
                 </div>
-                <div className="modal-body">
+                <div className="modal-body mb-5">
                   {dataOrStation == "data" ? (
                     <table className="table mt-4">
                       <thead>
                         <tr>
-                          <th scope="col" className="text-center">
+                          <th
+                            scope="col"
+                            className="text-center user-dashboard-table-thead fw-bold"
+                          >
                             Nomi
                           </th>
-                          <th scope="col" className="text-center">
+                          <th
+                            scope="col"
+                            className="text-center user-dashboard-table-thead fw-bold"
+                          >
                             Batareya (%)
                           </th>
-                          <th scope="col" className="text-center">
+                          <th
+                            scope="col"
+                            className="text-center user-dashboard-table-thead fw-bold"
+                          >
                             Sath (sm)
                           </th>
-                          <th scope="col" className="text-center">
+                          <th
+                            scope="col"
+                            className="text-center user-dashboard-table-thead fw-bold"
+                          >
                             Sho'rlanish (g/l)
                           </th>
-                          <th scope="col" className="text-center">
+                          <th
+                            scope="col"
+                            className="text-center user-dashboard-table-thead fw-bold"
+                          >
                             Temperatura (°C)
                           </th>
-                          <th scope="col" className="text-center">
+                          <th
+                            scope="col"
+                            className="text-center user-dashboard-table-thead fw-bold"
+                          >
                             {whichStation == "todayStation" ? "Vaqt" : "Sana"}
                           </th>
-                          <th scope="col" className="text-center">
+                          <th
+                            scope="col"
+                            className="text-center user-dashboard-table-thead fw-bold"
+                          >
                             Vazirlik bilan integratsiya
                           </th>
                         </tr>
                       </thead>
                       <tbody>
                         {viewStation?.map((e, i) => {
-                          return (
+                          return whichStation == "allStation" ||
+                            whichStation == "notWorkStation" ? (
                             <tr key={i}>
-                              <td className="text-center">
-                                {whichStation == "allStation" ||
-                                whichStation == "notWorkStation"
-                                  ? e?.name
-                                  : e.stations?.name}
+                              <td className={`text-center fw-bold`}>
+                                {e?.name}
                               </td>
-                              <td className="text-center">
-                                {whichStation == "allStation" ||
-                                whichStation == "notWorkStation"
-                                  ? e?.battery
-                                  : e.stations?.battery}
+                              <td className={`text-center fw-bold`}>
+                                {e?.battery}
                               </td>
-                              <td className="text-center">
-                                {whichStation == "allStation" &&
-                                e.lastData?.level != undefined
+                              <td className={`text-center fw-bold`}>
+                                {e.lastData?.level != undefined
                                   ? Number(e.lastData?.level).toFixed(2)
-                                  : e.level != undefined
-                                  ? Number(e.level).toFixed(2)
                                   : "-"}
                               </td>
-                              <td className="text-center">
-                                {whichStation == "allStation" &&
-                                e.lastData?.conductivity != undefined
+                              <td className={`text-center fw-bold`}>
+                                {e.lastData?.conductivity != undefined
                                   ? Number(e.lastData?.conductivity).toFixed(2)
-                                  : e.conductivity != undefined
-                                  ? Number(e.conductivity).toFixed(2)
                                   : "-"}
                               </td>
-                              <td className="text-center">
-                                {whichStation == "allStation" &&
-                                e.lastData?.temp != undefined
+                              <td className={`text-center fw-bold`}>
+                                {e.lastData?.temp != undefined
                                   ? Number(e.lastData?.temp).toFixed(2)
-                                  : e.temp != undefined
-                                  ? Number(e.temp).toFixed(2)
                                   : "-"}
                               </td>
-                              <td className="text-center">
-                                {whichStation == "allStation"
-                                  ? filteredStationDate(e.lastData?.date)
-                                  : filteredStationDate(e?.date)}
+                              <td
+                                className={`text-center fw-bold ${
+                                  checkStationWorkingOrNot(e.lastData?.date) ==
+                                  0
+                                    ? "color-green"
+                                    : checkStationWorkingOrNot(
+                                        e.lastData?.date
+                                      ) <= 3
+                                    ? "color-azeu"
+                                    : checkStationWorkingOrNot(
+                                        e.lastData?.date
+                                      ) > 3
+                                    ? "color-yellow"
+                                    : checkStationWorkingOrNot(
+                                        e.lastData?.date
+                                      ) == "after one month"
+                                    ? "text-danger"
+                                    : checkStationWorkingOrNot(
+                                        e.lastData?.date
+                                      ) == "undefined"
+                                    ? "text-danger"
+                                    : "text-danger"
+                                }`}
+                              >
+                                {filteredStationDate(e.lastData?.date)}
                               </td>
-                              <td className="text-center">
-                                {whichStation == "allStation" ||
-                                whichStation == "notWorkStation"
-                                  ? e?.isIntegration == true
-                                    ? "Ha"
-                                    : "Yo'q"
-                                  : e.stations?.isIntegration == true
+                              <td
+                                className={`text-center fw-bold ${
+                                  e?.isIntegration == false
+                                    ? "text-danger"
+                                    : null
+                                }`}
+                              >
+                                {e?.isIntegration == true ? "Ha" : "Yo'q"}
+                              </td>
+                            </tr>
+                          ) : (
+                            <tr key={i}>
+                              <td className={`text-center fw-bold`}>
+                                {e?.stations?.name}
+                              </td>
+                              <td className={`text-center fw-bold`}>
+                                {e?.stations?.battery}
+                              </td>
+                              <td className={`text-center fw-bold`}>
+                                {e?.level != undefined
+                                  ? Number(e?.level).toFixed(2)
+                                  : "-"}
+                              </td>
+                              <td className={`text-center fw-bold`}>
+                                {e?.conductivity != undefined
+                                  ? Number(e?.conductivity).toFixed(2)
+                                  : "-"}
+                              </td>
+                              <td className={`text-center fw-bold`}>
+                                {e?.temp != undefined
+                                  ? Number(e?.temp).toFixed(2)
+                                  : "-"}
+                              </td>
+                              <td
+                                className={`text-center fw-bold ${
+                                  whichStation == "todayStation"
+                                    ? "text-success"
+                                    : whichStation == "withinThreeDayStation"
+                                    ? "color-azeu"
+                                    : whichStation == "totalMonthWorkStation"
+                                    ? "color-yellow"
+                                    : whichStation == "totalMoreWorkStations"
+                                    ? "color-orange"
+                                    : null
+                                }`}
+                              >
+                                {filteredStationDate(e?.date)}
+                              </td>
+                              <td
+                                className={`text-center fw-bold ${
+                                  e?.stations?.isIntegration == false
+                                    ? "text-danger"
+                                    : null
+                                }`}
+                              >
+                                {e?.stations?.isIntegration == true
                                   ? "Ha"
                                   : "Yo'q"}
                               </td>
@@ -624,25 +746,46 @@ const UserDashboard = (prop) => {
                     <table className="table mt-4">
                       <thead>
                         <tr>
-                          <th scope="col" className="text-center">
+                          <th
+                            scope="col"
+                            className="text-center user-dashboard-table-thead fw-bold"
+                          >
                             Nomi
                           </th>
-                          <th scope="col" className="text-center">
+                          <th
+                            scope="col"
+                            className="text-center user-dashboard-table-thead fw-bold"
+                          >
                             Imei
                           </th>
-                          <th scope="col" className="text-center">
+                          <th
+                            scope="col"
+                            className="text-center user-dashboard-table-thead fw-bold"
+                          >
                             Batareya (%)
                           </th>
-                          <th scope="col" className="text-center">
+                          <th
+                            scope="col"
+                            className="text-center user-dashboard-table-thead fw-bold"
+                          >
                             Signal
                           </th>
-                          <th scope="col" className="text-center">
+                          <th
+                            scope="col"
+                            className="text-center user-dashboard-table-thead fw-bold"
+                          >
                             Status
                           </th>
-                          <th scope="col" className="text-center">
+                          <th
+                            scope="col"
+                            className="text-center user-dashboard-table-thead fw-bold"
+                          >
                             {whichStation == "todayStation" ? "Vaqt" : "Sana"}
                           </th>
-                          <th scope="col" className="text-center">
+                          <th
+                            scope="col"
+                            className="text-center user-dashboard-table-thead fw-bold"
+                          >
                             Vazirlik bilan integratsiya
                           </th>
                         </tr>
@@ -651,15 +794,27 @@ const UserDashboard = (prop) => {
                         {viewStationByChar?.map((e, i) => {
                           return (
                             <tr key={i}>
-                              <td className="text-center">{e?.name}</td>
-                              <td className="text-center">{e.imel}</td>
-                              <td className="text-center">{e.battery}</td>
-                              <td className="text-center">{e.signal}</td>
-                              <td className="text-center">{e.status}</td>
-                              <td className="text-center">
+                              <td className="text-center fw-bold">{e?.name}</td>
+                              <td className="text-center fw-bold">{e.imel}</td>
+                              <td className="text-center fw-bold">
+                                {e.battery}
+                              </td>
+                              <td className="text-center fw-bold">
+                                {e.signal}
+                              </td>
+                              <td className="text-center fw-bold">
+                                {e.status}
+                              </td>
+                              <td className="text-center fw-bold">
                                 {filteredStationDateByChar(e?.date)}
                               </td>
-                              <td className="text-center">
+                              <td
+                                className={`text-center fw-bold ${
+                                  e.isIntegration == false
+                                    ? "text-danger"
+                                    : null
+                                }`}
+                              >
                                 {e.isIntegration == true ? "Ha" : "Yo'q"}
                               </td>
                             </tr>
@@ -911,19 +1066,34 @@ const UserDashboard = (prop) => {
                   <table className="table mt-4">
                     <thead>
                       <tr>
-                        <th scope="col" className="text-center">
+                        <th
+                          scope="col"
+                          className="text-center user-dashboard-table-thead"
+                        >
                           Nomi
                         </th>
-                        <th scope="col" className="text-center">
+                        <th
+                          scope="col"
+                          className="text-center user-dashboard-table-thead"
+                        >
                           Sath (sm)
                         </th>
-                        <th scope="col" className="text-center">
+                        <th
+                          scope="col"
+                          className="text-center user-dashboard-table-thead"
+                        >
                           Sho'rlanish (g/l)
                         </th>
-                        <th scope="col" className="text-center">
+                        <th
+                          scope="col"
+                          className="text-center user-dashboard-table-thead"
+                        >
                           Temperatura (°C)
                         </th>
-                        <th scope="col" className="text-center">
+                        <th
+                          scope="col"
+                          className="text-center user-dashboard-table-thead"
+                        >
                           {whichStation == "todayStation" ? "Vaqt" : "Sana"}
                         </th>
                       </tr>
@@ -932,13 +1102,13 @@ const UserDashboard = (prop) => {
                       {viewStationLimit?.map((e, i) => {
                         return (
                           <tr key={i}>
-                            <td className="text-center">
+                            <td className="text-center fw-bold">
                               {whichStation == "allStation" ||
                               whichStation == "notWorkStation"
                                 ? e?.name
                                 : e.stations?.name}
                             </td>
-                            <td className="text-center">
+                            <td className="text-center fw-bold">
                               {whichStation == "allStation" &&
                               e.lastData?.level != undefined
                                 ? Number(e.lastData?.level).toFixed(2)
@@ -946,7 +1116,7 @@ const UserDashboard = (prop) => {
                                 ? Number(e.level).toFixed(2)
                                 : "-"}
                             </td>
-                            <td className="text-center">
+                            <td className="text-center fw-bold">
                               {whichStation == "allStation" &&
                               e.lastData?.conductivity != undefined
                                 ? Number(e.lastData?.conductivity).toFixed(2)
@@ -954,7 +1124,7 @@ const UserDashboard = (prop) => {
                                 ? Number(e.conductivity).toFixed(2)
                                 : "-"}
                             </td>
-                            <td className="text-center">
+                            <td className="text-center fw-bold">
                               {whichStation == "allStation" &&
                               e.lastData?.temp != undefined
                                 ? Number(e.lastData?.temp).toFixed(2)
@@ -962,11 +1132,53 @@ const UserDashboard = (prop) => {
                                 ? Number(e.temp).toFixed(2)
                                 : "-"}
                             </td>
-                            <td className="text-center">
-                              {whichStation == "allStation"
-                                ? filteredStationDate(e.lastData?.date)
-                                : filteredStationDate(e?.date)}
-                            </td>
+                            {whichStation == "allStation" ||
+                            whichStation == "notWorkStation" ? (
+                              <td
+                                className={`text-center fw-bold ${
+                                  checkStationWorkingOrNot(e.lastData?.date) ==
+                                  0
+                                    ? "color-green"
+                                    : checkStationWorkingOrNot(
+                                        e.lastData?.date
+                                      ) <= 3
+                                    ? "color-azeu"
+                                    : checkStationWorkingOrNot(
+                                        e.lastData?.date
+                                      ) > 3
+                                    ? "color-yellow"
+                                    : checkStationWorkingOrNot(
+                                        e.lastData?.date
+                                      ) == "after one month"
+                                    ? "text-danger"
+                                    : checkStationWorkingOrNot(
+                                        e.lastData?.date
+                                      ) == "undefined"
+                                    ? "text-danger"
+                                    : "text-danger"
+                                }`}
+                              >
+                                {filteredStationDate(e.lastData?.date)}
+                              </td>
+                            ) : (
+                              <td
+                                className={`text-center fw-bold ${
+                                  whichStation == "todayStation"
+                                    ? "text-success"
+                                    : whichStation == "withinThreeDayStation"
+                                    ? "color-azeu"
+                                    : whichStation == "totalMonthWorkStation"
+                                    ? "color-yellow"
+                                    : whichStation == "totalMoreWorkStations"
+                                    ? "color-orange"
+                                    : whichStation == "notWorkStation"
+                                    ? "text-danger"
+                                    : null
+                                }`}
+                              >
+                                {filteredStationDate(e?.date)}
+                              </td>
+                            )}
                           </tr>
                         );
                       })}
@@ -976,19 +1188,34 @@ const UserDashboard = (prop) => {
                   <table className="table mt-4">
                     <thead>
                       <tr>
-                        <th scope="col" className="text-center">
+                        <th
+                          scope="col"
+                          className="text-center user-dashboard-table-thead"
+                        >
                           Nomi
                         </th>
-                        <th scope="col" className="text-center">
+                        <th
+                          scope="col"
+                          className="text-center user-dashboard-table-thead"
+                        >
                           Batareya (%)
                         </th>
-                        <th scope="col" className="text-center">
+                        <th
+                          scope="col"
+                          className="text-center user-dashboard-table-thead"
+                        >
                           Signal
                         </th>
-                        <th scope="col" className="text-center">
+                        <th
+                          scope="col"
+                          className="text-center user-dashboard-table-thead"
+                        >
                           Status
                         </th>
-                        <th scope="col" className="text-center">
+                        <th
+                          scope="col"
+                          className="text-center user-dashboard-table-thead"
+                        >
                           {whichStation == "todayStation" ? "Vaqt" : "Sana"}
                         </th>
                       </tr>
@@ -997,11 +1224,11 @@ const UserDashboard = (prop) => {
                       {viewStationByCharLimit?.map((e, i) => {
                         return (
                           <tr key={i}>
-                            <td className="text-center">{e?.name}</td>
-                            <td className="text-center">{e.battery}</td>
-                            <td className="text-center">{e.signal}</td>
-                            <td className="text-center">{e.status}</td>
-                            <td className="text-center">
+                            <td className="text-center fw-bold">{e?.name}</td>
+                            <td className="text-center fw-bold">{e.battery}</td>
+                            <td className="text-center fw-bold">{e.signal}</td>
+                            <td className="text-center fw-bold">{e.status}</td>
+                            <td className="text-center fw-bold">
                               {filteredStationDateByChar(e?.date)}
                             </td>
                           </tr>

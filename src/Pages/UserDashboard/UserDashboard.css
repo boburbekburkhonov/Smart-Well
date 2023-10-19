@@ -102,6 +102,26 @@
   padding-bottom: 25px;
 }
 
+.color-green {
+  color: green !important;
+}
+
+.color-azeu {
+  color: #28dec6 !important;
+}
+
+.color-yellow {
+  color:rgb(255, 221, 31) !important;
+}
+
+.color-orange {
+  color:orange !important;
+}
+
+.user-dashboard-table-thead {
+  font-size: 19px !important;
+}
+
 @media (max-width: 1800px) {
 
   .table-char-wrapperlist {

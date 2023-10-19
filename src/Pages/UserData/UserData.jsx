@@ -57,6 +57,10 @@ const UserData = () => {
   );
   const role = window.localStorage.getItem("role");
   const [whichData, setWhichData] = useState("hour");
+  const [searchWithDaily, setSearchWithDaily] = useState(false);
+  const [hourInputValue, setHourInputValue] = useState(
+    new Date().toISOString().substring(0, 10)
+  );
   const nameUser = localStorage.getItem("name");
   const valueYear = [
     "Yanvar",
@@ -172,7 +176,7 @@ const UserData = () => {
 
       // ! LAST DATA
       const requestLastData = await fetch(
-        `${api}/last-data/allLastData?page=1&perPage=${responseStationStatistic.data.totalStationsCount}`,
+        `${api}/last-data/allLastData?page=1&perPage=${responseStationStatistic?.data.totalStationsCount}`,
         {
           method: "GET",
           headers: {
@@ -264,7 +268,7 @@ const UserData = () => {
     }
     setActiveMarker(marker);
   };
-
+  console.log(todayDataStatistic);
   if (!isLoaded) return <div>Loading...</div>;
 
   const labels =
@@ -358,9 +362,8 @@ const UserData = () => {
   };
 
   const searchTodayDataWithDate = (date) => {
-    console.log(date);
     fetch(
-      `${api}/yesterdayData/getAllDataByDay?page=1&perPage=${statisticsStation.totalStationsCount}&day=${date}`,
+      `${api}/yesterdayData/getAllDataByDay?page=1&perPage=10&day=${date}`,
       {
         method: "GET",
         headers: {
@@ -371,8 +374,10 @@ const UserData = () => {
     )
       .then((res) => res.json())
       .then((data) => {
-        console.log(data);
+        setSearchWithDaily(true);
+        setTodayDataMain(data.data);
         setTodayData(data.data);
+        setTotalPagesHour(data.totalPages);
       });
   };
 
@@ -706,23 +711,45 @@ const UserData = () => {
   };
 
   const handlePageChangeHour = (selectedPage) => {
-    fetch(
-      `${api}/mqttDataWrite/getAllTodayData?page=${
-        selectedPage.selected + 1
-      }&perPage=10`,
-      {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      }
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        setTodayDataMain(data.data);
-        setTodayData(data.data);
-      });
+    if (searchWithDaily) {
+      fetch(
+        `${api}/yesterdayData/getAllDataByDay?page=${
+          selectedPage.selected + 1
+        }&perPage=10&day=${hourInputValue}`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          setTodayDataMain(data.data);
+          setTodayData(data.data);
+        });
+    } else {
+      fetch(
+        `${api}/mqttDataWrite/getAllTodayData?page=${
+          selectedPage.selected + 1
+        }&perPage=10`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          setTodayDataMain(data.data);
+          setTodayData(data.data);
+        });
+    }
   };
 
   const handlePageChangeDaily = (selectedPage) => {
@@ -881,7 +908,7 @@ const UserData = () => {
                       options={{ maxWidth: "240" }}
                     >
                       {whichData == "hour" ? (
-                        todayDataStatistic.todayData.length > 0 ? (
+                        todayDataStatistic.todayData?.length > 0 ? (
                           <div>
                             <h3 className="fw-semibold text-success fs-6">
                               {todayDataStatistic.name}
@@ -1316,6 +1343,10 @@ const UserData = () => {
                       setValueTodayData("level");
                       setValueStatistic("level");
                       setSearchDate(false);
+                      setSearchWithDaily(false);
+                      setHourInputValue(
+                        new Date().toISOString().substring(0, 10)
+                      );
                     }}
                   >
                     Soatlik
@@ -1332,6 +1363,10 @@ const UserData = () => {
                       setValueTodayData("level");
                       setValueStatistic("level");
                       setSearchDate(false);
+                      setSearchWithDaily(false);
+                      setHourInputValue(
+                        new Date().toISOString().substring(0, 10)
+                      );
                     }}
                   >
                     Kecha kelgan
@@ -1348,6 +1383,10 @@ const UserData = () => {
                       setValueTodayData("level");
                       setValueStatistic("level");
                       setSearchDate(false);
+                      setSearchWithDaily(false);
+                      setHourInputValue(
+                        new Date().toISOString().substring(0, 10)
+                      );
                     }}
                   >
                     Kunlik
@@ -1364,6 +1403,10 @@ const UserData = () => {
                       setValueTodayData("level");
                       setValueStatistic("level");
                       setSearchDate(false);
+                      setSearchWithDaily(false);
+                      setHourInputValue(
+                        new Date().toISOString().substring(0, 10)
+                      );
                     }}
                   >
                     Oylik
@@ -1390,7 +1433,7 @@ const UserData = () => {
                           }
                         />
                         <div className="d-flex align-items-center ms-auto">
-                          {/* <input
+                          <input
                             type="date"
                             className="form-control"
                             id="dateMonth"
@@ -1401,9 +1444,10 @@ const UserData = () => {
                               .substring(0, 10)}
                             onChange={(e) => {
                               searchTodayDataWithDate(e.target.value);
+                              setHourInputValue(e.target.value);
                               setSearchDate(true);
                             }}
-                          /> */}
+                          />
 
                           <select
                             onChange={(e) => setValueTodayData(e.target.value)}
@@ -1449,9 +1493,7 @@ const UserData = () => {
                                 >
                                   Stantsiya nomi
                                 </th>
-                                <th colSpan="24">
-                                  {new Date().toISOString().substring(0, 10)}
-                                </th>
+                                <th colSpan="24">{hourInputValue}</th>
                               </tr>
                               <tr>
                                 {valueTodayTable.map((r, l) => {
