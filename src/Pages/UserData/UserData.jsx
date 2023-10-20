@@ -268,12 +268,14 @@ const UserData = () => {
     }
     setActiveMarker(marker);
   };
-  console.log(todayDataStatistic);
+
   if (!isLoaded) return <div>Loading...</div>;
 
   const labels =
-    whichData == "hour"
+    whichData == "hour" && !searchWithDaily
       ? todayDataStatistic.todayData?.map((e) => e.date.split(" ")[1])
+      : whichData == "hour" && searchWithDaily
+      ? todayDataStatistic.allData?.map((e) => e.date.split(" ")[1])
       : whichData == "yesterday"
       ? yesterdayDataStatistic.yesterdayData?.map((e) => e.date.split(" ")[1])
       : whichData == "daily"
@@ -294,8 +296,12 @@ const UserData = () => {
       {
         label: "Bugungi ma'lumotlar",
         data:
-          whichData == "hour"
+          whichData == "hour" && !searchWithDaily
             ? todayDataStatistic.todayData?.map((e) =>
+                Number(e[valueStatistic]).toFixed(2)
+              )
+            : whichData == "hour" && searchWithDaily
+            ? todayDataStatistic.allData?.map((e) =>
                 Number(e[valueStatistic]).toFixed(2)
               )
             : whichData == "yesterday"
@@ -907,7 +913,7 @@ const UserData = () => {
                       }}
                       options={{ maxWidth: "240" }}
                     >
-                      {whichData == "hour" ? (
+                      {whichData == "hour" && !searchWithDaily ? (
                         todayDataStatistic.todayData?.length > 0 ? (
                           <div>
                             <h3 className="fw-semibold text-success fs-6">
@@ -984,6 +990,100 @@ const UserData = () => {
                                     " "
                                   )[1]
                                 }
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <h3 className="fw-semibold text-success fs-6 text-center">
+                              {todayDataStatistic.name}
+                            </h3>
+                            <div className="d-flex align-items-center justify-content-center">
+                              <img
+                                src={circleRed}
+                                alt="circleBlue"
+                                width={18}
+                                height={18}
+                              />
+                              <p className="m-0 infowindow-desc-not-last-data fs-6 ms-1 me-1 ">
+                                Ma'lumot kelmagan...
+                              </p>
+                            </div>{" "}
+                          </div>
+                        )
+                      ) : whichData == "hour" && searchWithDaily ? (
+                        todayDataStatistic.allData?.length > 0 ? (
+                          <div>
+                            <h3 className="fw-semibold text-success fs-6">
+                              {todayDataStatistic.name}
+                            </h3>
+
+                            <div className="d-flex align-items-center mb-1">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="infowindow-desc m-0 ms-1 me-1">
+                                Sath:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {Number(
+                                  todayDataStatistic.allData[0].level
+                                ).toFixed(2)}{" "}
+                                sm
+                              </span>
+                            </div>
+
+                            <div className="d-flex align-items-center mb-1">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="m-0 infowindow-desc ms-1 me-1 ">
+                                Sho'rlanish:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {Number(
+                                  todayDataStatistic.allData[0].conductivity
+                                ).toFixed(2)}{" "}
+                                g/l
+                              </span>
+                            </div>
+
+                            <div className="d-flex align-items-center mb-1">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="m-0 infowindow-desc ms-1 me-1 ">
+                                Temperatura:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {Number(
+                                  todayDataStatistic.allData[0].temp
+                                ).toFixed(2)}{" "}
+                                °C
+                              </span>
+                            </div>
+
+                            <div className="d-flex align-items-center">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="m-0 infowindow-desc ms-1 me-1">
+                                Soat:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {todayDataStatistic.allData[0].date}
                               </span>
                             </div>
                           </div>
