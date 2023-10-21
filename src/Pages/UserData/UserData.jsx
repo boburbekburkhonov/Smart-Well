@@ -113,9 +113,69 @@ const UserData = () => {
     valueMonth.push(String(item).length == 1 ? `0${item}` : item);
   }
 
+  const minuteLimit = window.localStorage.getItem("minute");
+  const minuteNow = new Date().getMinutes();
+
   // ! REFRESH TOKEN
   useEffect(() => {
+    let limit;
     const minute = 60 * 1000;
+
+    if (
+      14 + Number(minuteLimit) == minuteNow ||
+      14 + Number(minuteLimit) == minuteNow + 60
+    ) {
+      fetch(`${api}/auth/signin`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          username: window.localStorage.getItem("username"),
+          password: window.localStorage.getItem("password"),
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          console.log(data);
+          if (data.statusCode == 200) {
+            window.localStorage.setItem("minute", minuteNow);
+            window.localStorage.setItem("accessToken", data.data.accessToken);
+            window.localStorage.setItem("refreshToken", data.data.refreshToken);
+          }
+        });
+    } else if (
+      14 + Number(minuteLimit) >= 60 &&
+      minuteNow < Number(minuteLimit)
+    ) {
+      limit = 14 + Number(minuteLimit) - (minuteNow + 60);
+    } else if (
+      14 + Number(minuteLimit) >= minuteNow &&
+      Number(minuteLimit) <= minuteNow
+    ) {
+      limit = 14 + Number(minuteLimit) - minuteNow;
+    } else {
+      fetch(`${api}/auth/signin`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          username: window.localStorage.getItem("username"),
+          password: window.localStorage.getItem("password"),
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          console.log(data);
+          if (data.statusCode == 200) {
+            window.localStorage.setItem("minute", minuteNow);
+            window.localStorage.setItem("accessToken", data.data.accessToken);
+            window.localStorage.setItem("refreshToken", data.data.refreshToken);
+          }
+        });
+    }
+
     setInterval(() => {
       fetch(`${api}/auth/signin`, {
         method: "POST",
@@ -129,12 +189,14 @@ const UserData = () => {
       })
         .then((res) => res.json())
         .then((data) => {
+          console.log(data);
           if (data.statusCode == 200) {
+            window.localStorage.setItem("minute", minuteNow);
             window.localStorage.setItem("accessToken", data.data.accessToken);
             window.localStorage.setItem("refreshToken", data.data.refreshToken);
           }
         });
-    }, minute * 14);
+    }, minute * limit);
   }, []);
 
   useEffect(() => {
@@ -1452,732 +1514,799 @@ const UserData = () => {
           </div>
         </div>
       </div>
+
       <section className="home-section py-3 ">
         <div className="container-fluid">
           <div className="card-user-data card--open">
-            <div className="card-body pt-3">
-              <ul className="nav nav-tabs nav-tabs-bordered">
-                <li className="nav-item">
-                  <button
-                    className="nav-link active"
-                    data-bs-toggle="tab"
-                    data-bs-target="#profile-hour"
-                    onClick={() => {
-                      setWhichData("hour");
-                      setValueTodayData("level");
-                      setValueStatistic("level");
-                      setSearchDate(false);
-                      setSearchWithDaily(false);
-                      setHourInputValue(
-                        new Date().toISOString().substring(0, 10)
-                      );
-                    }}
-                  >
-                    Soatlik
-                  </button>
-                </li>
+            {lastData.length > 0 ? (
+              <div className="card-body pt-3">
+                <ul className="nav nav-tabs nav-tabs-bordered">
+                  <li className="nav-item">
+                    <button
+                      className="nav-link active"
+                      data-bs-toggle="tab"
+                      data-bs-target="#profile-hour"
+                      onClick={() => {
+                        setWhichData("hour");
+                        setValueTodayData("level");
+                        setValueStatistic("level");
+                        setSearchDate(false);
+                        setSearchWithDaily(false);
+                        setHourInputValue(
+                          new Date().toISOString().substring(0, 10)
+                        );
+                      }}
+                    >
+                      Soatlik
+                    </button>
+                  </li>
 
-                <li className="nav-item">
-                  <button
-                    className="nav-link"
-                    data-bs-toggle="tab"
-                    data-bs-target="#profile-users-ten"
-                    onClick={() => {
-                      setWhichData("yesterday");
-                      setValueTodayData("level");
-                      setValueStatistic("level");
-                      setSearchDate(false);
-                      setSearchWithDaily(false);
-                      setHourInputValue(
-                        new Date().toISOString().substring(0, 10)
-                      );
-                    }}
-                  >
-                    Kecha kelgan
-                  </button>
-                </li>
+                  <li className="nav-item">
+                    <button
+                      className="nav-link"
+                      data-bs-toggle="tab"
+                      data-bs-target="#profile-users-ten"
+                      onClick={() => {
+                        setWhichData("yesterday");
+                        setValueTodayData("level");
+                        setValueStatistic("level");
+                        setSearchDate(false);
+                        setSearchWithDaily(false);
+                        setHourInputValue(
+                          new Date().toISOString().substring(0, 10)
+                        );
+                      }}
+                    >
+                      Kecha kelgan
+                    </button>
+                  </li>
 
-                <li className="nav-item">
-                  <button
-                    className="nav-link"
-                    data-bs-toggle="tab"
-                    data-bs-target="#profile-users"
-                    onClick={() => {
-                      setWhichData("daily");
-                      setValueTodayData("level");
-                      setValueStatistic("level");
-                      setSearchDate(false);
-                      setSearchWithDaily(false);
-                      setHourInputValue(
-                        new Date().toISOString().substring(0, 10)
-                      );
-                    }}
-                  >
-                    Kunlik
-                  </button>
-                </li>
+                  <li className="nav-item">
+                    <button
+                      className="nav-link"
+                      data-bs-toggle="tab"
+                      data-bs-target="#profile-users"
+                      onClick={() => {
+                        setWhichData("daily");
+                        setValueTodayData("level");
+                        setValueStatistic("level");
+                        setSearchDate(false);
+                        setSearchWithDaily(false);
+                        setHourInputValue(
+                          new Date().toISOString().substring(0, 10)
+                        );
+                      }}
+                    >
+                      Kunlik
+                    </button>
+                  </li>
 
-                <li className="nav-item">
-                  <button
-                    className="nav-link"
-                    data-bs-toggle="tab"
-                    data-bs-target="#profile-overview"
-                    onClick={() => {
-                      setWhichData("monthly");
-                      setValueTodayData("level");
-                      setValueStatistic("level");
-                      setSearchDate(false);
-                      setSearchWithDaily(false);
-                      setHourInputValue(
-                        new Date().toISOString().substring(0, 10)
-                      );
-                    }}
-                  >
-                    Oylik
-                  </button>
-                </li>
-              </ul>
+                  <li className="nav-item">
+                    <button
+                      className="nav-link"
+                      data-bs-toggle="tab"
+                      data-bs-target="#profile-overview"
+                      onClick={() => {
+                        setWhichData("monthly");
+                        setValueTodayData("level");
+                        setValueStatistic("level");
+                        setSearchDate(false);
+                        setSearchWithDaily(false);
+                        setHourInputValue(
+                          new Date().toISOString().substring(0, 10)
+                        );
+                      }}
+                    >
+                      Oylik
+                    </button>
+                  </li>
+                </ul>
 
-              <div className="tab-content d-flex justify-content-between flex-wrap mt-4">
-                <div
-                  className="tab-pane tab-pane-hour fade show active profile-hour "
-                  id="profile-hour"
-                >
-                  <div className="containerr">
-                    <div className="user-data-hour-wrapper">
-                      <div className="d-flex justify-content-between align-items-center">
-                        <input
-                          className="form-control user-lastdata-news-search"
-                          type="text"
-                          placeholder="Search..."
-                          onChange={(e) =>
-                            searchTodayDataWithInput(
-                              e.target.value.toLowerCase()
-                            )
-                          }
-                        />
-                        <div className="d-flex align-items-center ms-auto">
+                <div className="tab-content d-flex justify-content-between flex-wrap mt-4">
+                  <div
+                    className="tab-pane tab-pane-hour fade show active profile-hour "
+                    id="profile-hour"
+                  >
+                    <div className="containerr">
+                      <div className="user-data-hour-wrapper">
+                        <div className="d-flex justify-content-between align-items-center">
                           <input
-                            type="date"
-                            className="form-control"
-                            id="dateMonth"
-                            name="dateDaily"
-                            required
-                            defaultValue={new Date()
-                              .toISOString()
-                              .substring(0, 10)}
-                            onChange={(e) => {
-                              searchTodayDataWithDate(e.target.value);
-                              setHourInputValue(e.target.value);
-                              setSearchDate(true);
-                            }}
+                            className="form-control user-lastdata-news-search"
+                            type="text"
+                            placeholder="Search..."
+                            onChange={(e) =>
+                              searchTodayDataWithInput(
+                                e.target.value.toLowerCase()
+                              )
+                            }
                           />
-
-                          <select
-                            onChange={(e) => setValueTodayData(e.target.value)}
-                            className="form-select select-user-data-today ms-4"
-                          >
-                            <option value="level">Sathi (sm)</option>
-                            <option value="conductivity">
-                              Sho'rlanish (g/l)
-                            </option>
-                            <option value="temp">Temperatura (°C)</option>
-                          </select>
-                          <button
-                            onClick={() => exportNewsByPdf()}
-                            className="ms-4 border border-0"
-                          >
-                            <img src={pdf} alt="pdf" width={23} height={30} />
-                          </button>
-                          <button
-                            onClick={() => exportDataToExcel()}
-                            className="ms-4 border border-0"
-                          >
-                            <img
-                              src={excel}
-                              alt="excel"
-                              width={26}
-                              height={30}
+                          <div className="d-flex align-items-center ms-auto">
+                            <input
+                              type="date"
+                              className="form-control"
+                              id="dateMonth"
+                              name="dateDaily"
+                              required
+                              defaultValue={new Date()
+                                .toISOString()
+                                .substring(0, 10)}
+                              onChange={(e) => {
+                                searchTodayDataWithDate(e.target.value);
+                                setHourInputValue(e.target.value);
+                                setSearchDate(true);
+                              }}
                             />
-                          </button>
+
+                            <select
+                              onChange={(e) =>
+                                setValueTodayData(e.target.value)
+                              }
+                              className="form-select select-user-data-today ms-4"
+                            >
+                              <option value="level">Sathi (sm)</option>
+                              <option value="conductivity">
+                                Sho'rlanish (g/l)
+                              </option>
+                              <option value="temp">Temperatura (°C)</option>
+                            </select>
+                            <button
+                              onClick={() => exportNewsByPdf()}
+                              className="ms-4 border border-0"
+                            >
+                              <img src={pdf} alt="pdf" width={23} height={30} />
+                            </button>
+                            <button
+                              onClick={() => exportDataToExcel()}
+                              className="ms-4 border border-0"
+                            >
+                              <img
+                                src={excel}
+                                alt="excel"
+                                width={26}
+                                height={30}
+                              />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                      <div className="tableFlexible mt-3">
-                        <div className="tableFlexible-width">
-                          <table className="table-style">
-                            <thead className="">
-                              <tr>
-                                <th rowSpan="2" className="sticky">
-                                  T/R
-                                </th>
-                                <th
-                                  rowSpan="2"
-                                  className="sticky"
-                                  style={{ left: "57px" }}
-                                >
-                                  Stantsiya nomi
-                                </th>
-                                <th colSpan="24">{hourInputValue}</th>
-                              </tr>
-                              <tr>
-                                {valueTodayTable.map((r, l) => {
-                                  return <th key={l}>{r}</th>;
-                                })}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {todayData?.map((e, i) => {
-                                return (
-                                  <tr
-                                    className="tr0"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#exampleModal"
-                                    key={i}
-                                    onClick={() => {
-                                      setTodayDataStatistic(e);
-                                    }}
+                        <div className="tableFlexible mt-3">
+                          <div className="tableFlexible-width">
+                            <table className="table-style">
+                              <thead className="">
+                                <tr>
+                                  <th rowSpan="2" className="sticky">
+                                    T/R
+                                  </th>
+                                  <th
+                                    rowSpan="2"
+                                    className="sticky"
+                                    style={{ left: "57px" }}
                                   >
-                                    <td className="sticky" style={{}}>
-                                      {i + 1}
-                                    </td>
-                                    <td
-                                      className="text-start sticky fix-with"
-                                      style={{ left: "57px" }}
+                                    Stantsiya nomi
+                                  </th>
+                                  <th colSpan="24">{hourInputValue}</th>
+                                </tr>
+                                <tr>
+                                  {valueTodayTable.map((r, l) => {
+                                    return <th key={l}>{r}</th>;
+                                  })}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {todayData?.map((e, i) => {
+                                  return (
+                                    <tr
+                                      className="tr0"
+                                      data-bs-toggle="modal"
+                                      data-bs-target="#exampleModal"
+                                      key={i}
+                                      onClick={() => {
+                                        setTodayDataStatistic(e);
+                                      }}
                                     >
-                                      {e.name}
-                                    </td>
-                                    {valueTodayTable.map((d, w) => {
-                                      const existedValue = !searchDate
-                                        ? e.todayData?.find(
-                                            (a) =>
-                                              a.date
-                                                .split(" ")[1]
-                                                .split(":")[0] == d
-                                          )
-                                        : e.allData?.find(
+                                      <td className="sticky" style={{}}>
+                                        {i + 1}
+                                      </td>
+                                      <td
+                                        className="text-start sticky fix-with"
+                                        style={{ left: "57px" }}
+                                      >
+                                        {e.name}
+                                      </td>
+                                      {valueTodayTable.map((d, w) => {
+                                        const existedValue = !searchDate
+                                          ? e.todayData?.find(
+                                              (a) =>
+                                                a.date
+                                                  .split(" ")[1]
+                                                  .split(":")[0] == d
+                                            )
+                                          : e.allData?.find(
+                                              (a) =>
+                                                a.date
+                                                  .split(" ")[1]
+                                                  .split(":")[0] == d
+                                            );
+
+                                        if (existedValue) {
+                                          return (
+                                            <td key={w}>
+                                              {Number(
+                                                existedValue[valueTodayData]
+                                              ).toFixed(2)}
+                                            </td>
+                                          );
+                                        } else {
+                                          return <td key={w}>-</td>;
+                                        }
+                                      })}
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                        <ReactPaginate
+                          pageCount={totalPagesHour}
+                          onPageChange={handlePageChangeHour}
+                          forcePage={currentPage}
+                          previousLabel={"<<"}
+                          nextLabel={">>"}
+                          activeClassName={"pagination__link--active"}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* YESTERDAY */}
+                  <div
+                    className="tab-pane fade profile-users-ten"
+                    id="profile-users-ten"
+                  >
+                    <div className="containerr">
+                      <div className="user-data-hour-wrapper">
+                        <div className="d-flex justify-content-between align-items-center">
+                          <input
+                            className="form-control user-lastdata-news-search"
+                            type="text"
+                            placeholder="Search..."
+                            onChange={(e) =>
+                              searchTodayDataWithInput(
+                                e.target.value.toLowerCase()
+                              )
+                            }
+                          />
+                          <div className="d-flex align-items-center ms-auto">
+                            <select
+                              onChange={(e) =>
+                                setValueTodayData(e.target.value)
+                              }
+                              className="form-select select-user-data-today ms-4"
+                            >
+                              <option value="level">Sathi (sm)</option>
+                              <option value="conductivity">
+                                Sho'rlanish (g/l)
+                              </option>
+                              <option value="temp">Temperatura (°C)</option>
+                            </select>
+                            <button
+                              onClick={() => exportNewsByPdf()}
+                              className="ms-4 border border-0"
+                            >
+                              <img src={pdf} alt="pdf" width={23} height={30} />
+                            </button>
+                            <button
+                              onClick={() => exportDataToExcel()}
+                              className="ms-4 border border-0"
+                            >
+                              <img
+                                src={excel}
+                                alt="excel"
+                                width={26}
+                                height={30}
+                              />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="tableFlexible mt-3">
+                          <div className="tableFlexible-width">
+                            <table className="table-style">
+                              <thead className="">
+                                <tr>
+                                  <th rowSpan="2" className="sticky">
+                                    T/R
+                                  </th>
+                                  <th
+                                    rowSpan="2"
+                                    className="sticky"
+                                    style={{ left: "57px" }}
+                                  >
+                                    Stantsiya nomi
+                                  </th>
+                                  <th colSpan="24">
+                                    {new Date().toISOString().substring(0, 10)}
+                                  </th>
+                                </tr>
+                                <tr>
+                                  {valueTodayTable.map((r, l) => {
+                                    return <th key={l}>{r}</th>;
+                                  })}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {yesterdayData?.map((e, i) => {
+                                  return (
+                                    <tr
+                                      className="tr0"
+                                      data-bs-toggle="modal"
+                                      data-bs-target="#exampleModal"
+                                      key={i}
+                                      onClick={() => {
+                                        setYesterdayDataStatistic(e);
+                                      }}
+                                    >
+                                      <td className="sticky" style={{}}>
+                                        {i + 1}
+                                      </td>
+                                      <td
+                                        className="text-start sticky fix-with"
+                                        style={{ left: "57px" }}
+                                      >
+                                        {e.name}
+                                      </td>
+                                      {valueTodayTable.map((d, w) => {
+                                        const existedValue =
+                                          e.yesterdayData.find(
                                             (a) =>
                                               a.date
                                                 .split(" ")[1]
                                                 .split(":")[0] == d
                                           );
 
-                                      if (existedValue) {
-                                        return (
-                                          <td key={w}>
-                                            {Number(
-                                              existedValue[valueTodayData]
-                                            ).toFixed(2)}
-                                          </td>
-                                        );
-                                      } else {
-                                        return <td key={w}>-</td>;
-                                      }
-                                    })}
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                      <ReactPaginate
-                        pageCount={totalPagesHour}
-                        onPageChange={handlePageChangeHour}
-                        forcePage={currentPage}
-                        previousLabel={"<<"}
-                        nextLabel={">>"}
-                        activeClassName={"pagination__link--active"}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* YESTERDAY */}
-                <div
-                  className="tab-pane fade profile-users-ten"
-                  id="profile-users-ten"
-                >
-                  <div className="containerr">
-                    <div className="user-data-hour-wrapper">
-                      <div className="d-flex justify-content-between align-items-center">
-                        <input
-                          className="form-control user-lastdata-news-search"
-                          type="text"
-                          placeholder="Search..."
-                          onChange={(e) =>
-                            searchTodayDataWithInput(
-                              e.target.value.toLowerCase()
-                            )
-                          }
-                        />
-                        <div className="d-flex align-items-center ms-auto">
-                          <select
-                            onChange={(e) => setValueTodayData(e.target.value)}
-                            className="form-select select-user-data-today ms-4"
-                          >
-                            <option value="level">Sathi (sm)</option>
-                            <option value="conductivity">
-                              Sho'rlanish (g/l)
-                            </option>
-                            <option value="temp">Temperatura (°C)</option>
-                          </select>
-                          <button
-                            onClick={() => exportNewsByPdf()}
-                            className="ms-4 border border-0"
-                          >
-                            <img src={pdf} alt="pdf" width={23} height={30} />
-                          </button>
-                          <button
-                            onClick={() => exportDataToExcel()}
-                            className="ms-4 border border-0"
-                          >
-                            <img
-                              src={excel}
-                              alt="excel"
-                              width={26}
-                              height={30}
-                            />
-                          </button>
-                        </div>
-                      </div>
-                      <div className="tableFlexible mt-3">
-                        <div className="tableFlexible-width">
-                          <table className="table-style">
-                            <thead className="">
-                              <tr>
-                                <th rowSpan="2" className="sticky">
-                                  T/R
-                                </th>
-                                <th
-                                  rowSpan="2"
-                                  className="sticky"
-                                  style={{ left: "57px" }}
-                                >
-                                  Stantsiya nomi
-                                </th>
-                                <th colSpan="24">
-                                  {new Date().toISOString().substring(0, 10)}
-                                </th>
-                              </tr>
-                              <tr>
-                                {valueTodayTable.map((r, l) => {
-                                  return <th key={l}>{r}</th>;
+                                        if (existedValue) {
+                                          return (
+                                            <td key={w}>
+                                              {Number(
+                                                existedValue[valueTodayData]
+                                              ).toFixed(2)}
+                                            </td>
+                                          );
+                                        } else {
+                                          return <td key={w}>-</td>;
+                                        }
+                                      })}
+                                    </tr>
+                                  );
                                 })}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {yesterdayData?.map((e, i) => {
-                                return (
-                                  <tr
-                                    className="tr0"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#exampleModal"
-                                    key={i}
-                                    onClick={() => {
-                                      setYesterdayDataStatistic(e);
-                                    }}
-                                  >
-                                    <td className="sticky" style={{}}>
-                                      {i + 1}
-                                    </td>
-                                    <td
-                                      className="text-start sticky fix-with"
-                                      style={{ left: "57px" }}
-                                    >
-                                      {e.name}
-                                    </td>
-                                    {valueTodayTable.map((d, w) => {
-                                      const existedValue = e.yesterdayData.find(
-                                        (a) =>
-                                          a.date.split(" ")[1].split(":")[0] ==
-                                          d
-                                      );
-
-                                      if (existedValue) {
-                                        return (
-                                          <td key={w}>
-                                            {Number(
-                                              existedValue[valueTodayData]
-                                            ).toFixed(2)}
-                                          </td>
-                                        );
-                                      } else {
-                                        return <td key={w}>-</td>;
-                                      }
-                                    })}
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
+                        <ReactPaginate
+                          pageCount={totalPagesYesterday}
+                          onPageChange={handlePageChangeYesterday}
+                          forcePage={currentPage}
+                          previousLabel={"<<"}
+                          nextLabel={">>"}
+                          activeClassName={"pagination__link--active"}
+                        />
                       </div>
-                      <ReactPaginate
-                        pageCount={totalPagesYesterday}
-                        onPageChange={handlePageChangeYesterday}
-                        forcePage={currentPage}
-                        previousLabel={"<<"}
-                        nextLabel={">>"}
-                        activeClassName={"pagination__link--active"}
-                      />
                     </div>
                   </div>
-                </div>
 
-                {/* DAILY */}
-                <div className="tab-pane fade profile-users" id="profile-users">
-                  <div className="containerr">
-                    <div className="user-data-hour-wrapper">
-                      <div className="d-flex justify-content-between align-items-center">
-                        <input
-                          className="form-control user-lastdata-news-search"
-                          type="text"
-                          placeholder="Search..."
-                          onChange={(e) =>
-                            searchTodayDataWithInput(
-                              e.target.value.toLowerCase()
-                            )
-                          }
-                        />
-                        <div className="d-flex align-items-center ms-auto">
+                  {/* DAILY */}
+                  <div
+                    className="tab-pane fade profile-users"
+                    id="profile-users"
+                  >
+                    <div className="containerr">
+                      <div className="user-data-hour-wrapper">
+                        <div className="d-flex justify-content-between align-items-center">
                           <input
-                            type="month"
-                            className="form-control"
-                            id="dateMonth"
-                            name="dateDaily"
-                            required
-                            defaultValue={new Date()
-                              .toISOString()
-                              .substring(0, 7)}
-                            onChange={(e) => {
-                              searchDailyDataWithDate(e.target.value);
-                              setValueDailyDataTable(e.target.value);
-                            }}
+                            className="form-control user-lastdata-news-search"
+                            type="text"
+                            placeholder="Search..."
+                            onChange={(e) =>
+                              searchTodayDataWithInput(
+                                e.target.value.toLowerCase()
+                              )
+                            }
                           />
-
-                          <select
-                            onChange={(e) => setValueTodayData(e.target.value)}
-                            className="form-select select-user-data-today ms-4"
-                          >
-                            <option value="level">Sathi (sm)</option>
-                            <option value="conductivity">
-                              Sho'rlanish (g/l)
-                            </option>
-                            <option value="temp">Temperatura (°C)</option>
-                          </select>
-                          <button
-                            onClick={() => exportNewsByPdf()}
-                            className="ms-4 border border-0"
-                          >
-                            <img src={pdf} alt="pdf" width={23} height={30} />
-                          </button>
-                          <button
-                            onClick={() => exportDataToExcel()}
-                            className="ms-4 border border-0"
-                          >
-                            <img
-                              src={excel}
-                              alt="excel"
-                              width={26}
-                              height={30}
+                          <div className="d-flex align-items-center ms-auto">
+                            <input
+                              type="month"
+                              className="form-control"
+                              id="dateMonth"
+                              name="dateDaily"
+                              required
+                              defaultValue={new Date()
+                                .toISOString()
+                                .substring(0, 7)}
+                              onChange={(e) => {
+                                searchDailyDataWithDate(e.target.value);
+                                setValueDailyDataTable(e.target.value);
+                              }}
                             />
-                          </button>
-                        </div>
-                      </div>
-                      <div className="tableFlexible mt-3">
-                        <div className="tableFlexible-width">
-                          <table className="table-style">
-                            <thead className="">
-                              <tr>
-                                <th rowSpan="2" className="sticky">
-                                  T/R
-                                </th>
-                                <th
-                                  rowSpan="2"
-                                  className="sticky"
-                                  style={{ left: "57px" }}
-                                >
-                                  Stantsiya nomi
-                                </th>
-                                <th colSpan={lastDateOfMonth}>
-                                  {valueDailyDataTable}
-                                </th>
-                              </tr>
-                              <tr>
-                                {valueMonth.map((r, l) => {
-                                  return <th key={l}>{r}</th>;
-                                })}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {dailyData?.map((e, i) => {
-                                return (
-                                  <tr
-                                    className="tr0"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#exampleModal"
-                                    key={i}
-                                    onClick={() => {
-                                      setDailyDataStatistic(e);
-                                    }}
-                                  >
-                                    <td className="sticky" style={{}}>
-                                      {i + 1}
-                                    </td>
-                                    <td
-                                      className="text-start sticky fix-with"
-                                      style={{ left: "57px" }}
-                                    >
-                                      {e.name}
-                                    </td>
-                                    {valueMonth.map((d, w) => {
-                                      const existedValue = e.dailyData.find(
-                                        (a) => a.date.split("-")[2] == d
-                                      );
 
-                                      if (existedValue) {
-                                        return (
-                                          <td key={w}>
-                                            {Number(
-                                              existedValue[valueTodayData]
-                                            ).toFixed(2)}
-                                          </td>
-                                        );
-                                      } else {
-                                        return <td key={w}>-</td>;
-                                      }
-                                    })}
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
+                            <select
+                              onChange={(e) =>
+                                setValueTodayData(e.target.value)
+                              }
+                              className="form-select select-user-data-today ms-4"
+                            >
+                              <option value="level">Sathi (sm)</option>
+                              <option value="conductivity">
+                                Sho'rlanish (g/l)
+                              </option>
+                              <option value="temp">Temperatura (°C)</option>
+                            </select>
+                            <button
+                              onClick={() => exportNewsByPdf()}
+                              className="ms-4 border border-0"
+                            >
+                              <img src={pdf} alt="pdf" width={23} height={30} />
+                            </button>
+                            <button
+                              onClick={() => exportDataToExcel()}
+                              className="ms-4 border border-0"
+                            >
+                              <img
+                                src={excel}
+                                alt="excel"
+                                width={26}
+                                height={30}
+                              />
+                            </button>
+                          </div>
                         </div>
+                        <div className="tableFlexible mt-3">
+                          <div className="tableFlexible-width">
+                            <table className="table-style">
+                              <thead className="">
+                                <tr>
+                                  <th rowSpan="2" className="sticky">
+                                    T/R
+                                  </th>
+                                  <th
+                                    rowSpan="2"
+                                    className="sticky"
+                                    style={{ left: "57px" }}
+                                  >
+                                    Stantsiya nomi
+                                  </th>
+                                  <th colSpan={lastDateOfMonth}>
+                                    {valueDailyDataTable}
+                                  </th>
+                                </tr>
+                                <tr>
+                                  {valueMonth.map((r, l) => {
+                                    return <th key={l}>{r}</th>;
+                                  })}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {dailyData?.map((e, i) => {
+                                  return (
+                                    <tr
+                                      className="tr0"
+                                      data-bs-toggle="modal"
+                                      data-bs-target="#exampleModal"
+                                      key={i}
+                                      onClick={() => {
+                                        setDailyDataStatistic(e);
+                                      }}
+                                    >
+                                      <td className="sticky" style={{}}>
+                                        {i + 1}
+                                      </td>
+                                      <td
+                                        className="text-start sticky fix-with"
+                                        style={{ left: "57px" }}
+                                      >
+                                        {e.name}
+                                      </td>
+                                      {valueMonth.map((d, w) => {
+                                        const existedValue = e.dailyData.find(
+                                          (a) => a.date.split("-")[2] == d
+                                        );
+
+                                        if (existedValue) {
+                                          return (
+                                            <td key={w}>
+                                              {Number(
+                                                existedValue[valueTodayData]
+                                              ).toFixed(2)}
+                                            </td>
+                                          );
+                                        } else {
+                                          return <td key={w}>-</td>;
+                                        }
+                                      })}
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                        <ReactPaginate
+                          pageCount={totalPagesDaily}
+                          onPageChange={handlePageChangeDaily}
+                          forcePage={currentPage}
+                          previousLabel={"<<"}
+                          nextLabel={">>"}
+                          activeClassName={"pagination__link--active"}
+                        />
                       </div>
-                      <ReactPaginate
-                        pageCount={totalPagesDaily}
-                        onPageChange={handlePageChangeDaily}
-                        forcePage={currentPage}
-                        previousLabel={"<<"}
-                        nextLabel={">>"}
-                        activeClassName={"pagination__link--active"}
-                      />
                     </div>
                   </div>
-                </div>
 
-                {/* MONTHLY */}
-                <div
-                  className="tab-pane fade profile-overview"
-                  id="profile-overview"
-                >
-                  <div className="containerr">
-                    <div className="user-data-hour-wrapper">
-                      <div className="d-flex justify-content-between align-items-center">
+                  {/* MONTHLY */}
+                  <div
+                    className="tab-pane fade profile-overview"
+                    id="profile-overview"
+                  >
+                    <div className="containerr">
+                      <div className="user-data-hour-wrapper">
+                        <div className="d-flex justify-content-between align-items-center">
+                          <input
+                            className="form-control user-lastdata-news-search"
+                            type="text"
+                            placeholder="Search..."
+                            onChange={(e) =>
+                              searchTodayDataWithInput(
+                                e.target.value.toLowerCase()
+                              )
+                            }
+                          />
+                          <div className="d-flex align-items-center ms-auto">
+                            <select
+                              onChange={(e) =>
+                                setValueTodayData(e.target.value)
+                              }
+                              className="form-select select-user-data-today ms-4"
+                            >
+                              <option value="level">Sathi (sm)</option>
+                              <option value="conductivity">
+                                Sho'rlanish (g/l)
+                              </option>
+                              <option value="temp">Temperatura (°C)</option>
+                            </select>
+                            <button
+                              onClick={() => exportNewsByPdf()}
+                              className="ms-4 border border-0"
+                            >
+                              <img src={pdf} alt="pdf" width={23} height={30} />
+                            </button>
+                            <button
+                              onClick={() => exportDataToExcel()}
+                              className="ms-4 border border-0"
+                            >
+                              <img
+                                src={excel}
+                                alt="excel"
+                                width={26}
+                                height={30}
+                              />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="tableFlexible mt-3">
+                          <div className="tableFlexible-width">
+                            <table className="table-style">
+                              <thead className="">
+                                <tr>
+                                  <th rowSpan="2" className="sticky">
+                                    T/R
+                                  </th>
+                                  <th
+                                    rowSpan="2"
+                                    className="sticky"
+                                    style={{ left: "57px" }}
+                                  >
+                                    Stantsiya nomi
+                                  </th>
+                                  <th colSpan={12}>
+                                    {new Date().toISOString().substring(0, 4)}
+                                  </th>
+                                </tr>
+                                <tr>
+                                  {valueYear.map((r, l) => {
+                                    return <th key={l}>{r}</th>;
+                                  })}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {monthlyData?.map((e, i) => {
+                                  return (
+                                    <tr
+                                      className="tr0"
+                                      data-bs-toggle="modal"
+                                      data-bs-target="#exampleModal"
+                                      key={i}
+                                      onClick={() => {
+                                        setMonthlyDataStatistic(e);
+                                      }}
+                                    >
+                                      <td className="sticky">{i + 1}</td>
+                                      <td
+                                        className="text-start sticky fix-with"
+                                        style={{ left: "57px" }}
+                                      >
+                                        {e.name}
+                                      </td>
+                                      {valueYear.map((d, w) => {
+                                        const existedValue = e.monthlyData.find(
+                                          (a) => a.monthNumber == w + 1
+                                        );
+
+                                        if (existedValue) {
+                                          return (
+                                            <td key={w}>
+                                              {Number(
+                                                existedValue[valueTodayData]
+                                              ).toFixed(2)}
+                                            </td>
+                                          );
+                                        } else {
+                                          return <td key={w}>-</td>;
+                                        }
+                                      })}
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        <ReactPaginate
+                          pageCount={totalPagesMonthly}
+                          onPageChange={handlePageChangeMonthly}
+                          forcePage={currentPage}
+                          previousLabel={"<<"}
+                          nextLabel={">>"}
+                          activeClassName={"pagination__link--active"}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div>
+                      <div className="smartwell-search-user-data d-flex align-items-center flex-wrap">
                         <input
-                          className="form-control user-lastdata-news-search"
-                          type="text"
-                          placeholder="Search..."
+                          id="bbr"
+                          type="input"
+                          placeholder="Kuzatuv stansiyasi..."
+                          className="form-control search-user-data-input-observe"
                           onChange={(e) =>
-                            searchTodayDataWithInput(
-                              e.target.value.toLowerCase()
-                            )
+                            searchLastDataWithInput(e.target.value)
                           }
                         />
-                        <div className="d-flex align-items-center ms-auto">
-                          <select
-                            onChange={(e) => setValueTodayData(e.target.value)}
-                            className="form-select select-user-data-today ms-4"
-                          >
-                            <option value="level">Sathi (sm)</option>
-                            <option value="conductivity">
-                              Sho'rlanish (g/l)
-                            </option>
-                            <option value="temp">Temperatura (°C)</option>
-                          </select>
-                          <button
-                            onClick={() => exportNewsByPdf()}
-                            className="ms-4 border border-0"
-                          >
-                            <img src={pdf} alt="pdf" width={23} height={30} />
-                          </button>
-                          <button
-                            onClick={() => exportDataToExcel()}
-                            className="ms-4 border border-0"
-                          >
-                            <img
-                              src={excel}
-                              alt="excel"
-                              width={26}
-                              height={30}
-                            />
-                          </button>
-                        </div>
-                      </div>
-                      <div className="tableFlexible mt-3">
-                        <div className="tableFlexible-width">
-                          <table className="table-style">
-                            <thead className="">
-                              <tr>
-                                <th rowSpan="2" className="sticky">
-                                  T/R
-                                </th>
-                                <th
-                                  rowSpan="2"
-                                  className="sticky"
-                                  style={{ left: "57px" }}
-                                >
-                                  Stantsiya nomi
-                                </th>
-                                <th colSpan={12}>
-                                  {new Date().toISOString().substring(0, 4)}
-                                </th>
-                              </tr>
-                              <tr>
-                                {valueYear.map((r, l) => {
-                                  return <th key={l}>{r}</th>;
-                                })}
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {monthlyData?.map((e, i) => {
-                                return (
-                                  <tr
-                                    className="tr0"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#exampleModal"
-                                    key={i}
-                                    onClick={() => {
-                                      setMonthlyDataStatistic(e);
-                                    }}
-                                  >
-                                    <td className="sticky">{i + 1}</td>
-                                    <td
-                                      className="text-start sticky fix-with"
-                                      style={{ left: "57px" }}
-                                    >
-                                      {e.name}
-                                    </td>
-                                    {valueYear.map((d, w) => {
-                                      const existedValue = e.monthlyData.find(
-                                        (a) => a.monthNumber == w + 1
-                                      );
-
-                                      if (existedValue) {
-                                        return (
-                                          <td key={w}>
-                                            {Number(
-                                              existedValue[valueTodayData]
-                                            ).toFixed(2)}
-                                          </td>
-                                        );
-                                      } else {
-                                        return <td key={w}>-</td>;
-                                      }
-                                    })}
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-
-                      <ReactPaginate
-                        pageCount={totalPagesMonthly}
-                        onPageChange={handlePageChangeMonthly}
-                        forcePage={currentPage}
-                        previousLabel={"<<"}
-                        nextLabel={">>"}
-                        activeClassName={"pagination__link--active"}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <div>
-                    <div className="smartwell-search-user-data d-flex align-items-center flex-wrap">
-                      <input
-                        id="bbr"
-                        type="input"
-                        placeholder="Kuzatuv stansiyasi..."
-                        className="form-control search-user-data-input-observe"
-                        onChange={(e) =>
-                          searchLastDataWithInput(e.target.value)
-                        }
-                      />
-                      <span className="ms-3 me-3 text-danger">
-                        Soni: {lastData?.length} ta
-                      </span>
-                      <label htmlFor="bbr">
-                        <span
-                          role="img"
-                          aria-label="search"
-                          className="anticon anticon-search"
-                          style={{ color: "rgb(110, 139, 245)" }}
-                        >
-                          <svg
-                            viewBox="64 64 896 896"
-                            focusable="false"
-                            data-icon="search"
-                            width="1em"
-                            height="1em"
-                            fill="currentColor"
-                            aria-hidden="true"
-                          >
-                            <path d="M909.6 854.5L649.9 594.8C690.2 542.7 712 479 712 412c0-80.2-31.3-155.4-87.9-212.1-56.6-56.7-132-87.9-212.1-87.9s-155.5 31.3-212.1 87.9C143.2 256.5 112 331.8 112 412c0 80.1 31.3 155.5 87.9 212.1C256.5 680.8 331.8 712 412 712c67 0 130.6-21.8 182.7-62l259.7 259.6a8.2 8.2 0 0011.6 0l43.6-43.5a8.2 8.2 0 000-11.6zM570.4 570.4C528 612.7 471.8 636 412 636s-116-23.3-158.4-65.6C211.3 528 188 471.8 188 412s23.3-116.1 65.6-158.4C296 211.3 352.2 188 412 188s116.1 23.2 158.4 65.6S636 352.2 636 412s-23.3 116.1-65.6 158.4z"></path>
-                          </svg>
+                        <span className="ms-3 me-3 text-danger">
+                          Soni: {lastData?.length} ta
                         </span>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div className="user-data-right">
-                    <ul className="list-group list-unstyled m-0 mt-3">
-                      {lastData?.map((e, i) => {
-                        return (
-                          <li
-                            className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-                            key={i}
+                        <label htmlFor="bbr">
+                          <span
+                            role="img"
+                            aria-label="search"
+                            className="anticon anticon-search"
+                            style={{ color: "rgb(110, 139, 245)" }}
                           >
-                            <div className="d-flex align-items-center">
-                              <img
-                                src={
-                                  checkStationWorkingOrNot(e.lastData) == 0
-                                    ? locationGreen
-                                    : checkStationWorkingOrNot(e.lastData) <= 3
-                                    ? locationYellow
-                                    : checkStationWorkingOrNot(e.lastData) ==
-                                      404
-                                    ? locationRed
-                                    : locationOrange
-                                }
-                                alt="location"
-                                width={23}
-                                height={20}
-                              />
+                            <svg
+                              viewBox="64 64 896 896"
+                              focusable="false"
+                              data-icon="search"
+                              width="1em"
+                              height="1em"
+                              fill="currentColor"
+                              aria-hidden="true"
+                            >
+                              <path d="M909.6 854.5L649.9 594.8C690.2 542.7 712 479 712 412c0-80.2-31.3-155.4-87.9-212.1-56.6-56.7-132-87.9-212.1-87.9s-155.5 31.3-212.1 87.9C143.2 256.5 112 331.8 112 412c0 80.1 31.3 155.5 87.9 212.1C256.5 680.8 331.8 712 412 712c67 0 130.6-21.8 182.7-62l259.7 259.6a8.2 8.2 0 0011.6 0l43.6-43.5a8.2 8.2 0 000-11.6zM570.4 570.4C528 612.7 471.8 636 412 636s-116-23.3-158.4-65.6C211.3 528 188 471.8 188 412s23.3-116.1 65.6-158.4C296 211.3 352.2 188 412 188s116.1 23.2 158.4 65.6S636 352.2 636 412s-23.3 116.1-65.6 158.4z"></path>
+                            </svg>
+                          </span>
+                        </label>
+                      </div>
+                    </div>
 
-                              <p className="m-0 ms-2 fs-6">{e.name}</p>
-                            </div>
+                    <div className="user-data-right">
+                      <ul className="list-group list-unstyled m-0 mt-3">
+                        {lastData?.map((e, i) => {
+                          return (
+                            <li
+                              className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                              key={i}
+                            >
+                              <div className="d-flex align-items-center">
+                                <img
+                                  src={
+                                    checkStationWorkingOrNot(e.lastData) == 0
+                                      ? locationGreen
+                                      : checkStationWorkingOrNot(e.lastData) <=
+                                        3
+                                      ? locationYellow
+                                      : checkStationWorkingOrNot(e.lastData) ==
+                                        404
+                                      ? locationRed
+                                      : locationOrange
+                                  }
+                                  alt="location"
+                                  width={23}
+                                  height={20}
+                                />
 
-                            <p className="m-0 text-danger">
-                              {e.lastData?.level}
-                            </p>
-                          </li>
-                        );
-                      })}
-                    </ul>
+                                <p className="m-0 ms-2 fs-6">{e.name}</p>
+                              </div>
+
+                              <p className="m-0 text-danger">
+                                {e.lastData?.level}
+                              </p>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="user-map-animation-wrapper">
+                <div id="box">
+                  <div id="tile01">
+                    <div id="mask">Smart Solutions System</div>
+                  </div>
+                </div>
 
-            <Helmet>
-              <script src="../../src/assets/js/Admin.js"></script>
-            </Helmet>
+                <div className="wrap">
+                  <div className="drop-outer">
+                    <svg
+                      className="drop"
+                      viewBox="0 0 40 40"
+                      version="1.1"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <circle cx="20" cy="20" r="20" />
+                    </svg>
+                  </div>
+                  <div div className="ripple ripple-1">
+                    <svg
+                      className="ripple-svg"
+                      viewBox="0 0 60 60"
+                      version="1.1"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <circle cx="30" cy="30" r="24" />
+                    </svg>
+                  </div>
+                  <div className="ripple ripple-2">
+                    <svg
+                      className="ripple-svg"
+                      viewBox="0 0 60 60"
+                      version="1.1"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <circle cx="30" cy="30" r="24" />
+                    </svg>
+                  </div>
+                  <div className="ripple ripple-3">
+                    <svg
+                      className="ripple-svg"
+                      viewBox="0 0 60 60"
+                      version="1.1"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <circle cx="30" cy="30" r="24" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
+        <Helmet>
+          <script src="../../src/assets/js/Admin.js"></script>
+        </Helmet>
       </section>
     </HelmetProvider>
   );

@@ -32,9 +32,69 @@ const UserLastData = (prop) => {
     "user-last-data-list-item-href-blue"
   );
 
+  const minuteLimit = window.localStorage.getItem("minute");
+  const minuteNow = new Date().getMinutes();
+
   // ! REFRESH TOKEN
   useEffect(() => {
+    let limit;
     const minute = 60 * 1000;
+
+    if (
+      14 + Number(minuteLimit) == minuteNow ||
+      14 + Number(minuteLimit) == minuteNow + 60
+    ) {
+      fetch(`${api}/auth/signin`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          username: window.localStorage.getItem("username"),
+          password: window.localStorage.getItem("password"),
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          console.log(data);
+          if (data.statusCode == 200) {
+            window.localStorage.setItem("minute", minuteNow);
+            window.localStorage.setItem("accessToken", data.data.accessToken);
+            window.localStorage.setItem("refreshToken", data.data.refreshToken);
+          }
+        });
+    } else if (
+      14 + Number(minuteLimit) >= 60 &&
+      minuteNow < Number(minuteLimit)
+    ) {
+      limit = 14 + Number(minuteLimit) - (minuteNow + 60);
+    } else if (
+      14 + Number(minuteLimit) >= minuteNow &&
+      Number(minuteLimit) <= minuteNow
+    ) {
+      limit = 14 + Number(minuteLimit) - minuteNow;
+    } else {
+      fetch(`${api}/auth/signin`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          username: window.localStorage.getItem("username"),
+          password: window.localStorage.getItem("password"),
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          console.log(data);
+          if (data.statusCode == 200) {
+            window.localStorage.setItem("minute", minuteNow);
+            window.localStorage.setItem("accessToken", data.data.accessToken);
+            window.localStorage.setItem("refreshToken", data.data.refreshToken);
+          }
+        });
+    }
+
     setInterval(() => {
       fetch(`${api}/auth/signin`, {
         method: "POST",
@@ -48,12 +108,14 @@ const UserLastData = (prop) => {
       })
         .then((res) => res.json())
         .then((data) => {
+          console.log(data);
           if (data.statusCode == 200) {
+            window.localStorage.setItem("minute", minuteNow);
             window.localStorage.setItem("accessToken", data.data.accessToken);
             window.localStorage.setItem("refreshToken", data.data.refreshToken);
           }
         });
-    }, minute * 14);
+    }, minute * limit);
   }, []);
 
   useEffect(() => {
@@ -564,395 +626,454 @@ const UserLastData = (prop) => {
     <section className="home-section py-3">
       <div className="container-fluid">
         <div className="card">
-          <div className="card-body">
-            <div className="tab-content">
-              <div
-                className="tab-pane container-fluid fade show active profile-users user-last-data-table-wrapper"
-                id="profile-users"
-              >
-                <div className="user-last-data-top-wrapper pt-5">
-                  <h1 className="mb-3 user-lastdata-heading">
-                    {balanceOrg.length == 0
-                      ? `${name} ga biriktirilgan qurilmalar`
-                      : `${
-                          balanceOrg.find((e) => {
-                            if (e.id == name) {
-                              return e.name;
-                            }
-                          })?.name
-                        } ga biriktirilgan qurilmalar`}
-                  </h1>
+          {allStation.length > 0 ? (
+            <div className="card-body">
+              <div className="tab-content">
+                <div
+                  className="tab-pane container-fluid fade show active profile-users user-last-data-table-wrapper"
+                  id="profile-users"
+                >
+                  <div className="user-last-data-top-wrapper pt-5">
+                    <h1 className="mb-3 user-lastdata-heading">
+                      {balanceOrg.length == 0
+                        ? `${name} ga biriktirilgan qurilmalar`
+                        : `${
+                            balanceOrg.find((e) => {
+                              if (e.id == name) {
+                                return e.name;
+                              }
+                            })?.name
+                          } ga biriktirilgan qurilmalar`}
+                    </h1>
 
-                  <ul className="dashboard-list list-unstyled m-0 d-flex flex-wrap align-items-center justify-content-between mt-4">
-                    {stationStatistic?.totalStationsCount > 0 ? (
-                      <li
-                        className="dashboard-list-item mt-3 d-flex border-blue"
-                        onClick={() => {
-                          setWhichStation("allStation");
-                          setTableTitle("Umumiy stansiyalar soni");
-                          setColorCard("user-last-data-list-item-href-blue");
-                        }}
-                      >
-                        <img
-                          src={circleBlue}
-                          alt="circleBlue"
-                          width={30}
-                          height={30}
-                        />
-                        <div className="ms-2">
-                          <p className="dashboard-list-number m-0">
-                            {stationStatistic?.totalStationsCount} ta
-                          </p>
-                          <p className="dashboard-list-desc m-0">
-                            Umumiy stansiyalar soni
-                          </p>
-                          <p className="dashboard-list-desc-percentage text-info m-0 text-end">
-                            100%
-                          </p>
-                        </div>
-                      </li>
-                    ) : null}
-
-                    {stationStatistic?.totalTodayWorkStationsCount > 0 ? (
-                      <li
-                        className="dashboard-list-item d-flex mt-3 border-green"
-                        onClick={() => {
-                          setWhichStation("todayStation");
-                          setTableTitle("Bugun ishlayotganlar stansiyalar");
-                          setColorCard("user-last-data-list-item-href-green");
-                        }}
-                      >
-                        <img
-                          src={circleGreen}
-                          alt="circleGreen"
-                          width={30}
-                          height={30}
-                        />
-                        <div className="ms-2">
-                          <p className="dashboard-list-number m-0">
-                            {stationStatistic?.totalTodayWorkStationsCount} ta
-                          </p>
-                          <p className="dashboard-list-desc m-0">
-                            Bugun ishlayotganlar stansiyalar
-                          </p>
-                          <p className="dashboard-list-desc-percentage text-info m-0 text-end">
-                            {(
-                              (stationStatistic?.totalTodayWorkStationsCount *
-                                100) /
-                              stationStatistic?.totalStationsCount
-                            ).toFixed()}
-                            %
-                          </p>
-                        </div>
-                      </li>
-                    ) : null}
-
-                    {stationStatistic?.totalThreeDayWorkStationsCount > 0 ? (
-                      <li
-                        className="dashboard-list-item mt-3 d-flex border-azeu"
-                        onClick={() => {
-                          setWhichStation("withinThreeDayStation");
-                          setTableTitle("3 kun ichida ishlagan stansiyalar");
-                          setColorCard(
-                            "user-last-data-list-item-href-lime-green"
-                          );
-                        }}
-                      >
-                        <img
-                          src={circleGreenBlue}
-                          alt="circleGreen"
-                          width={30}
-                          height={30}
-                        />
-                        <div className="ms-2">
-                          <p className="dashboard-list-number m-0">
-                            {stationStatistic?.totalThreeDayWorkStationsCount}{" "}
-                            ta
-                          </p>
-                          <p className="dashboard-list-desc m-0">
-                            3 kun ichida ishlagan stansiyalar
-                          </p>
-                          <p className="dashboard-list-desc-percentage text-info m-0 text-end">
-                            {(
-                              (stationStatistic?.totalThreeDayWorkStationsCount *
-                                100) /
-                              stationStatistic?.totalStationsCount
-                            ).toFixed()}
-                            %
-                          </p>
-                        </div>
-                      </li>
-                    ) : null}
-
-                    {stationStatistic?.totalMonthWorkStationsCount > 0 ? (
-                      <li
-                        className="dashboard-list-item mt-3 d-flex border-yellow"
-                        onClick={() => {
-                          setWhichStation("totalMonthWorkStation");
-                          setTableTitle("Oxirgi oy ishlagan stansiyalar");
-                          setColorCard("user-last-data-list-item-href-yellow");
-                        }}
-                      >
-                        <img
-                          src={circleYellow}
-                          alt="circleGreen"
-                          width={30}
-                          height={30}
-                        />
-                        <div className="ms-2">
-                          <p className="dashboard-list-number m-0">
-                            {stationStatistic?.totalMonthWorkStationsCount}
-                            ta
-                          </p>
-                          <p className="dashboard-list-desc m-0">
-                            Oxirgi oy ishlagan stansiyalar
-                          </p>
-                          <p className="dashboard-list-desc-percentage text-info m-0 text-end">
-                            {(
-                              (stationStatistic?.totalMonthWorkStationsCount *
-                                100) /
-                              stationStatistic?.totalStationsCount
-                            ).toFixed()}
-                            %
-                          </p>
-                        </div>
-                      </li>
-                    ) : null}
-
-                    {stationStatistic?.totalMoreWorkStationsCount > 0 ? (
-                      <li
-                        className="dashboard-list-item mt-3 d-flex border-orange"
-                        onClick={() => {
-                          setWhichStation("totalMoreWorkStations");
-                          setTableTitle("Uzoq vaqt ishlamagan qurilmalar");
-                          setColorCard("user-last-data-list-item-href-orange");
-                        }}
-                      >
-                        <img
-                          src={circleOrange}
-                          alt="circleGreen"
-                          width={30}
-                          height={30}
-                        />
-                        <div className="ms-2">
-                          <p className="dashboard-list-number m-0">
-                            {stationStatistic?.totalMoreWorkStationsCount}
-                            ta
-                          </p>
-                          <p className="dashboard-list-desc m-0">
-                            Uzoq vaqt ishlamagan qurilmalar
-                          </p>
-                          <p className="dashboard-list-desc-percentage text-info m-0 text-end">
-                            {(
-                              (stationStatistic?.totalMoreWorkStationsCount *
-                                100) /
-                              stationStatistic?.totalStationsCount
-                            ).toFixed()}
-                            %
-                          </p>
-                        </div>
-                      </li>
-                    ) : null}
-                  </ul>
-                </div>
-
-                <h3 className="m-0 mt-5">{tableTitle} ning ma'lumotlari</h3>
-
-                <div className="d-flex align-items-center user-last-data-sort-wrapper justify-content-end">
-                  <input
-                    onChange={(e) => searchStationByInput(e.target.value)}
-                    type="text"
-                    className="form-control user-last-data-search-input"
-                    placeholder="Search..."
-                  />
-
-                  <button
-                    onClick={() => exportDataToExcel()}
-                    className="ms-4 border border-0"
-                  >
-                    <img src={excel} alt="excel" width={26} height={30} />
-                  </button>
-                </div>
-                <ol className="user-last-data-list list-unstyled m-0 mt-4 mb-4 d-flex align-items-center justify-content-between flex-wrap">
-                  {allStation?.map((e, i) => {
-                    return (
-                      <li className="user-last-data-list-item mt-4" key={i}>
-                        <a
+                    <ul className="dashboard-list list-unstyled m-0 d-flex flex-wrap align-items-center justify-content-between mt-4">
+                      {stationStatistic?.totalStationsCount > 0 ? (
+                        <li
+                          className="dashboard-list-item mt-3 d-flex border-blue"
                           onClick={() => {
-                            navigate(
-                              `/user/lastdata/${
-                                whichStation == "allStation"
-                                  ? e._id
-                                  : e.stationsId
-                              }`
-                            );
-                            localStorage.setItem(
-                              "stationName",
-                              whichStation == "allStation"
-                                ? e.name
-                                : e.stations?.name
-                            );
-                            localStorage.setItem(
-                              "location",
-                              whichStation == "allStation"
-                                ? e.location
-                                : e.stations?.location
+                            setWhichStation("allStation");
+                            setTableTitle("Umumiy stansiyalar soni");
+                            setColorCard("user-last-data-list-item-href-blue");
+                          }}
+                        >
+                          <img
+                            src={circleBlue}
+                            alt="circleBlue"
+                            width={30}
+                            height={30}
+                          />
+                          <div className="ms-2">
+                            <p className="dashboard-list-number m-0">
+                              {stationStatistic?.totalStationsCount} ta
+                            </p>
+                            <p className="dashboard-list-desc m-0">
+                              Umumiy stansiyalar soni
+                            </p>
+                            <p className="dashboard-list-desc-percentage text-info m-0 text-end">
+                              100%
+                            </p>
+                          </div>
+                        </li>
+                      ) : null}
+
+                      {stationStatistic?.totalTodayWorkStationsCount > 0 ? (
+                        <li
+                          className="dashboard-list-item d-flex mt-3 border-green"
+                          onClick={() => {
+                            setWhichStation("todayStation");
+                            setTableTitle("Bugun ishlayotganlar stansiyalar");
+                            setColorCard("user-last-data-list-item-href-green");
+                          }}
+                        >
+                          <img
+                            src={circleGreen}
+                            alt="circleGreen"
+                            width={30}
+                            height={30}
+                          />
+                          <div className="ms-2">
+                            <p className="dashboard-list-number m-0">
+                              {stationStatistic?.totalTodayWorkStationsCount} ta
+                            </p>
+                            <p className="dashboard-list-desc m-0">
+                              Bugun ishlayotganlar stansiyalar
+                            </p>
+                            <p className="dashboard-list-desc-percentage text-info m-0 text-end">
+                              {(
+                                (stationStatistic?.totalTodayWorkStationsCount *
+                                  100) /
+                                stationStatistic?.totalStationsCount
+                              ).toFixed()}
+                              %
+                            </p>
+                          </div>
+                        </li>
+                      ) : null}
+
+                      {stationStatistic?.totalThreeDayWorkStationsCount > 0 ? (
+                        <li
+                          className="dashboard-list-item mt-3 d-flex border-azeu"
+                          onClick={() => {
+                            setWhichStation("withinThreeDayStation");
+                            setTableTitle("3 kun ichida ishlagan stansiyalar");
+                            setColorCard(
+                              "user-last-data-list-item-href-lime-green"
                             );
                           }}
                         >
-                          <div className="user-last-data-list-item-top d-flex align-items-center justify-content-between">
-                            <h3 className="fs-5 m-0">
-                              {whichStation == "allStation"
-                                ? e.name
-                                : e.stations?.name}
-                            </h3>
-                            <div className="d-flex align-items-center justify-content-between">
-                              <p
-                                className={
-                                  "m-0 me-1 fw-semibold fs-5 " +
-                                  ((whichStation == "allStation"
-                                    ? e.battery
-                                    : e.stations?.battery) >= 70
-                                    ? "text-success"
-                                    : (whichStation == "allStation"
-                                        ? e.battery
-                                        : e.stations?.battery) < 70 &&
-                                      (whichStation == "allStation"
-                                        ? e.battery
-                                        : e.stations?.battery) >= 30
-                                    ? "text-warning"
-                                    : (whichStation == "allStation"
-                                        ? e.battery
-                                        : e.stations?.battery) < 30
-                                    ? "text-danger"
-                                    : " ")
-                                }
-                              >
-                                {whichStation == "allStation"
-                                  ? e.battery
-                                  : e.stations?.battery}
-                                %
-                              </p>
-                              <img
-                                src={
-                                  (whichStation == "allStation"
-                                    ? e.battery
-                                    : e.stations?.battery) == 100
-                                    ? batteryFull
-                                    : (whichStation == "allStation"
-                                        ? e.battery
-                                        : e.stations?.battery) == 0
-                                    ? batteryNo
-                                    : (whichStation == "allStation"
-                                        ? e.battery
-                                        : e.stations?.battery) >= 70 &&
-                                      (whichStation == "allStation"
-                                        ? e.battery
-                                        : e.stations?.battery) < 100
-                                    ? batteryPow
-                                    : (whichStation == "allStation"
-                                        ? e.battery
-                                        : e.stations?.battery) < 30
-                                    ? batteryRed
-                                    : (whichStation == "allStation"
-                                        ? e.battery
-                                        : e.stations?.battery >= 30) &&
-                                      (whichStation == "allStation"
-                                        ? e.battery
-                                        : e.stations?.battery < 70)
-                                    ? batteryLow
-                                    : null
-                                }
-                                alt="battery"
-                                width={35}
-                                height={35}
-                              />
-                            </div>
+                          <img
+                            src={circleGreenBlue}
+                            alt="circleGreen"
+                            width={30}
+                            height={30}
+                          />
+                          <div className="ms-2">
+                            <p className="dashboard-list-number m-0">
+                              {stationStatistic?.totalThreeDayWorkStationsCount}{" "}
+                              ta
+                            </p>
+                            <p className="dashboard-list-desc m-0">
+                              3 kun ichida ishlagan stansiyalar
+                            </p>
+                            <p className="dashboard-list-desc-percentage text-info m-0 text-end">
+                              {(
+                                (stationStatistic?.totalThreeDayWorkStationsCount *
+                                  100) /
+                                stationStatistic?.totalStationsCount
+                              ).toFixed()}
+                              %
+                            </p>
                           </div>
-                          {whichStation == "allStation" ? (
-                            <span
-                              className={
-                                checkStationWorkingOrNot(e.lastData) == 0
-                                  ? "user-last-data-list-item-href-green"
-                                  : checkStationWorkingOrNot(e.lastData) <= 3
-                                  ? "user-last-data-list-item-href-lime-green"
-                                  : checkStationWorkingOrNot(e.lastData) ==
-                                    "one month"
-                                  ? "user-last-data-list-item-href-yellow"
-                                  : checkStationWorkingOrNot(e.lastData) ==
-                                    "after one month"
-                                  ? "user-last-data-list-item-href-orange"
-                                  : "user-last-data-list-item-href-orange"
-                              }
-                            ></span>
-                          ) : (
-                            <span className={colorCard}></span>
-                          )}
+                        </li>
+                      ) : null}
 
-                          <span className="">
-                            <div className="text-end mt-2">
-                              <div className="d-flex align-items-center">
-                                <p className="m-0 user-lastdata-level-desc">
-                                  Sath:{" "}
-                                </p>
-                                <span className="fw-bold text-end w-100 user-lastdata-level-desc">
-                                  {whichStation == "allStation"
-                                    ? Number(e.lastData?.level).toFixed()
-                                    : Number(e?.level).toFixed()}{" "}
-                                  sm
-                                </span>
-                              </div>
-                              <div className="d-flex align-items-center">
-                                <p className="m-0 user-lastdata-level-desc">
-                                  Sho'rlanish:{" "}
-                                </p>
-                                <span className="fw-bold text-end w-100 user-lastdata-level-desc">
-                                  {whichStation == "allStation"
-                                    ? Number(e.lastData?.conductivity).toFixed()
-                                    : Number(e?.conductivity).toFixed()}{" "}
-                                  g/l
-                                </span>
-                              </div>
-                              <div className="d-flex align-items-center">
-                                <p className="m-0 user-lastdata-level-desc">
-                                  Temperatura:{" "}
-                                </p>
-                                <span className="fw-bold text-end w-100 user-lastdata-level-desc">
-                                  {whichStation == "allStation"
-                                    ? Number(e.lastData?.temp).toFixed()
-                                    : Number(e?.temp).toFixed()}{" "}
-                                  °C
-                                </span>
-                              </div>
-                            </div>
+                      {stationStatistic?.totalMonthWorkStationsCount > 0 ? (
+                        <li
+                          className="dashboard-list-item mt-3 d-flex border-yellow"
+                          onClick={() => {
+                            setWhichStation("totalMonthWorkStation");
+                            setTableTitle("Oxirgi oy ishlagan stansiyalar");
+                            setColorCard(
+                              "user-last-data-list-item-href-yellow"
+                            );
+                          }}
+                        >
+                          <img
+                            src={circleYellow}
+                            alt="circleGreen"
+                            width={30}
+                            height={30}
+                          />
+                          <div className="ms-2">
+                            <p className="dashboard-list-number m-0">
+                              {stationStatistic?.totalMonthWorkStationsCount}
+                              ta
+                            </p>
+                            <p className="dashboard-list-desc m-0">
+                              Oxirgi oy ishlagan stansiyalar
+                            </p>
+                            <p className="dashboard-list-desc-percentage text-info m-0 text-end">
+                              {(
+                                (stationStatistic?.totalMonthWorkStationsCount *
+                                  100) /
+                                stationStatistic?.totalStationsCount
+                              ).toFixed()}
+                              %
+                            </p>
+                          </div>
+                        </li>
+                      ) : null}
 
-                            <div className="mt-2">
-                              <p className="m-0">
-                                {returnFixdDate(
+                      {stationStatistic?.totalMoreWorkStationsCount > 0 ? (
+                        <li
+                          className="dashboard-list-item mt-3 d-flex border-orange"
+                          onClick={() => {
+                            setWhichStation("totalMoreWorkStations");
+                            setTableTitle("Uzoq vaqt ishlamagan qurilmalar");
+                            setColorCard(
+                              "user-last-data-list-item-href-orange"
+                            );
+                          }}
+                        >
+                          <img
+                            src={circleOrange}
+                            alt="circleGreen"
+                            width={30}
+                            height={30}
+                          />
+                          <div className="ms-2">
+                            <p className="dashboard-list-number m-0">
+                              {stationStatistic?.totalMoreWorkStationsCount}
+                              ta
+                            </p>
+                            <p className="dashboard-list-desc m-0">
+                              Uzoq vaqt ishlamagan qurilmalar
+                            </p>
+                            <p className="dashboard-list-desc-percentage text-info m-0 text-end">
+                              {(
+                                (stationStatistic?.totalMoreWorkStationsCount *
+                                  100) /
+                                stationStatistic?.totalStationsCount
+                              ).toFixed()}
+                              %
+                            </p>
+                          </div>
+                        </li>
+                      ) : null}
+                    </ul>
+                  </div>
+
+                  <h3 className="m-0 mt-5">{tableTitle} ning ma'lumotlari</h3>
+
+                  <div className="d-flex align-items-center user-last-data-sort-wrapper justify-content-end">
+                    <input
+                      onChange={(e) => searchStationByInput(e.target.value)}
+                      type="text"
+                      className="form-control user-last-data-search-input"
+                      placeholder="Search..."
+                    />
+
+                    <button
+                      onClick={() => exportDataToExcel()}
+                      className="ms-4 border border-0"
+                    >
+                      <img src={excel} alt="excel" width={26} height={30} />
+                    </button>
+                  </div>
+                  <ol className="user-last-data-list list-unstyled m-0 mt-4 mb-4 d-flex align-items-center justify-content-between flex-wrap">
+                    {allStation?.map((e, i) => {
+                      return (
+                        <li className="user-last-data-list-item mt-4" key={i}>
+                          <a
+                            onClick={() => {
+                              navigate(
+                                `/user/lastdata/${
                                   whichStation == "allStation"
-                                    ? e?.lastData?.date
-                                    : e.date
-                                )}
-                              </p>
+                                    ? e._id
+                                    : e.stationsId
+                                }`
+                              );
+                              localStorage.setItem(
+                                "stationName",
+                                whichStation == "allStation"
+                                  ? e.name
+                                  : e.stations?.name
+                              );
+                              localStorage.setItem(
+                                "location",
+                                whichStation == "allStation"
+                                  ? e.location
+                                  : e.stations?.location
+                              );
+                            }}
+                          >
+                            <div className="user-last-data-list-item-top d-flex align-items-center justify-content-between">
+                              <h3 className="fs-5 m-0">
+                                {whichStation == "allStation"
+                                  ? e.name
+                                  : e.stations?.name}
+                              </h3>
+                              <div className="d-flex align-items-center justify-content-between">
+                                <p
+                                  className={
+                                    "m-0 me-1 fw-semibold fs-5 " +
+                                    ((whichStation == "allStation"
+                                      ? e.battery
+                                      : e.stations?.battery) >= 70
+                                      ? "text-success"
+                                      : (whichStation == "allStation"
+                                          ? e.battery
+                                          : e.stations?.battery) < 70 &&
+                                        (whichStation == "allStation"
+                                          ? e.battery
+                                          : e.stations?.battery) >= 30
+                                      ? "text-warning"
+                                      : (whichStation == "allStation"
+                                          ? e.battery
+                                          : e.stations?.battery) < 30
+                                      ? "text-danger"
+                                      : " ")
+                                  }
+                                >
+                                  {whichStation == "allStation"
+                                    ? e.battery
+                                    : e.stations?.battery}
+                                  %
+                                </p>
+                                <img
+                                  src={
+                                    (whichStation == "allStation"
+                                      ? e.battery
+                                      : e.stations?.battery) == 100
+                                      ? batteryFull
+                                      : (whichStation == "allStation"
+                                          ? e.battery
+                                          : e.stations?.battery) == 0
+                                      ? batteryNo
+                                      : (whichStation == "allStation"
+                                          ? e.battery
+                                          : e.stations?.battery) >= 70 &&
+                                        (whichStation == "allStation"
+                                          ? e.battery
+                                          : e.stations?.battery) < 100
+                                      ? batteryPow
+                                      : (whichStation == "allStation"
+                                          ? e.battery
+                                          : e.stations?.battery) < 30
+                                      ? batteryRed
+                                      : (whichStation == "allStation"
+                                          ? e.battery
+                                          : e.stations?.battery >= 30) &&
+                                        (whichStation == "allStation"
+                                          ? e.battery
+                                          : e.stations?.battery < 70)
+                                      ? batteryLow
+                                      : null
+                                  }
+                                  alt="battery"
+                                  width={35}
+                                  height={35}
+                                />
+                              </div>
                             </div>
-                          </span>
-                        </a>
-                      </li>
-                    );
-                  })}
-                </ol>
+                            {whichStation == "allStation" ? (
+                              <span
+                                className={
+                                  checkStationWorkingOrNot(e.lastData) == 0
+                                    ? "user-last-data-list-item-href-green"
+                                    : checkStationWorkingOrNot(e.lastData) <= 3
+                                    ? "user-last-data-list-item-href-lime-green"
+                                    : checkStationWorkingOrNot(e.lastData) ==
+                                      "one month"
+                                    ? "user-last-data-list-item-href-yellow"
+                                    : checkStationWorkingOrNot(e.lastData) ==
+                                      "after one month"
+                                    ? "user-last-data-list-item-href-orange"
+                                    : "user-last-data-list-item-href-orange"
+                                }
+                              ></span>
+                            ) : (
+                              <span className={colorCard}></span>
+                            )}
 
-                <ReactPaginate
-                  pageCount={totalPages}
-                  onPageChange={handlePageChange}
-                  forcePage={currentPage}
-                  previousLabel={"<<"}
-                  nextLabel={">>"}
-                  activeClassName={"pagination__link--active"}
-                />
+                            <span className="">
+                              <div className="text-end mt-2">
+                                <div className="d-flex align-items-center">
+                                  <p className="m-0 user-lastdata-level-desc">
+                                    Sath:{" "}
+                                  </p>
+                                  <span className="fw-bold text-end w-100 user-lastdata-level-desc">
+                                    {whichStation == "allStation"
+                                      ? Number(e.lastData?.level).toFixed()
+                                      : Number(e?.level).toFixed()}{" "}
+                                    sm
+                                  </span>
+                                </div>
+                                <div className="d-flex align-items-center">
+                                  <p className="m-0 user-lastdata-level-desc">
+                                    Sho'rlanish:{" "}
+                                  </p>
+                                  <span className="fw-bold text-end w-100 user-lastdata-level-desc">
+                                    {whichStation == "allStation"
+                                      ? Number(
+                                          e.lastData?.conductivity
+                                        ).toFixed()
+                                      : Number(e?.conductivity).toFixed()}{" "}
+                                    g/l
+                                  </span>
+                                </div>
+                                <div className="d-flex align-items-center">
+                                  <p className="m-0 user-lastdata-level-desc">
+                                    Temperatura:{" "}
+                                  </p>
+                                  <span className="fw-bold text-end w-100 user-lastdata-level-desc">
+                                    {whichStation == "allStation"
+                                      ? Number(e.lastData?.temp).toFixed()
+                                      : Number(e?.temp).toFixed()}{" "}
+                                    °C
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div className="mt-2">
+                                <p className="m-0">
+                                  {returnFixdDate(
+                                    whichStation == "allStation"
+                                      ? e?.lastData?.date
+                                      : e.date
+                                  )}
+                                </p>
+                              </div>
+                            </span>
+                          </a>
+                        </li>
+                      );
+                    })}
+                  </ol>
+
+                  <ReactPaginate
+                    pageCount={totalPages}
+                    onPageChange={handlePageChange}
+                    forcePage={currentPage}
+                    previousLabel={"<<"}
+                    nextLabel={">>"}
+                    activeClassName={"pagination__link--active"}
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="user-map-animation-wrapper">
+              <div id="box">
+                <div id="tile01">
+                  <div id="mask">Smart Solutions System</div>
+                </div>
+              </div>
+
+              <div className="wrap">
+                <div className="drop-outer">
+                  <svg
+                    className="drop"
+                    viewBox="0 0 40 40"
+                    version="1.1"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <circle cx="20" cy="20" r="20" />
+                  </svg>
+                </div>
+                <div div className="ripple ripple-1">
+                  <svg
+                    className="ripple-svg"
+                    viewBox="0 0 60 60"
+                    version="1.1"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <circle cx="30" cy="30" r="24" />
+                  </svg>
+                </div>
+                <div className="ripple ripple-2">
+                  <svg
+                    className="ripple-svg"
+                    viewBox="0 0 60 60"
+                    version="1.1"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <circle cx="30" cy="30" r="24" />
+                  </svg>
+                </div>
+                <div className="ripple ripple-3">
+                  <svg
+                    className="ripple-svg"
+                    viewBox="0 0 60 60"
+                    version="1.1"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <circle cx="30" cy="30" r="24" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </section>

@@ -35,9 +35,69 @@ const UserMap = () => {
   const center = useMemo(() => location, [count]);
   const role = window.localStorage.getItem("role");
 
+  const minuteLimit = window.localStorage.getItem("minute");
+  const minuteNow = new Date().getMinutes();
+
   // ! REFRESH TOKEN
   useEffect(() => {
+    let limit;
     const minute = 60 * 1000;
+
+    if (
+      14 + Number(minuteLimit) == minuteNow ||
+      14 + Number(minuteLimit) == minuteNow + 60
+    ) {
+      fetch(`${api}/auth/signin`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          username: window.localStorage.getItem("username"),
+          password: window.localStorage.getItem("password"),
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          console.log(data);
+          if (data.statusCode == 200) {
+            window.localStorage.setItem("minute", minuteNow);
+            window.localStorage.setItem("accessToken", data.data.accessToken);
+            window.localStorage.setItem("refreshToken", data.data.refreshToken);
+          }
+        });
+    } else if (
+      14 + Number(minuteLimit) >= 60 &&
+      minuteNow < Number(minuteLimit)
+    ) {
+      limit = 14 + Number(minuteLimit) - (minuteNow + 60);
+    } else if (
+      14 + Number(minuteLimit) >= minuteNow &&
+      Number(minuteLimit) <= minuteNow
+    ) {
+      limit = 14 + Number(minuteLimit) - minuteNow;
+    } else {
+      fetch(`${api}/auth/signin`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          username: window.localStorage.getItem("username"),
+          password: window.localStorage.getItem("password"),
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          console.log(data);
+          if (data.statusCode == 200) {
+            window.localStorage.setItem("minute", minuteNow);
+            window.localStorage.setItem("accessToken", data.data.accessToken);
+            window.localStorage.setItem("refreshToken", data.data.refreshToken);
+          }
+        });
+    }
+
     setInterval(() => {
       fetch(`${api}/auth/signin`, {
         method: "POST",
@@ -51,12 +111,14 @@ const UserMap = () => {
       })
         .then((res) => res.json())
         .then((data) => {
+          console.log(data);
           if (data.statusCode == 200) {
+            window.localStorage.setItem("minute", minuteNow);
             window.localStorage.setItem("accessToken", data.data.accessToken);
             window.localStorage.setItem("refreshToken", data.data.refreshToken);
           }
         });
-    }, minute * 14);
+    }, minute * limit);
   }, []);
 
   useEffect(() => {

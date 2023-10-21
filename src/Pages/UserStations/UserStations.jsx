@@ -27,9 +27,69 @@ const UserStations = () => {
   const [whichData, setWhichData] = useState("allStation");
   const name = window.localStorage.getItem("name");
 
+  const minuteLimit = window.localStorage.getItem("minute");
+  const minuteNow = new Date().getMinutes();
+
   // ! REFRESH TOKEN
   useEffect(() => {
+    let limit;
     const minute = 60 * 1000;
+
+    if (
+      14 + Number(minuteLimit) == minuteNow ||
+      14 + Number(minuteLimit) == minuteNow + 60
+    ) {
+      fetch(`${api}/auth/signin`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          username: window.localStorage.getItem("username"),
+          password: window.localStorage.getItem("password"),
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          console.log(data);
+          if (data.statusCode == 200) {
+            window.localStorage.setItem("minute", minuteNow);
+            window.localStorage.setItem("accessToken", data.data.accessToken);
+            window.localStorage.setItem("refreshToken", data.data.refreshToken);
+          }
+        });
+    } else if (
+      14 + Number(minuteLimit) >= 60 &&
+      minuteNow < Number(minuteLimit)
+    ) {
+      limit = 14 + Number(minuteLimit) - (minuteNow + 60);
+    } else if (
+      14 + Number(minuteLimit) >= minuteNow &&
+      Number(minuteLimit) <= minuteNow
+    ) {
+      limit = 14 + Number(minuteLimit) - minuteNow;
+    } else {
+      fetch(`${api}/auth/signin`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          username: window.localStorage.getItem("username"),
+          password: window.localStorage.getItem("password"),
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          console.log(data);
+          if (data.statusCode == 200) {
+            window.localStorage.setItem("minute", minuteNow);
+            window.localStorage.setItem("accessToken", data.data.accessToken);
+            window.localStorage.setItem("refreshToken", data.data.refreshToken);
+          }
+        });
+    }
+
     setInterval(() => {
       fetch(`${api}/auth/signin`, {
         method: "POST",
@@ -43,12 +103,14 @@ const UserStations = () => {
       })
         .then((res) => res.json())
         .then((data) => {
+          console.log(data);
           if (data.statusCode == 200) {
+            window.localStorage.setItem("minute", minuteNow);
             window.localStorage.setItem("accessToken", data.data.accessToken);
             window.localStorage.setItem("refreshToken", data.data.refreshToken);
           }
         });
-    }, minute * 14);
+    }, minute * limit);
   }, []);
 
   useEffect(() => {
@@ -381,650 +443,705 @@ const UserStations = () => {
   return (
     <HelmetProvider>
       <section className="home-section py-3">
-        <div className="container-fluid">
-          <div>
-            {/* ToastContainer */}
-            <ToastContainer
-              position="top-center"
-              autoClose={1000}
-              hideProgressBar={false}
-              newestOnTop={false}
-              closeOnClick
-              rtl={false}
-              pauseOnFocusLoss
-              draggable
-              pauseOnHover
-            />
+        {allStation.length > 0 ? (
+          <div className="container-fluid">
+            <div>
+              {/* ToastContainer */}
+              <ToastContainer
+                position="top-center"
+                autoClose={1000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+              />
 
-            {/*! Modal LIST ONE  */}
-            <div
-              className="modal fade"
-              id="exampleModal"
-              data-bs-backdrop="static"
-              tabIndex="-1"
-              aria-labelledby="exampleModalLabel"
-              aria-hidden="true"
-            >
-              <div className="modal-dialog table-location-width modal-dialog-centered">
-                <div className="modal-content table-location-scrol">
-                  <div className="modal-header lastdata-close pb-3 pb-0">
-                    <h3 className="m-0 text-primary fs-3 cite-main-color">
-                      {stationOne?.name}
-                    </h3>
+              {/*! Modal LIST ONE  */}
+              <div
+                className="modal fade"
+                id="exampleModal"
+                data-bs-backdrop="static"
+                tabIndex="-1"
+                aria-labelledby="exampleModalLabel"
+                aria-hidden="true"
+              >
+                <div className="modal-dialog table-location-width modal-dialog-centered">
+                  <div className="modal-content table-location-scrol">
+                    <div className="modal-header lastdata-close pb-3 pb-0">
+                      <h3 className="m-0 text-primary fs-3 cite-main-color">
+                        {stationOne?.name}
+                      </h3>
 
-                    <button
-                      type="button"
-                      className="btn-close btn-close-location"
-                      data-bs-dismiss="modal"
-                      aria-label="Close"
-                    ></button>
-                  </div>
-                  <div className="modal-body pt-0 pt-2 pb-4">
-                    <div className="modal-body-item m-auto d-flex align-items-center justify-content-between flex-wrap">
-                      <div className="modal-item-wrapper d-flex align-items-center  mt-3">
-                        <img src={circle} alt="name" width={20} height={20} />
-                        <p className="m-0 ms-4">Nomi:</p>
-                        <p className="m-0 ms-2 fw-semibold">
-                          {stationOne?.name}
-                        </p>
-                      </div>
-
-                      <div className="modal-item-wrapper d-flex align-items-center ">
-                        <img src={circle} alt="name" width={20} height={20} />
-                        <p className="m-0 ms-4">Imei:</p>
-                        <p className="m-0 ms-2 fw-semibold">
-                          {stationOne?.imel}
-                        </p>
-                      </div>
-
-                      <div className="modal-item-wrapper d-flex align-items-center ">
-                        <img src={circle} alt="name" width={20} height={20} />
-                        <p className="m-0 ms-4">Viloyat:</p>
-                        <p className="m-0 ms-2 fw-semibold">
-                          {stationRegionName}
-                        </p>
-                      </div>
-
-                      <div className="modal-item-wrapper d-flex align-items-center ">
-                        <img src={circle} alt="name" width={20} height={20} />
-                        <p className="m-0 ms-4">Tuman:</p>
-                        <p className="m-0 ms-2 fw-semibold">
-                          {
-                            stationDistrictName.find((e) => {
-                              if (e.id == stationOne?.district_id) {
-                                return e.name;
-                              }
-                            })?.name
-                          }
-                        </p>
-                      </div>
-
-                      <div className="modal-item-wrapper d-flex align-items-center ">
-                        <img src={circle} alt="name" width={20} height={20} />
-                        <p className="m-0 ms-4">Balans tashkiloti:</p>
-                        <p className="m-0 ms-2 fw-semibold">
-                          {
-                            stationBalansOrgName.find((e) => {
-                              if (e.id == stationOne?.balance_organization_id) {
-                                return e.name;
-                              }
-                            })?.name
-                          }
-                        </p>
-                      </div>
-
-                      <div className="modal-item-wrapper d-flex align-items-center ">
-                        <img src={circle} alt="name" width={20} height={20} />
-                        <p className="m-0 ms-4">User telefon raqami:</p>
-                        <p className="m-0 ms-2 fw-semibold">
-                          {stationOne?.userPhoneNum}
-                        </p>
-                      </div>
-
-                      <div className="modal-item-wrapper d-flex align-items-center ">
-                        <img src={circle} alt="name" width={20} height={20} />
-                        <p className="m-0 ms-4">Qurilma telefon raqami:</p>
-                        <p className="m-0 ms-2 fw-semibold">
-                          {stationOne?.devicePhoneNum}
-                        </p>
-                      </div>
-
-                      <div className="modal-item-wrapper d-flex align-items-center ">
-                        <img src={circle} alt="name" width={20} height={20} />
-                        <p className="m-0 ms-4">Lokatsiya:</p>
-                        <p className="m-0 ms-2 fw-semibold">
-                          {stationOne?.location}
-                        </p>
-                      </div>
-
-                      <div className="modal-item-wrapper d-flex align-items-center ">
-                        <img src={circle} alt="name" width={20} height={20} />
-                        <p className="m-0 ms-4">Datani yuborish vaqti:</p>
-                        <p className="m-0 ms-2 fw-semibold">
-                          {stationOne?.sendDataTime}
-                        </p>
-                      </div>
-
-                      <div className="modal-item-wrapper d-flex align-items-center ">
-                        <img src={circle} alt="name" width={20} height={20} />
-                        <p className="m-0 ms-4">Infoni yuborish vaqti:</p>
-                        <p className="m-0 ms-2 fw-semibold">
-                          {stationOne?.sendInfoTime}
-                        </p>
-                      </div>
-
-                      <div className="modal-item-wrapper d-flex align-items-center ">
-                        <img src={circle} alt="name" width={20} height={20} />
-                        <p className="m-0 ms-4">Programma versiyasi:</p>
-                        <p className="m-0 ms-2 fw-semibold">
-                          {stationOne?.programVersion}
-                        </p>
-                      </div>
-
-                      <div className="modal-item-wrapper d-flex align-items-center ">
-                        <img src={circle} alt="name" width={20} height={20} />
-                        <p className="m-0 ms-4">Temperatura:</p>
-                        <p className="m-0 ms-2 fw-semibold">
-                          {stationOne?.temperture}
-                        </p>
-                      </div>
-
-                      <div className="modal-item-wrapper d-flex align-items-center ">
-                        <img src={circle} alt="name" width={20} height={20} />
-                        <p className="m-0 ms-4">Batareya:</p>
-                        <p
-                          className={
-                            "m-0 ms-2 fw-semibold " +
-                            (stationOne.battery > 77
-                              ? "text-success"
-                              : stationOne.battery <= 77 &&
-                                stationOne.battery >= 50
-                              ? "text-warning"
-                              : stationOne.battery < 50
-                              ? "text-danger"
-                              : "")
-                          }
-                        >
-                          {stationOne?.battery}%
-                        </p>
-                      </div>
-
-                      <div className="modal-item-wrapper d-flex align-items-center ">
-                        <img src={circle} alt="name" width={20} height={20} />
-                        <p className="m-0 ms-4">Signal:</p>
-                        <p className="m-0 ms-2 fw-semibold">
-                          {stationOne?.signal}
-                        </p>
-                      </div>
-
-                      <div className="modal-item-wrapper d-flex align-items-center ">
-                        <img src={circle} alt="name" width={20} height={20} />
-                        <p className="m-0 ms-4">Status:</p>
-                        <p className="m-0 ms-2 fw-semibold">
-                          {stationOne?.status}
-                        </p>
-                      </div>
-
-                      <div className="modal-item-wrapper d-flex align-items-center ">
-                        <img src={circle} alt="name" width={20} height={20} />
-                        <p className="m-0 ms-4">Sensor type:</p>
-                        <p className="m-0 ms-2 fw-semibold">
-                          {
-                            sensorType.find((e) => {
-                              if (e._id == stationOne.sensorTypeId) {
-                                return e.name;
-                              }
-                            })?.name
-                          }
-                        </p>
-                      </div>
-
-                      <div className="modal-item-wrapper d-flex align-items-center ">
-                        <img src={circle} alt="name" width={20} height={20} />
-                        <p className="m-0 ms-4">Sana:</p>
-                        <p className="m-0 ms-2 fw-semibold">
-                          {moment(stationOne.date).format("L")}{" "}
-                          {stationOne.date?.split("T")[1]?.slice(0, 8)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="card">
-              <div className="card-body pt-3">
-                <ul className="nav nav-tabs nav-tabs-bordered">
-                  <li className="nav-item">
-                    <button
-                      className="nav-link active"
-                      data-bs-toggle="tab"
-                      data-bs-target="#profile-users"
-                      onClick={() => setWhichData("allStation")}
-                    >
-                      Stansiyalar ro'yhati
-                    </button>
-                  </li>
-
-                  <li className="nav-item">
-                    <button
-                      className="nav-link"
-                      data-bs-toggle="tab"
-                      data-bs-target="#profile-overview"
-                      onClick={() => setWhichData("StationForBattery")}
-                    >
-                      Batareya bo'yicha qidirish
-                    </button>
-                  </li>
-
-                  <li className="nav-item">
-                    <button
-                      className="nav-link"
-                      data-bs-toggle="tab"
-                      data-bs-target="#profile-search"
-                      onClick={() => setWhichData("StationForStatus")}
-                    >
-                      Ishlamayotganlar stansiyalar
-                    </button>
-                  </li>
-                </ul>
-                <div className="tab-content pt-4">
-                  <div
-                    className="tab-pane fade show active profile-users table-scroll"
-                    id="profile-users"
-                  >
-                    <h3 className="stations-search-heading">Qidirish</h3>
-                    <form
-                      onSubmit={searchNameOrImei}
-                      className="search-name-wrapper d-flex align-items-center justify-content-between"
-                    >
-                      <input
-                        name="nameOrImeiInput"
-                        type="text"
-                        className="form-control w-50"
-                        placeholder="Qidiruv..."
-                        required
-                      />
-
-                      <select
-                        className="form-select w-25"
-                        name="nameOrImeiSelect"
-                        required
-                      >
-                        <option value="name">Nomi</option>
-                        <option value="imei">Imei</option>
-                        <option value="all">All</option>
-                      </select>
-
-                      <button className="btn btn-primary bg-btn">
-                        Qidirish
-                      </button>
-                    </form>
-
-                    <div
-                      className="d-flex align-items-center justify-content-end cursor-pointer"
-                      onClick={() => exportDataToExcel()}
-                    >
-                      <p className="m-0 p-0 user-station-save-data-desc">
-                        Ma'lumotni saqlash
-                      </p>
                       <button
-                        onClick={() => exportDataToExcel()}
-                        className="ms-3 border border-0"
-                      >
-                        <img src={excel} alt="excel" width={26} height={30} />
-                      </button>
+                        type="button"
+                        className="btn-close btn-close-location"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                      ></button>
                     </div>
+                    <div className="modal-body pt-0 pt-2 pb-4">
+                      <div className="modal-body-item m-auto d-flex align-items-center justify-content-between flex-wrap">
+                        <div className="modal-item-wrapper d-flex align-items-center  mt-3">
+                          <img src={circle} alt="name" width={20} height={20} />
+                          <p className="m-0 ms-4">Nomi:</p>
+                          <p className="m-0 ms-2 fw-semibold">
+                            {stationOne?.name}
+                          </p>
+                        </div>
 
-                    {allStation?.length == 0 ? (
-                      <h3 className="alert alert-dark text-center mt-5">
-                        Hozircha bunday stansiya yo'q...
-                      </h3>
-                    ) : (
-                      <table className="c-table mt-4">
-                        <thead className="c-table__header">
-                          <tr>
-                            <th className="c-table__col-label text-center">
-                              Nomi
-                            </th>
-                            <th className="c-table__col-label text-center">
-                              Imei
-                            </th>
-                            <th className="c-table__col-label text-center">
-                              Status
-                            </th>
-                            <th className="c-table__col-label text-center">
-                              Temperatura
-                            </th>
-                            <th className="c-table__col-label text-center">
-                              Batareya
-                            </th>
-                            <th className="c-table__col-label text-center">
-                              Signal
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="c-table__body">
-                          {allStation?.map((e, i) => {
-                            return (
-                              <tr
-                                className="fs-6 column-admin-station"
-                                key={i}
-                                data-bs-toggle="modal"
-                                data-bs-target="#exampleModal"
-                                onClick={() => {
-                                  getStationWithImei(e.imel);
-                                }}
-                              >
-                                <td className="c-table__cell text-center">
-                                  {e.name}
-                                </td>
-                                <td className="c-table__cell text-center">
-                                  {e.imel}
-                                </td>
-                                <td className="c-table__cell text-center">
-                                  {e.status}
-                                </td>
-                                <td className="c-table__cell text-center">
-                                  {e.temperture}
-                                </td>
-                                <td
-                                  className={
-                                    "c-table__cell text-center " +
-                                    (e.battery > 77
-                                      ? "text-success"
-                                      : e.battery <= 77 && e.battery >= 50
-                                      ? "text-warning"
-                                      : e.battery < 50
-                                      ? "text-danger"
-                                      : "")
-                                  }
-                                >
-                                  {e.battery}%
-                                </td>
-                                <td className="c-table__cell text-center">
-                                  {e.signal}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    )}
+                        <div className="modal-item-wrapper d-flex align-items-center ">
+                          <img src={circle} alt="name" width={20} height={20} />
+                          <p className="m-0 ms-4">Imei:</p>
+                          <p className="m-0 ms-2 fw-semibold">
+                            {stationOne?.imel}
+                          </p>
+                        </div>
 
-                    <ReactPaginate
-                      pageCount={totalPages}
-                      onPageChange={handlePageChange}
-                      forcePage={currentPage}
-                      previousLabel={"<<"}
-                      nextLabel={">>"}
-                      activeClassName={"pagination__link--active"}
-                    />
-                  </div>
+                        <div className="modal-item-wrapper d-flex align-items-center ">
+                          <img src={circle} alt="name" width={20} height={20} />
+                          <p className="m-0 ms-4">Viloyat:</p>
+                          <p className="m-0 ms-2 fw-semibold">
+                            {stationRegionName}
+                          </p>
+                        </div>
 
-                  {/* BATTERY */}
-                  <div
-                    className="tab-pane fade profile-overview table-scroll"
-                    id="profile-overview"
-                  >
-                    <h3 className="stations-search-heading">
-                      Batareya quvvati oralig'ini kiriting
-                    </h3>
-                    <form
-                      onSubmit={searchByBattery}
-                      className="search-name-wrapper d-flex align-items-center justify-content-between"
-                    >
-                      <div className="w-25">
-                        <label
-                          className="user-station-search-battery-label"
-                          htmlFor="nameOrImeiInputMin"
-                        >
-                          Minimum
-                        </label>
-                        <input
-                          id="nameOrImeiInputMin"
-                          name="nameOrImeiInputMin"
-                          type="text"
-                          className="form-control"
-                          placeholder="0"
-                          required
-                        />
+                        <div className="modal-item-wrapper d-flex align-items-center ">
+                          <img src={circle} alt="name" width={20} height={20} />
+                          <p className="m-0 ms-4">Tuman:</p>
+                          <p className="m-0 ms-2 fw-semibold">
+                            {
+                              stationDistrictName.find((e) => {
+                                if (e.id == stationOne?.district_id) {
+                                  return e.name;
+                                }
+                              })?.name
+                            }
+                          </p>
+                        </div>
+
+                        <div className="modal-item-wrapper d-flex align-items-center ">
+                          <img src={circle} alt="name" width={20} height={20} />
+                          <p className="m-0 ms-4">Balans tashkiloti:</p>
+                          <p className="m-0 ms-2 fw-semibold">
+                            {
+                              stationBalansOrgName.find((e) => {
+                                if (
+                                  e.id == stationOne?.balance_organization_id
+                                ) {
+                                  return e.name;
+                                }
+                              })?.name
+                            }
+                          </p>
+                        </div>
+
+                        <div className="modal-item-wrapper d-flex align-items-center ">
+                          <img src={circle} alt="name" width={20} height={20} />
+                          <p className="m-0 ms-4">User telefon raqami:</p>
+                          <p className="m-0 ms-2 fw-semibold">
+                            {stationOne?.userPhoneNum}
+                          </p>
+                        </div>
+
+                        <div className="modal-item-wrapper d-flex align-items-center ">
+                          <img src={circle} alt="name" width={20} height={20} />
+                          <p className="m-0 ms-4">Qurilma telefon raqami:</p>
+                          <p className="m-0 ms-2 fw-semibold">
+                            {stationOne?.devicePhoneNum}
+                          </p>
+                        </div>
+
+                        <div className="modal-item-wrapper d-flex align-items-center ">
+                          <img src={circle} alt="name" width={20} height={20} />
+                          <p className="m-0 ms-4">Lokatsiya:</p>
+                          <p className="m-0 ms-2 fw-semibold">
+                            {stationOne?.location}
+                          </p>
+                        </div>
+
+                        <div className="modal-item-wrapper d-flex align-items-center ">
+                          <img src={circle} alt="name" width={20} height={20} />
+                          <p className="m-0 ms-4">Datani yuborish vaqti:</p>
+                          <p className="m-0 ms-2 fw-semibold">
+                            {stationOne?.sendDataTime}
+                          </p>
+                        </div>
+
+                        <div className="modal-item-wrapper d-flex align-items-center ">
+                          <img src={circle} alt="name" width={20} height={20} />
+                          <p className="m-0 ms-4">Infoni yuborish vaqti:</p>
+                          <p className="m-0 ms-2 fw-semibold">
+                            {stationOne?.sendInfoTime}
+                          </p>
+                        </div>
+
+                        <div className="modal-item-wrapper d-flex align-items-center ">
+                          <img src={circle} alt="name" width={20} height={20} />
+                          <p className="m-0 ms-4">Programma versiyasi:</p>
+                          <p className="m-0 ms-2 fw-semibold">
+                            {stationOne?.programVersion}
+                          </p>
+                        </div>
+
+                        <div className="modal-item-wrapper d-flex align-items-center ">
+                          <img src={circle} alt="name" width={20} height={20} />
+                          <p className="m-0 ms-4">Temperatura:</p>
+                          <p className="m-0 ms-2 fw-semibold">
+                            {stationOne?.temperture}
+                          </p>
+                        </div>
+
+                        <div className="modal-item-wrapper d-flex align-items-center ">
+                          <img src={circle} alt="name" width={20} height={20} />
+                          <p className="m-0 ms-4">Batareya:</p>
+                          <p
+                            className={
+                              "m-0 ms-2 fw-semibold " +
+                              (stationOne.battery > 77
+                                ? "text-success"
+                                : stationOne.battery <= 77 &&
+                                  stationOne.battery >= 50
+                                ? "text-warning"
+                                : stationOne.battery < 50
+                                ? "text-danger"
+                                : "")
+                            }
+                          >
+                            {stationOne?.battery}%
+                          </p>
+                        </div>
+
+                        <div className="modal-item-wrapper d-flex align-items-center ">
+                          <img src={circle} alt="name" width={20} height={20} />
+                          <p className="m-0 ms-4">Signal:</p>
+                          <p className="m-0 ms-2 fw-semibold">
+                            {stationOne?.signal}
+                          </p>
+                        </div>
+
+                        <div className="modal-item-wrapper d-flex align-items-center ">
+                          <img src={circle} alt="name" width={20} height={20} />
+                          <p className="m-0 ms-4">Status:</p>
+                          <p className="m-0 ms-2 fw-semibold">
+                            {stationOne?.status}
+                          </p>
+                        </div>
+
+                        <div className="modal-item-wrapper d-flex align-items-center ">
+                          <img src={circle} alt="name" width={20} height={20} />
+                          <p className="m-0 ms-4">Sensor type:</p>
+                          <p className="m-0 ms-2 fw-semibold">
+                            {
+                              sensorType.find((e) => {
+                                if (e._id == stationOne.sensorTypeId) {
+                                  return e.name;
+                                }
+                              })?.name
+                            }
+                          </p>
+                        </div>
+
+                        <div className="modal-item-wrapper d-flex align-items-center ">
+                          <img src={circle} alt="name" width={20} height={20} />
+                          <p className="m-0 ms-4">Sana:</p>
+                          <p className="m-0 ms-2 fw-semibold">
+                            {moment(stationOne.date).format("L")}{" "}
+                            {stationOne.date?.split("T")[1]?.slice(0, 8)}
+                          </p>
+                        </div>
                       </div>
-
-                      <div className="w-25">
-                        <label
-                          className="user-station-search-battery-label"
-                          htmlFor="nameOrImeiInputMax"
-                        >
-                          Maximum
-                        </label>
-                        <input
-                          id="nameOrImeiInputMax"
-                          name="nameOrImeiInputMax"
-                          type="text"
-                          className="form-control"
-                          placeholder="100"
-                          required
-                        />
-                      </div>
-                      <button className="btn btn-primary bg-btn">
-                        Qidirish
-                      </button>
-                    </form>
-
-                    <div
-                      className="text-end d-flex align-items-center justify-content-end cursor-pointer"
-                      onClick={() => exportDataToExcel()}
-                    >
-                      <p className="m-0 p-0 user-station-save-data-desc">
-                        Ma'lumotni saqlash
-                      </p>
-
-                      <button className="ms-3 border border-0">
-                        <img src={excel} alt="excel" width={26} height={30} />
-                      </button>
                     </div>
-
-                    {allStationForBattery?.length == 0 ? (
-                      <h3 className="alert alert-dark text-center mt-5">
-                        Hozircha bunday stansiya yo'q...
-                      </h3>
-                    ) : (
-                      <table className="c-table mt-4">
-                        <thead className="c-table__header">
-                          <tr>
-                            <th className="c-table__col-label text-center">
-                              Nomi
-                            </th>
-                            <th className="c-table__col-label text-center">
-                              Imei
-                            </th>
-                            <th className="c-table__col-label text-center">
-                              Status
-                            </th>
-                            <th className="c-table__col-label text-center">
-                              Temperatura
-                            </th>
-                            <th className="c-table__col-label text-center">
-                              Batareya
-                            </th>
-                            <th className="c-table__col-label text-center">
-                              Signal
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="c-table__body">
-                          {allStationForBattery?.map((e, i) => {
-                            return (
-                              <tr
-                                className="fs-6 column-admin-station"
-                                key={i}
-                                data-bs-toggle="modal"
-                                data-bs-target="#exampleModal"
-                                onClick={() => {
-                                  getStationWithImei(e.imel);
-                                }}
-                              >
-                                <td className="c-table__cell text-center">
-                                  {e.name}
-                                </td>
-                                <td className="c-table__cell text-center">
-                                  {e.imel}
-                                </td>
-                                <td className="c-table__cell text-center">
-                                  {e.status}
-                                </td>
-                                <td className="c-table__cell text-center">
-                                  {e.temperture}
-                                </td>
-                                <td
-                                  className={
-                                    "c-table__cell text-center " +
-                                    (e.battery > 77
-                                      ? "text-success"
-                                      : e.battery <= 77 && e.battery >= 50
-                                      ? "text-warning"
-                                      : e.battery < 50
-                                      ? "text-danger"
-                                      : "")
-                                  }
-                                >
-                                  {e.battery}%
-                                </td>
-                                <td className="c-table__cell text-center">
-                                  {e.signal}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    )}
-                    <ReactPaginate
-                      pageCount={totalPagesForBattery}
-                      onPageChange={handlePageChangeForBattery}
-                      forcePage={currentPage}
-                      previousLabel={"<<"}
-                      nextLabel={">>"}
-                      activeClassName={"pagination__link--active"}
-                    />
-                  </div>
-
-                  {/* STATUS */}
-                  <div
-                    className="tab-pane fade profile-search table-scroll"
-                    id="profile-search"
-                  >
-                    <h3 className="stations-search-heading">
-                      Ishlamayotganlar stansiyalar ro'yhati
-                    </h3>
-
-                    <div
-                      className="text-end d-flex align-items-center justify-content-end cursor-pointer"
-                      onClick={() => exportDataToExcel()}
-                    >
-                      <p className="m-0 p-0 user-station-save-data-desc">
-                        Ma'lumotni saqlash
-                      </p>
-                      <button className="ms-4 border border-0">
-                        <img src={excel} alt="excel" width={26} height={30} />
-                      </button>
-                    </div>
-                    {notWorkingStation?.length == 0 ? (
-                      <h3 className="alert alert-dark text-center mt-5">
-                        Hozircha bunday stansiya yo'q...
-                      </h3>
-                    ) : (
-                      <table className="c-table mt-4">
-                        <thead className="c-table__header">
-                          <tr>
-                            <th className="c-table__col-label text-center">
-                              Nomi
-                            </th>
-                            <th className="c-table__col-label text-center">
-                              Imei
-                            </th>
-                            <th className="c-table__col-label text-center">
-                              Status
-                            </th>
-                            <th className="c-table__col-label text-center">
-                              Temperatura
-                            </th>
-                            <th className="c-table__col-label text-center">
-                              Batareya
-                            </th>
-                            <th className="c-table__col-label text-center">
-                              Signal
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="c-table__body">
-                          {notWorkingStation?.map((e, i) => {
-                            return (
-                              <tr
-                                className="fs-6 column-admin-station"
-                                key={i}
-                                data-bs-toggle="modal"
-                                data-bs-target="#exampleModal"
-                                onClick={() => {
-                                  getStationWithImei(e.imel);
-                                }}
-                              >
-                                <td className="c-table__cell text-center">
-                                  {e.name}
-                                </td>
-                                <td className="c-table__cell text-center">
-                                  {e.imel}
-                                </td>
-                                <td className="c-table__cell text-center">
-                                  {e.status}
-                                </td>
-                                <td className="c-table__cell text-center">
-                                  {e.temperture}
-                                </td>
-                                <td
-                                  className={
-                                    "c-table__cell text-center " +
-                                    (e.battery > 77
-                                      ? "text-success"
-                                      : e.battery <= 77 && e.battery >= 50
-                                      ? "text-warning"
-                                      : e.battery < 50
-                                      ? "text-danger"
-                                      : "")
-                                  }
-                                >
-                                  {e.battery}%
-                                </td>
-                                <td className="c-table__cell text-center">
-                                  {e.signal}
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    )}
-
-                    <ReactPaginate
-                      pageCount={totalPagesForStatus}
-                      onPageChange={handlePageChangeForStatus}
-                      forcePage={currentPage}
-                      previousLabel={"<<"}
-                      nextLabel={">>"}
-                      activeClassName={"pagination__link--active"}
-                    />
                   </div>
                 </div>
               </div>
+
+              <div className="card">
+                <div className="card-body pt-3">
+                  <ul className="nav nav-tabs nav-tabs-bordered">
+                    <li className="nav-item">
+                      <button
+                        className="nav-link active"
+                        data-bs-toggle="tab"
+                        data-bs-target="#profile-users"
+                        onClick={() => setWhichData("allStation")}
+                      >
+                        Stansiyalar ro'yhati
+                      </button>
+                    </li>
+
+                    <li className="nav-item">
+                      <button
+                        className="nav-link"
+                        data-bs-toggle="tab"
+                        data-bs-target="#profile-overview"
+                        onClick={() => setWhichData("StationForBattery")}
+                      >
+                        Batareya bo'yicha qidirish
+                      </button>
+                    </li>
+
+                    <li className="nav-item">
+                      <button
+                        className="nav-link"
+                        data-bs-toggle="tab"
+                        data-bs-target="#profile-search"
+                        onClick={() => setWhichData("StationForStatus")}
+                      >
+                        Ishlamayotganlar stansiyalar
+                      </button>
+                    </li>
+                  </ul>
+                  <div className="tab-content pt-4">
+                    <div
+                      className="tab-pane fade show active profile-users table-scroll"
+                      id="profile-users"
+                    >
+                      <h3 className="stations-search-heading">Qidirish</h3>
+                      <form
+                        onSubmit={searchNameOrImei}
+                        className="search-name-wrapper d-flex align-items-center justify-content-between"
+                      >
+                        <input
+                          name="nameOrImeiInput"
+                          type="text"
+                          className="form-control w-50"
+                          placeholder="Qidiruv..."
+                          required
+                        />
+
+                        <select
+                          className="form-select w-25"
+                          name="nameOrImeiSelect"
+                          required
+                        >
+                          <option value="name">Nomi</option>
+                          <option value="imei">Imei</option>
+                          <option value="all">All</option>
+                        </select>
+
+                        <button className="btn btn-primary bg-btn">
+                          Qidirish
+                        </button>
+                      </form>
+
+                      <div
+                        className="d-flex align-items-center justify-content-end cursor-pointer"
+                        onClick={() => exportDataToExcel()}
+                      >
+                        <p className="m-0 p-0 user-station-save-data-desc">
+                          Ma'lumotni saqlash
+                        </p>
+                        <button
+                          onClick={() => exportDataToExcel()}
+                          className="ms-3 border border-0"
+                        >
+                          <img src={excel} alt="excel" width={26} height={30} />
+                        </button>
+                      </div>
+
+                      {allStation?.length == 0 ? (
+                        <h3 className="alert alert-dark text-center mt-5">
+                          Hozircha bunday stansiya yo'q...
+                        </h3>
+                      ) : (
+                        <table className="c-table mt-4">
+                          <thead className="c-table__header">
+                            <tr>
+                              <th className="c-table__col-label text-center">
+                                Nomi
+                              </th>
+                              <th className="c-table__col-label text-center">
+                                Imei
+                              </th>
+                              <th className="c-table__col-label text-center">
+                                Status
+                              </th>
+                              <th className="c-table__col-label text-center">
+                                Temperatura
+                              </th>
+                              <th className="c-table__col-label text-center">
+                                Batareya
+                              </th>
+                              <th className="c-table__col-label text-center">
+                                Signal
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="c-table__body">
+                            {allStation?.map((e, i) => {
+                              return (
+                                <tr
+                                  className="fs-6 column-admin-station"
+                                  key={i}
+                                  data-bs-toggle="modal"
+                                  data-bs-target="#exampleModal"
+                                  onClick={() => {
+                                    getStationWithImei(e.imel);
+                                  }}
+                                >
+                                  <td className="c-table__cell text-center">
+                                    {e.name}
+                                  </td>
+                                  <td className="c-table__cell text-center">
+                                    {e.imel}
+                                  </td>
+                                  <td className="c-table__cell text-center">
+                                    {e.status}
+                                  </td>
+                                  <td className="c-table__cell text-center">
+                                    {e.temperture}
+                                  </td>
+                                  <td
+                                    className={
+                                      "c-table__cell text-center " +
+                                      (e.battery > 77
+                                        ? "text-success"
+                                        : e.battery <= 77 && e.battery >= 50
+                                        ? "text-warning"
+                                        : e.battery < 50
+                                        ? "text-danger"
+                                        : "")
+                                    }
+                                  >
+                                    {e.battery}%
+                                  </td>
+                                  <td className="c-table__cell text-center">
+                                    {e.signal}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      )}
+
+                      <ReactPaginate
+                        pageCount={totalPages}
+                        onPageChange={handlePageChange}
+                        forcePage={currentPage}
+                        previousLabel={"<<"}
+                        nextLabel={">>"}
+                        activeClassName={"pagination__link--active"}
+                      />
+                    </div>
+
+                    {/* BATTERY */}
+                    <div
+                      className="tab-pane fade profile-overview table-scroll"
+                      id="profile-overview"
+                    >
+                      <h3 className="stations-search-heading">
+                        Batareya quvvati oralig'ini kiriting
+                      </h3>
+                      <form
+                        onSubmit={searchByBattery}
+                        className="search-name-wrapper d-flex align-items-center justify-content-between"
+                      >
+                        <div className="w-25">
+                          <label
+                            className="user-station-search-battery-label"
+                            htmlFor="nameOrImeiInputMin"
+                          >
+                            Minimum
+                          </label>
+                          <input
+                            id="nameOrImeiInputMin"
+                            name="nameOrImeiInputMin"
+                            type="text"
+                            className="form-control"
+                            placeholder="0"
+                            required
+                          />
+                        </div>
+
+                        <div className="w-25">
+                          <label
+                            className="user-station-search-battery-label"
+                            htmlFor="nameOrImeiInputMax"
+                          >
+                            Maximum
+                          </label>
+                          <input
+                            id="nameOrImeiInputMax"
+                            name="nameOrImeiInputMax"
+                            type="text"
+                            className="form-control"
+                            placeholder="100"
+                            required
+                          />
+                        </div>
+                        <button className="btn btn-primary bg-btn">
+                          Qidirish
+                        </button>
+                      </form>
+
+                      <div
+                        className="text-end d-flex align-items-center justify-content-end cursor-pointer"
+                        onClick={() => exportDataToExcel()}
+                      >
+                        <p className="m-0 p-0 user-station-save-data-desc">
+                          Ma'lumotni saqlash
+                        </p>
+
+                        <button className="ms-3 border border-0">
+                          <img src={excel} alt="excel" width={26} height={30} />
+                        </button>
+                      </div>
+
+                      {allStationForBattery?.length == 0 ? (
+                        <h3 className="alert alert-dark text-center mt-5">
+                          Hozircha bunday stansiya yo'q...
+                        </h3>
+                      ) : (
+                        <table className="c-table mt-4">
+                          <thead className="c-table__header">
+                            <tr>
+                              <th className="c-table__col-label text-center">
+                                Nomi
+                              </th>
+                              <th className="c-table__col-label text-center">
+                                Imei
+                              </th>
+                              <th className="c-table__col-label text-center">
+                                Status
+                              </th>
+                              <th className="c-table__col-label text-center">
+                                Temperatura
+                              </th>
+                              <th className="c-table__col-label text-center">
+                                Batareya
+                              </th>
+                              <th className="c-table__col-label text-center">
+                                Signal
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="c-table__body">
+                            {allStationForBattery?.map((e, i) => {
+                              return (
+                                <tr
+                                  className="fs-6 column-admin-station"
+                                  key={i}
+                                  data-bs-toggle="modal"
+                                  data-bs-target="#exampleModal"
+                                  onClick={() => {
+                                    getStationWithImei(e.imel);
+                                  }}
+                                >
+                                  <td className="c-table__cell text-center">
+                                    {e.name}
+                                  </td>
+                                  <td className="c-table__cell text-center">
+                                    {e.imel}
+                                  </td>
+                                  <td className="c-table__cell text-center">
+                                    {e.status}
+                                  </td>
+                                  <td className="c-table__cell text-center">
+                                    {e.temperture}
+                                  </td>
+                                  <td
+                                    className={
+                                      "c-table__cell text-center " +
+                                      (e.battery > 77
+                                        ? "text-success"
+                                        : e.battery <= 77 && e.battery >= 50
+                                        ? "text-warning"
+                                        : e.battery < 50
+                                        ? "text-danger"
+                                        : "")
+                                    }
+                                  >
+                                    {e.battery}%
+                                  </td>
+                                  <td className="c-table__cell text-center">
+                                    {e.signal}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      )}
+                      <ReactPaginate
+                        pageCount={totalPagesForBattery}
+                        onPageChange={handlePageChangeForBattery}
+                        forcePage={currentPage}
+                        previousLabel={"<<"}
+                        nextLabel={">>"}
+                        activeClassName={"pagination__link--active"}
+                      />
+                    </div>
+
+                    {/* STATUS */}
+                    <div
+                      className="tab-pane fade profile-search table-scroll"
+                      id="profile-search"
+                    >
+                      <h3 className="stations-search-heading">
+                        Ishlamayotganlar stansiyalar ro'yhati
+                      </h3>
+
+                      <div
+                        className="text-end d-flex align-items-center justify-content-end cursor-pointer"
+                        onClick={() => exportDataToExcel()}
+                      >
+                        <p className="m-0 p-0 user-station-save-data-desc">
+                          Ma'lumotni saqlash
+                        </p>
+                        <button className="ms-4 border border-0">
+                          <img src={excel} alt="excel" width={26} height={30} />
+                        </button>
+                      </div>
+                      {notWorkingStation?.length == 0 ? (
+                        <h3 className="alert alert-dark text-center mt-5">
+                          Hozircha bunday stansiya yo'q...
+                        </h3>
+                      ) : (
+                        <table className="c-table mt-4">
+                          <thead className="c-table__header">
+                            <tr>
+                              <th className="c-table__col-label text-center">
+                                Nomi
+                              </th>
+                              <th className="c-table__col-label text-center">
+                                Imei
+                              </th>
+                              <th className="c-table__col-label text-center">
+                                Status
+                              </th>
+                              <th className="c-table__col-label text-center">
+                                Temperatura
+                              </th>
+                              <th className="c-table__col-label text-center">
+                                Batareya
+                              </th>
+                              <th className="c-table__col-label text-center">
+                                Signal
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="c-table__body">
+                            {notWorkingStation?.map((e, i) => {
+                              return (
+                                <tr
+                                  className="fs-6 column-admin-station"
+                                  key={i}
+                                  data-bs-toggle="modal"
+                                  data-bs-target="#exampleModal"
+                                  onClick={() => {
+                                    getStationWithImei(e.imel);
+                                  }}
+                                >
+                                  <td className="c-table__cell text-center">
+                                    {e.name}
+                                  </td>
+                                  <td className="c-table__cell text-center">
+                                    {e.imel}
+                                  </td>
+                                  <td className="c-table__cell text-center">
+                                    {e.status}
+                                  </td>
+                                  <td className="c-table__cell text-center">
+                                    {e.temperture}
+                                  </td>
+                                  <td
+                                    className={
+                                      "c-table__cell text-center " +
+                                      (e.battery > 77
+                                        ? "text-success"
+                                        : e.battery <= 77 && e.battery >= 50
+                                        ? "text-warning"
+                                        : e.battery < 50
+                                        ? "text-danger"
+                                        : "")
+                                    }
+                                  >
+                                    {e.battery}%
+                                  </td>
+                                  <td className="c-table__cell text-center">
+                                    {e.signal}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      )}
+
+                      <ReactPaginate
+                        pageCount={totalPagesForStatus}
+                        onPageChange={handlePageChangeForStatus}
+                        forcePage={currentPage}
+                        previousLabel={"<<"}
+                        nextLabel={">>"}
+                        activeClassName={"pagination__link--active"}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <Helmet>
+                <script src="../src/assets/js/table.js"></script>
+              </Helmet>
+            </div>
+          </div>
+        ) : (
+          <div className="user-map-animation-wrapper">
+            <div id="box">
+              <div id="tile01">
+                <div id="mask">Smart Solutions System</div>
+              </div>
             </div>
 
-            <Helmet>
-              <script src="../src/assets/js/table.js"></script>
-            </Helmet>
+            <div className="wrap">
+              <div className="drop-outer">
+                <svg
+                  className="drop"
+                  viewBox="0 0 40 40"
+                  version="1.1"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle cx="20" cy="20" r="20" />
+                </svg>
+              </div>
+              <div div className="ripple ripple-1">
+                <svg
+                  className="ripple-svg"
+                  viewBox="0 0 60 60"
+                  version="1.1"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle cx="30" cy="30" r="24" />
+                </svg>
+              </div>
+              <div className="ripple ripple-2">
+                <svg
+                  className="ripple-svg"
+                  viewBox="0 0 60 60"
+                  version="1.1"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle cx="30" cy="30" r="24" />
+                </svg>
+              </div>
+              <div className="ripple ripple-3">
+                <svg
+                  className="ripple-svg"
+                  viewBox="0 0 60 60"
+                  version="1.1"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <circle cx="30" cy="30" r="24" />
+                </svg>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </section>
     </HelmetProvider>
   );

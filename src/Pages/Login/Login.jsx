@@ -5,6 +5,7 @@ import "./Login.css";
 import { api } from "../Api/Api";
 
 const Login = () => {
+  const date = new Date();
   const [errorMessage, setErrorMessage] = useState("");
   const [error, setError] = useState(false);
   const [checkRemember, setCheckRemember] = useState("off");
@@ -38,7 +39,7 @@ const Login = () => {
         });
     }
   }, []);
-
+  console.log(date.getMinutes());
   const loginUser = async (e) => {
     e.preventDefault();
 
@@ -58,6 +59,7 @@ const Login = () => {
     const response = await request.json();
 
     if (response.statusCode == 200) {
+      window.localStorage.setItem("minute", date.getMinutes());
       window.localStorage.setItem("username", username.value);
       window.localStorage.setItem("password", password.value);
       window.localStorage.setItem("name", response.data.user.name);
