@@ -113,6 +113,30 @@ const UserData = () => {
     valueMonth.push(String(item).length == 1 ? `0${item}` : item);
   }
 
+  // ! REFRESH TOKEN
+  useEffect(() => {
+    const minute = 60 * 1000;
+    setInterval(() => {
+      fetch(`${api}/auth/signin`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          username: window.localStorage.getItem("username"),
+          password: window.localStorage.getItem("password"),
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.statusCode == 200) {
+            window.localStorage.setItem("accessToken", data.data.accessToken);
+            window.localStorage.setItem("refreshToken", data.data.refreshToken);
+          }
+        });
+    }, minute * 14);
+  }, []);
+
   useEffect(() => {
     const getStationFunc = async () => {
       // ! STATISTICS

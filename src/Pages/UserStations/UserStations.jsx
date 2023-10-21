@@ -27,6 +27,30 @@ const UserStations = () => {
   const [whichData, setWhichData] = useState("allStation");
   const name = window.localStorage.getItem("name");
 
+  // ! REFRESH TOKEN
+  useEffect(() => {
+    const minute = 60 * 1000;
+    setInterval(() => {
+      fetch(`${api}/auth/signin`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          username: window.localStorage.getItem("username"),
+          password: window.localStorage.getItem("password"),
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.statusCode == 200) {
+            window.localStorage.setItem("accessToken", data.data.accessToken);
+            window.localStorage.setItem("refreshToken", data.data.refreshToken);
+          }
+        });
+    }, minute * 14);
+  }, []);
+
   useEffect(() => {
     const fetchData = async () => {
       // ! ALL STATIONS
@@ -39,29 +63,6 @@ const UserStations = () => {
       });
 
       const response = await request.json();
-
-      if (response.statusCode == 401) {
-        const request = await fetch(`${api}/auth/signIn`, {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({
-            username: window.localStorage.getItem("username"),
-            password: window.localStorage.getItem("password"),
-          }),
-        });
-
-        const response = await request.json();
-
-        if (response.statusCode == 200) {
-          window.localStorage.setItem("accessToken", response.data.accessToken);
-          window.localStorage.setItem(
-            "refreshToken",
-            response.data.refreshToken
-          );
-        }
-      }
 
       setAllStation(response.data.data);
       setTotalPages(response.data.metadata.lastPage);
