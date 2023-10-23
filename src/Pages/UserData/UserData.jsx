@@ -28,6 +28,7 @@ import autoTable from "jspdf-autotable";
 import ReactPaginate from "react-paginate";
 
 const UserData = () => {
+  const [hourSearchBoolean, setHourSearchBoolean] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPagesHour, setTotalPagesHour] = useState(0);
   const [totalPagesYesterday, setTotalPagesYesterday] = useState(0);
@@ -454,6 +455,7 @@ const UserData = () => {
   };
 
   const searchTodayDataWithDate = (date) => {
+    setHourSearchBoolean(true);
     fetch(
       `${api}/yesterdayData/getAllDataByDay?page=1&perPage=10&day=${date}`,
       {
@@ -470,10 +472,12 @@ const UserData = () => {
         setTodayDataMain(data.data);
         setTodayData(data.data);
         setTotalPagesHour(data.totalPages);
+        setHourSearchBoolean(false);
       });
   };
 
   const searchDailyDataWithDate = (date) => {
+    setHourSearchBoolean(true);
     fetch(
       `${api}/dailyData/getAllStationsDataByMonth?page=1&perPage=10&month=${date}`,
       {
@@ -489,6 +493,30 @@ const UserData = () => {
         setDailyDataMain(data.data);
         setDailyData(data.data);
         setTotalPagesDaily(data.totalPages);
+        setHourSearchBoolean(false);
+      });
+  };
+
+  const searchBetweenForm = (e) => {
+    e.preventDefault();
+
+    const { dateStart, dateEnd } = e.target;
+
+    fetch(
+      `${api}/yesterdayData/getAllDataByTwoDayBetween?page=1&perPage=${10}&startDay=${
+        dateStart.value
+      }&endDay=${dateEnd.value}`,
+      {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
+          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
+        },
+      }
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data);
       });
   };
 
@@ -804,6 +832,7 @@ const UserData = () => {
 
   const handlePageChangeHour = (selectedPage) => {
     if (searchWithDaily) {
+      setHourSearchBoolean(true);
       fetch(
         `${api}/yesterdayData/getAllDataByDay?page=${
           selectedPage.selected + 1
@@ -821,6 +850,7 @@ const UserData = () => {
         .then((data) => {
           setTodayDataMain(data.data);
           setTodayData(data.data);
+          setHourSearchBoolean(false);
         });
     } else {
       fetch(
@@ -845,6 +875,7 @@ const UserData = () => {
   };
 
   const handlePageChangeDaily = (selectedPage) => {
+    setHourSearchBoolean(true);
     fetch(
       `${api}/dailyData/getAllStationsDataByMonth?page=${
         selectedPage.selected + 1
@@ -861,6 +892,7 @@ const UserData = () => {
       .then((data) => {
         setDailyDataMain(data.data);
         setDailyData(data.data);
+        setHourSearchBoolean(false);
       });
   };
 
@@ -1600,9 +1632,30 @@ const UserData = () => {
                       Oylik
                     </button>
                   </li>
+
+                  <li className="nav-item">
+                    <button
+                      className="nav-link"
+                      data-bs-toggle="tab"
+                      data-bs-target="#profile-search-between"
+                      onClick={() => {
+                        setWhichData("search-between");
+                        setValueTodayData("level");
+                        setValueStatistic("level");
+                        setSearchDate(false);
+                        setSearchWithDaily(false);
+                        setHourInputValue(
+                          new Date().toISOString().substring(0, 10)
+                        );
+                      }}
+                    >
+                      Kun bo'yicha qidirish
+                    </button>
+                  </li>
                 </ul>
 
                 <div className="tab-content d-flex justify-content-between flex-wrap mt-4">
+                  {/* ! HOUR */}
                   <div
                     className="tab-pane tab-pane-hour fade show active profile-hour "
                     id="profile-hour"
@@ -1670,80 +1723,86 @@ const UserData = () => {
                         </div>
                         <div className="tableFlexible mt-3">
                           <div className="tableFlexible-width">
-                            <table className="table-style">
-                              <thead className="">
-                                <tr>
-                                  <th rowSpan="2" className="sticky">
-                                    T/R
-                                  </th>
-                                  <th
-                                    rowSpan="2"
-                                    className="sticky"
-                                    style={{ left: "57px" }}
-                                  >
-                                    Stantsiya nomi
-                                  </th>
-                                  <th colSpan="24">{hourInputValue}</th>
-                                </tr>
-                                <tr>
-                                  {valueTodayTable.map((r, l) => {
-                                    return <th key={l}>{r}</th>;
-                                  })}
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {todayData?.map((e, i) => {
-                                  return (
-                                    <tr
-                                      className="tr0"
-                                      data-bs-toggle="modal"
-                                      data-bs-target="#exampleModal"
-                                      key={i}
-                                      onClick={() => {
-                                        setTodayDataStatistic(e);
-                                      }}
+                            {hourSearchBoolean ? (
+                              <div className="d-flex align-items-center justify-content-center hour-spinner-wrapper">
+                                <span className="loader"></span>
+                              </div>
+                            ) : (
+                              <table className="table-style">
+                                <thead className="">
+                                  <tr>
+                                    <th rowSpan="2" className="sticky">
+                                      T/R
+                                    </th>
+                                    <th
+                                      rowSpan="2"
+                                      className="sticky"
+                                      style={{ left: "57px" }}
                                     >
-                                      <td className="sticky" style={{}}>
-                                        {i + 1}
-                                      </td>
-                                      <td
-                                        className="text-start sticky fix-with"
-                                        style={{ left: "57px" }}
+                                      Stantsiya nomi
+                                    </th>
+                                    <th colSpan="24">{hourInputValue}</th>
+                                  </tr>
+                                  <tr>
+                                    {valueTodayTable.map((r, l) => {
+                                      return <th key={l}>{r}</th>;
+                                    })}
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {todayData?.map((e, i) => {
+                                    return (
+                                      <tr
+                                        className="tr0"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#exampleModal"
+                                        key={i}
+                                        onClick={() => {
+                                          setTodayDataStatistic(e);
+                                        }}
                                       >
-                                        {e.name}
-                                      </td>
-                                      {valueTodayTable.map((d, w) => {
-                                        const existedValue = !searchDate
-                                          ? e.todayData?.find(
-                                              (a) =>
-                                                a.date
-                                                  .split(" ")[1]
-                                                  .split(":")[0] == d
-                                            )
-                                          : e.allData?.find(
-                                              (a) =>
-                                                a.date
-                                                  .split(" ")[1]
-                                                  .split(":")[0] == d
-                                            );
+                                        <td className="sticky" style={{}}>
+                                          {i + 1}
+                                        </td>
+                                        <td
+                                          className="text-start sticky fix-with"
+                                          style={{ left: "57px" }}
+                                        >
+                                          {e.name}
+                                        </td>
+                                        {valueTodayTable.map((d, w) => {
+                                          const existedValue = !searchDate
+                                            ? e.todayData?.find(
+                                                (a) =>
+                                                  a.date
+                                                    .split(" ")[1]
+                                                    .split(":")[0] == d
+                                              )
+                                            : e.allData?.find(
+                                                (a) =>
+                                                  a.date
+                                                    .split(" ")[1]
+                                                    .split(":")[0] == d
+                                              );
 
-                                        if (existedValue) {
-                                          return (
-                                            <td key={w}>
-                                              {Number(
-                                                existedValue[valueTodayData]
-                                              ).toFixed(2)}
-                                            </td>
-                                          );
-                                        } else {
-                                          return <td key={w}>-</td>;
-                                        }
-                                      })}
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
+                                          if (existedValue) {
+                                            return (
+                                              <td key={w}>
+                                                {Number(
+                                                  existedValue[valueTodayData]
+                                                ).toFixed(2)}
+                                              </td>
+                                            );
+                                          } else {
+                                            return <td key={w}>-</td>;
+                                          }
+                                        })}
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            )}
                           </div>
                         </div>
                         <ReactPaginate
@@ -1896,7 +1955,7 @@ const UserData = () => {
 
                   {/* DAILY */}
                   <div
-                    className="tab-pane fade profile-users"
+                    className="tab-pane tab-pane-hour fade profile-users"
                     id="profile-users"
                   >
                     <div className="containerr">
@@ -1961,72 +2020,78 @@ const UserData = () => {
                         </div>
                         <div className="tableFlexible mt-3">
                           <div className="tableFlexible-width">
-                            <table className="table-style">
-                              <thead className="">
-                                <tr>
-                                  <th rowSpan="2" className="sticky">
-                                    T/R
-                                  </th>
-                                  <th
-                                    rowSpan="2"
-                                    className="sticky"
-                                    style={{ left: "57px" }}
-                                  >
-                                    Stantsiya nomi
-                                  </th>
-                                  <th colSpan={lastDateOfMonth}>
-                                    {valueDailyDataTable}
-                                  </th>
-                                </tr>
-                                <tr>
-                                  {valueMonth.map((r, l) => {
-                                    return <th key={l}>{r}</th>;
-                                  })}
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {dailyData?.map((e, i) => {
-                                  return (
-                                    <tr
-                                      className="tr0"
-                                      data-bs-toggle="modal"
-                                      data-bs-target="#exampleModal"
-                                      key={i}
-                                      onClick={() => {
-                                        setDailyDataStatistic(e);
-                                      }}
+                            {hourSearchBoolean ? (
+                              <div className="d-flex align-items-center justify-content-center hour-spinner-wrapper">
+                                <span className="loader"></span>
+                              </div>
+                            ) : (
+                              <table className="table-style">
+                                <thead className="">
+                                  <tr>
+                                    <th rowSpan="2" className="sticky">
+                                      T/R
+                                    </th>
+                                    <th
+                                      rowSpan="2"
+                                      className="sticky"
+                                      style={{ left: "57px" }}
                                     >
-                                      <td className="sticky" style={{}}>
-                                        {i + 1}
-                                      </td>
-                                      <td
-                                        className="text-start sticky fix-with"
-                                        style={{ left: "57px" }}
+                                      Stantsiya nomi
+                                    </th>
+                                    <th colSpan={lastDateOfMonth}>
+                                      {valueDailyDataTable}
+                                    </th>
+                                  </tr>
+                                  <tr>
+                                    {valueMonth.map((r, l) => {
+                                      return <th key={l}>{r}</th>;
+                                    })}
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {dailyData?.map((e, i) => {
+                                    return (
+                                      <tr
+                                        className="tr0"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#exampleModal"
+                                        key={i}
+                                        onClick={() => {
+                                          setDailyDataStatistic(e);
+                                        }}
                                       >
-                                        {e.name}
-                                      </td>
-                                      {valueMonth.map((d, w) => {
-                                        const existedValue = e.dailyData.find(
-                                          (a) => a.date.split("-")[2] == d
-                                        );
-
-                                        if (existedValue) {
-                                          return (
-                                            <td key={w}>
-                                              {Number(
-                                                existedValue[valueTodayData]
-                                              ).toFixed(2)}
-                                            </td>
+                                        <td className="sticky" style={{}}>
+                                          {i + 1}
+                                        </td>
+                                        <td
+                                          className="text-start sticky fix-with"
+                                          style={{ left: "57px" }}
+                                        >
+                                          {e.name}
+                                        </td>
+                                        {valueMonth.map((d, w) => {
+                                          const existedValue = e.dailyData.find(
+                                            (a) => a.date.split("-")[2] == d
                                           );
-                                        } else {
-                                          return <td key={w}>-</td>;
-                                        }
-                                      })}
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
+
+                                          if (existedValue) {
+                                            return (
+                                              <td key={w}>
+                                                {Number(
+                                                  existedValue[valueTodayData]
+                                                ).toFixed(2)}
+                                              </td>
+                                            );
+                                          } else {
+                                            return <td key={w}>-</td>;
+                                          }
+                                        })}
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            )}
                           </div>
                         </div>
                         <ReactPaginate
@@ -2072,6 +2137,172 @@ const UserData = () => {
                               </option>
                               <option value="temp">Temperatura (°C)</option>
                             </select>
+                            <button
+                              onClick={() => exportNewsByPdf()}
+                              className="ms-4 border border-0"
+                            >
+                              <img src={pdf} alt="pdf" width={23} height={30} />
+                            </button>
+                            <button
+                              onClick={() => exportDataToExcel()}
+                              className="ms-4 border border-0"
+                            >
+                              <img
+                                src={excel}
+                                alt="excel"
+                                width={26}
+                                height={30}
+                              />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="tableFlexible mt-3">
+                          <div className="tableFlexible-width">
+                            <table className="table-style">
+                              <thead className="">
+                                <tr>
+                                  <th rowSpan="2" className="sticky">
+                                    T/R
+                                  </th>
+                                  <th
+                                    rowSpan="2"
+                                    className="sticky"
+                                    style={{ left: "57px" }}
+                                  >
+                                    Stantsiya nomi
+                                  </th>
+                                  <th colSpan={12}>
+                                    {new Date().toISOString().substring(0, 4)}
+                                  </th>
+                                </tr>
+                                <tr>
+                                  {valueYear.map((r, l) => {
+                                    return <th key={l}>{r}</th>;
+                                  })}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {monthlyData?.map((e, i) => {
+                                  return (
+                                    <tr
+                                      className="tr0"
+                                      data-bs-toggle="modal"
+                                      data-bs-target="#exampleModal"
+                                      key={i}
+                                      onClick={() => {
+                                        setMonthlyDataStatistic(e);
+                                      }}
+                                    >
+                                      <td className="sticky">{i + 1}</td>
+                                      <td
+                                        className="text-start sticky fix-with"
+                                        style={{ left: "57px" }}
+                                      >
+                                        {e.name}
+                                      </td>
+                                      {valueYear.map((d, w) => {
+                                        const existedValue = e.monthlyData.find(
+                                          (a) => a.monthNumber == w + 1
+                                        );
+
+                                        if (existedValue) {
+                                          return (
+                                            <td key={w}>
+                                              {Number(
+                                                existedValue[valueTodayData]
+                                              ).toFixed(2)}
+                                            </td>
+                                          );
+                                        } else {
+                                          return <td key={w}>-</td>;
+                                        }
+                                      })}
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        <ReactPaginate
+                          pageCount={totalPagesMonthly}
+                          onPageChange={handlePageChangeMonthly}
+                          forcePage={currentPage}
+                          previousLabel={"<<"}
+                          nextLabel={">>"}
+                          activeClassName={"pagination__link--active"}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SEARCH */}
+                  <div
+                    className="tab-pane fade profile-search-between"
+                    id="profile-search-between"
+                  >
+                    <div className="containerr">
+                      <div className="user-data-hour-wrapper">
+                        <div className="d-flex justify-content-between align-items-start">
+                          <input
+                            className="form-control user-lastdata-news-search"
+                            type="text"
+                            placeholder="Search..."
+                            onChange={(e) =>
+                              searchTodayDataWithInput(
+                                e.target.value.toLowerCase()
+                              )
+                            }
+                          />
+                          <div className="d-flex align-items-end ms-auto">
+                            <form
+                              onSubmit={searchBetweenForm}
+                              className="search-daily-between-form d-flex align-items-end"
+                            >
+                              <div className="me-3">
+                                <label
+                                  htmlFor="dateDaily"
+                                  className="color-seach--daily-label"
+                                >
+                                  Boshlanish sanasi:
+                                </label>
+                                <input
+                                  type="date"
+                                  className="form-control"
+                                  id="dateMonth"
+                                  name="dateStart"
+                                  required
+                                  defaultValue={new Date()
+                                    .toISOString()
+                                    .substring(0, 10)}
+                                />
+                              </div>
+
+                              <div>
+                                <label
+                                  htmlFor="dateDaily"
+                                  className="color-seach--daily-label"
+                                >
+                                  Tugash sanasi:
+                                </label>
+                                <input
+                                  type="date"
+                                  className="form-control"
+                                  id="dateMonth"
+                                  name="dateEnd"
+                                  required
+                                  defaultValue={new Date()
+                                    .toISOString()
+                                    .substring(0, 10)}
+                                />
+                              </div>
+
+                              <button className="search-between-btn ms-3">
+                                Qidirish
+                              </button>
+                            </form>
+
                             <button
                               onClick={() => exportNewsByPdf()}
                               className="ms-4 border border-0"
@@ -2269,7 +2500,7 @@ const UserData = () => {
                       <circle cx="20" cy="20" r="20" />
                     </svg>
                   </div>
-                  <div div className="ripple ripple-1">
+                  <div className="ripple ripple-1">
                     <svg
                       className="ripple-svg"
                       viewBox="0 0 60 60"

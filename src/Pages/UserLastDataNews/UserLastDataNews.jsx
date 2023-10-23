@@ -355,49 +355,110 @@ const UserLastDataNews = () => {
 
   // ! SAVE DATA
   const exportDataToExcel = () => {
+    const fixedDate = new Date();
+
+    const resultDate = `${fixedDate.getDate()}/${
+      fixedDate.getMonth() + 1
+    }/${fixedDate.getFullYear()} ${fixedDate.getHours()}:${
+      String(fixedDate.getMinutes()).length == 1
+        ? "0" + fixedDate.getMinutes()
+        : fixedDate.getMinutes()
+    }`;
+
     if (whichData == "hour") {
+      const resultData = [];
+
+      todayData.forEach((e) => {
+        resultData.push({
+          nomi: stationName,
+          sath: Number(e.level).toFixed(2),
+          shurlanish: Number(e.conductivity).toFixed(2),
+          temperatura: Number(e.temp).toFixed(2),
+          sana: e.date,
+        });
+      });
+
       const workBook = XLSX.utils.book_new();
-      const workSheet = XLSX.utils.json_to_sheet(todayData);
+      const workSheet = XLSX.utils.json_to_sheet(resultData);
 
       XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
 
       if (todayData.length > 0) {
         XLSX.writeFile(
           workBook,
-          `${stationName} ning bugungi ma'lumotlari.xlsx`
+          `${stationName} ning bugungi ma'lumotlari ${resultDate}.xlsx`
         );
       }
     } else if (whichData == "daily") {
+      const resultData = [];
+
+      dailyData.forEach((e) => {
+        resultData.push({
+          nomi: stationName,
+          sath: Number(e.level).toFixed(2),
+          shurlanish: Number(e.conductivity).toFixed(2),
+          temperatura: Number(e.temp).toFixed(2),
+          sana: e.date.split(" ")[0],
+        });
+      });
+
       const workBook = XLSX.utils.book_new();
-      const workSheet = XLSX.utils.json_to_sheet(dailyData);
+      const workSheet = XLSX.utils.json_to_sheet(resultData);
 
       XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
 
       if (dailyData.length > 0) {
         XLSX.writeFile(
           workBook,
-          `${stationName} ning kunlik ma'lumotlari.xlsx`
+          `${stationName} ning kunlik ma'lumotlari ${resultDate}.xlsx`
         );
       }
     } else if (whichData == "monthly") {
+      const resultData = [];
+
+      monthData.forEach((e) => {
+        resultData.push({
+          nomi: stationName,
+          sath: Number(e.level).toFixed(2),
+          shurlanish: Number(e.conductivity).toFixed(2),
+          temperatura: Number(e.temp).toFixed(2),
+          oy: valueYear.find((r, i) => i + 1 == e.monthNumber),
+        });
+      });
+
       const workBook = XLSX.utils.book_new();
-      const workSheet = XLSX.utils.json_to_sheet(monthData);
+      const workSheet = XLSX.utils.json_to_sheet(resultData);
 
       XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
 
       if (monthData.length > 0) {
-        XLSX.writeFile(workBook, `${stationName} ning oylik ma'lumotlari.xlsx`);
+        XLSX.writeFile(
+          workBook,
+          `${stationName} ning oylik ma'lumotlari ${resultDate}.xlsx`
+        );
       }
     } else if (whichData == "yesterday") {
+      const resultData = [];
+
+      yesterdayData.forEach((e) => {
+        resultData.push({
+          nomi: stationName,
+          sath: Number(e.level).toFixed(2),
+          shurlanish: Number(e.conductivity).toFixed(2),
+          temperatura: Number(e.temp).toFixed(2),
+          sana: e.date.split(" ")[1],
+        });
+      });
+
       const workBook = XLSX.utils.book_new();
-      const workSheet = XLSX.utils.json_to_sheet(yesterdayData);
+      const workSheet = XLSX.utils.json_to_sheet(resultData);
 
       XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
 
       if (yesterdayData.length > 0) {
         XLSX.writeFile(
           workBook,
-          `${stationName} ning kecha kelgan ma'lumotlari.xlsx`
+          `${stationName} ning kecha kelgan ma'lumotlari ${resultDate}.xlsx`
         );
       }
     }
@@ -930,7 +991,7 @@ const UserLastDataNews = () => {
                   <div className="dashboard-table dashboard-table-user-last-data-news mt-2">
                     <div className="d-flex justify-content-between align-items-center">
                       <h2 className="m-0 mb-3">
-                        {stationName} ning soatlik ma'lumotlari
+                        {stationName} ning bugun kelgan soatlik ma'lumotlari
                       </h2>
                       <div className="d-flex align-items-center ms-auto">
                         <a
@@ -976,20 +1037,20 @@ const UserLastDataNews = () => {
                     <table className="table mt-4">
                       <thead>
                         <tr>
+                          <th scope="col">Vaqt</th>
                           <th scope="col">Sath (sm)</th>
                           <th scope="col">Sho'rlanish (g/l) </th>
                           <th scope="col">Temperatura (°C)</th>
-                          <th scope="col">Vaqt</th>
                         </tr>
                       </thead>
                       <tbody>
                         {todayData.map((e, i) => {
                           return (
                             <tr key={i}>
+                              <td>{e.date?.split(" ")[1]}</td>
                               <td>{Number(e.level).toFixed(2)}</td>
                               <td>{Number(e.conductivity).toFixed(2)}</td>
                               <td>{Number(e.temp).toFixed(2)}</td>
-                              <td>{e.date?.split(" ")[1]}</td>
                             </tr>
                           );
                         })}
@@ -1059,20 +1120,20 @@ const UserLastDataNews = () => {
                     <table className="table mt-4">
                       <thead>
                         <tr>
+                          <th scope="col">Sana</th>
                           <th scope="col">Sath (sm)</th>
                           <th scope="col">Sho'rlanish (g/l) </th>
                           <th scope="col">Temperatura (°C)</th>
-                          <th scope="col">Kun</th>
                         </tr>
                       </thead>
                       <tbody>
                         {dailyData.map((e, i) => {
                           return (
                             <tr key={i}>
+                              <td>{e.date.split(" ")[0]}</td>
                               <td>{Number(e.level).toFixed(2)}</td>
                               <td>{Number(e.conductivity).toFixed(2)}</td>
                               <td>{Number(e.temp).toFixed(2)}</td>
-                              <td>{e.date.split("-")[2].slice(0, 2)}</td>
                             </tr>
                           );
                         })}
@@ -1134,20 +1195,20 @@ const UserLastDataNews = () => {
                     <table className="table mt-4">
                       <thead>
                         <tr>
+                          <th scope="col">Vaqt</th>
                           <th scope="col">Sath (sm)</th>
                           <th scope="col">Sho'rlanish (g/l) </th>
                           <th scope="col">Temperatura (°C)</th>
-                          <th scope="col">Vaqt</th>
                         </tr>
                       </thead>
                       <tbody>
                         {yesterdayData.map((e, i) => {
                           return (
                             <tr key={i}>
+                              <td>{e.date.split(" ")[1]}</td>
                               <td>{Number(e.level).toFixed(2)}</td>
                               <td>{Number(e.conductivity).toFixed(2)}</td>
                               <td>{Number(e.temp).toFixed(2)}</td>
-                              <td>{e.date.split(" ")[1]}</td>
                             </tr>
                           );
                         })}
@@ -1209,24 +1270,24 @@ const UserLastDataNews = () => {
                     <table className="table mt-4">
                       <thead>
                         <tr>
+                          <th scope="col">Oy</th>
                           <th scope="col">Sath (sm)</th>
                           <th scope="col">Sho'rlanish (g/l) </th>
                           <th scope="col">Temperatura (°C)</th>
-                          <th scope="col">Oy</th>
                         </tr>
                       </thead>
                       <tbody>
                         {monthData.map((e, i) => {
                           return (
                             <tr key={i}>
-                              <td>{Number(e.level).toFixed(2)}</td>
-                              <td>{Number(e.conductivity).toFixed(2)}</td>
-                              <td>{Number(e.temp).toFixed(2)}</td>
                               <td>
                                 {valueYear.find(
                                   (r, i) => i + 1 == e.monthNumber
                                 )}
                               </td>
+                              <td>{Number(e.level).toFixed(2)}</td>
+                              <td>{Number(e.conductivity).toFixed(2)}</td>
+                              <td>{Number(e.temp).toFixed(2)}</td>
                             </tr>
                           );
                         })}

@@ -25,6 +25,8 @@ const UserStations = () => {
   const [stationBalansOrgName, setStationBalansOrgName] = useState([]);
   const [sensorType, setSensorType] = useState([]);
   const [whichData, setWhichData] = useState("allStation");
+  const [minimumValue, setMinimumValue] = useState("");
+  const [maximumValue, setMaximumValue] = useState("");
   const name = window.localStorage.getItem("name");
 
   const minuteLimit = window.localStorage.getItem("minute");
@@ -370,10 +372,50 @@ const UserStations = () => {
   };
 
   // ! SAVE DATA EXCEL
-  const exportDataToExcel = () => {
+  const exportDataToExcel = async () => {
     if (whichData == "allStation") {
+      const requestAllStation = await fetch(
+        `${api}/stations/all?page=1&perPage=${totalPages * 10}`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      );
+
+      const responseAllStation = await requestAllStation.json();
+
+      const resultExcelData = [];
+
+      responseAllStation.data.data.forEach((e) => {
+        resultExcelData.push({
+          id: e._id,
+          Nomi: e.name,
+          Imei: e.imel,
+          Lokatsiya: e.location,
+          Qurilma_Telefon_Raqami: e.devicePhoneNum,
+          User_Telefon_Raqami: e.userPhoneNum,
+          Programma_Versiyasi: e.programVersion,
+          Status: e.status,
+          Signal: e.signal,
+          Temperture: e.temperture,
+          Battereya: e.battery,
+          Datani_yuborish_vaqti: e.sendDataTime,
+          Infoni_yuborish_vaqti: e.sendInfoTime,
+          User_Id: e.userId,
+          Region_Id: e.region_id,
+          Balans_Tashkiloti_Id: e.balance_organization_id,
+          Tuman_Id: e.district_id,
+          date: e.lastData?.date,
+          Integratsiya: e?.isIntegration == true ? "true" : "false",
+        });
+      });
+
       const workBook = XLSX.utils.book_new();
-      const workSheet = XLSX.utils.json_to_sheet(allStation);
+      const workSheet = XLSX.utils.json_to_sheet(resultExcelData);
 
       XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
 
@@ -394,8 +436,52 @@ const UserStations = () => {
         );
       }
     } else if (whichData == "StationForBattery") {
+      const requestAllStationForBattery = await fetch(
+        `${api}/last-data/getGreaterAndLessByStations?great=${
+          minimumValue.length > 0 ? minimumValue : 0
+        }&page=1&perPage=${totalPages * 10}&less=${
+          maximumValue.length > 0 ? maximumValue : 100
+        }`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      );
+
+      const responseAllStationForBattery =
+        await requestAllStationForBattery.json();
+      const resultExcelData = [];
+
+      responseAllStationForBattery.data.data.forEach((e) => {
+        resultExcelData.push({
+          id: e._id,
+          Nomi: e.name,
+          Imei: e.imel,
+          Lokatsiya: e.location,
+          Qurilma_Telefon_Raqami: e.devicePhoneNum,
+          User_Telefon_Raqami: e.userPhoneNum,
+          Programma_Versiyasi: e.programVersion,
+          Status: e.status,
+          Signal: e.signal,
+          Temperture: e.temperture,
+          Battereya: e.battery,
+          Datani_yuborish_vaqti: e.sendDataTime,
+          Infoni_yuborish_vaqti: e.sendInfoTime,
+          User_Id: e.userId,
+          Region_Id: e.region_id,
+          Balans_Tashkiloti_Id: e.balance_organization_id,
+          Tuman_Id: e.district_id,
+          date: e.lastData?.date,
+          Integratsiya: e?.isIntegration == true ? "true" : "false",
+        });
+      });
+
       const workBook = XLSX.utils.book_new();
-      const workSheet = XLSX.utils.json_to_sheet(allStationForBattery);
+      const workSheet = XLSX.utils.json_to_sheet(resultExcelData);
 
       XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
 
@@ -416,8 +502,51 @@ const UserStations = () => {
         );
       }
     } else if (whichData == "StationForStatus") {
+      const requestAllStationForStatus = await fetch(
+        `${api}/stations/all/statusOff?&page=1&perPage=${
+          totalPagesForStatus * 10
+        }`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      );
+
+      const responseAllStationForStatus =
+        await requestAllStationForStatus.json();
+
+      const resultExcelData = [];
+
+      responseAllStationForStatus.data.data.forEach((e) => {
+        resultExcelData.push({
+          id: e._id,
+          Nomi: e.name,
+          Imei: e.imel,
+          Lokatsiya: e.location,
+          Qurilma_Telefon_Raqami: e.devicePhoneNum,
+          User_Telefon_Raqami: e.userPhoneNum,
+          Programma_Versiyasi: e.programVersion,
+          Status: e.status,
+          Signal: e.signal,
+          Temperture: e.temperture,
+          Battereya: e.battery,
+          Datani_yuborish_vaqti: e.sendDataTime,
+          Infoni_yuborish_vaqti: e.sendInfoTime,
+          User_Id: e.userId,
+          Region_Id: e.region_id,
+          Balans_Tashkiloti_Id: e.balance_organization_id,
+          Tuman_Id: e.district_id,
+          date: e.lastData?.date,
+          Integratsiya: e?.isIntegration == true ? "true" : "false",
+        });
+      });
+
       const workBook = XLSX.utils.book_new();
-      const workSheet = XLSX.utils.json_to_sheet(notWorkingStation);
+      const workSheet = XLSX.utils.json_to_sheet(resultExcelData);
 
       XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
 
@@ -854,6 +983,7 @@ const UserStations = () => {
                             className="form-control"
                             placeholder="0"
                             required
+                            onChange={(e) => setMinimumValue(e.target.value)}
                           />
                         </div>
 
@@ -871,6 +1001,7 @@ const UserStations = () => {
                             className="form-control"
                             placeholder="100"
                             required
+                            onChange={(e) => setMaximumValue(e.target.value)}
                           />
                         </div>
                         <button className="btn btn-primary bg-btn">
@@ -1109,7 +1240,7 @@ const UserStations = () => {
                   <circle cx="20" cy="20" r="20" />
                 </svg>
               </div>
-              <div div className="ripple ripple-1">
+              <div className="ripple ripple-1">
                 <svg
                   className="ripple-svg"
                   viewBox="0 0 60 60"

@@ -18,6 +18,7 @@ import * as XLSX from "xlsx";
 import excel from "../../assets/images/excel.png";
 
 const UserLastData = (prop) => {
+  const [loader, setLoader] = useState(false);
   const [allStation, setAllStation] = useState([]);
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
@@ -31,7 +32,7 @@ const UserLastData = (prop) => {
   const [colorCard, setColorCard] = useState(
     "user-last-data-list-item-href-blue"
   );
-
+  console.log(allStation);
   const minuteLimit = window.localStorage.getItem("minute");
   const minuteNow = new Date().getMinutes();
 
@@ -475,17 +476,23 @@ const UserLastData = (prop) => {
 
     allStation.forEach((e) => {
       resultExcelData.push({
-        name: whichStation == "allStation" ? e.name : e.stations.name,
+        nomi: whichStation == "allStation" ? e.name : e.stations.name,
         imei: whichStation == "allStation" ? e.imel : e.stations.imel,
         battery: whichStation == "allStation" ? e.battery : e.stations.battery,
-        level: whichStation == "allStation" ? e?.lastData.level : e.level,
-        conductivity:
+        sath:
           whichStation == "allStation"
-            ? e?.lastData.conductivity
-            : e.conductivity,
-        temp: whichStation == "allStation" ? e?.lastData.temp : e.temp,
-        date: whichStation == "allStation" ? e?.lastData.date : e.date,
-        isIntegration:
+            ? Number(e?.lastData.level).toFixed(2)
+            : Number(e.level).toFixed(2),
+        shurlanish:
+          whichStation == "allStation"
+            ? Number(e?.lastData.conductivity).toFixed(2)
+            : Number(e.conductivity).toFixed(2),
+        temperatura:
+          whichStation == "allStation"
+            ? Number(e?.lastData.temp).toFixed(2)
+            : Number(e.temp).toFixed(2),
+        Sana: whichStation == "allStation" ? e?.lastData.date : e.date,
+        Integratsiya:
           whichStation == "allStation"
             ? e?.isIntegration == true
               ? "true"
@@ -622,6 +629,14 @@ const UserLastData = (prop) => {
     }
   };
 
+  const loaderFunc = () => {
+    setLoader(true);
+
+    setTimeout(() => {
+      setLoader(false);
+    }, 700);
+  };
+
   return (
     <section className="home-section py-3">
       <div className="container-fluid">
@@ -654,6 +669,7 @@ const UserLastData = (prop) => {
                             setWhichStation("allStation");
                             setTableTitle("Umumiy stansiyalar soni");
                             setColorCard("user-last-data-list-item-href-blue");
+                            loaderFunc();
                           }}
                         >
                           <img
@@ -683,6 +699,7 @@ const UserLastData = (prop) => {
                             setWhichStation("todayStation");
                             setTableTitle("Bugun ishlayotganlar stansiyalar");
                             setColorCard("user-last-data-list-item-href-green");
+                            loaderFunc();
                           }}
                         >
                           <img
@@ -719,6 +736,7 @@ const UserLastData = (prop) => {
                             setColorCard(
                               "user-last-data-list-item-href-lime-green"
                             );
+                            loaderFunc();
                           }}
                         >
                           <img
@@ -756,6 +774,7 @@ const UserLastData = (prop) => {
                             setColorCard(
                               "user-last-data-list-item-href-yellow"
                             );
+                            loaderFunc();
                           }}
                         >
                           <img
@@ -793,6 +812,7 @@ const UserLastData = (prop) => {
                             setColorCard(
                               "user-last-data-list-item-href-orange"
                             );
+                            loaderFunc();
                           }}
                         >
                           <img
@@ -840,176 +860,185 @@ const UserLastData = (prop) => {
                       <img src={excel} alt="excel" width={26} height={30} />
                     </button>
                   </div>
-                  <ol className="user-last-data-list list-unstyled m-0 mt-4 mb-4 d-flex align-items-center justify-content-between flex-wrap">
-                    {allStation?.map((e, i) => {
-                      return (
-                        <li className="user-last-data-list-item mt-4" key={i}>
-                          <a
-                            onClick={() => {
-                              navigate(
-                                `/user/lastdata/${
-                                  whichStation == "allStation"
-                                    ? e._id
-                                    : e.stationsId
-                                }`
-                              );
-                              localStorage.setItem(
-                                "stationName",
-                                whichStation == "allStation"
-                                  ? e.name
-                                  : e.stations?.name
-                              );
-                              localStorage.setItem(
-                                "location",
-                                whichStation == "allStation"
-                                  ? e.location
-                                  : e.stations?.location
-                              );
-                            }}
-                          >
-                            <div className="user-last-data-list-item-top d-flex align-items-center justify-content-between">
-                              <h3 className="fs-5 m-0">
-                                {whichStation == "allStation"
-                                  ? e.name
-                                  : e.stations?.name}
-                              </h3>
-                              <div className="d-flex align-items-center justify-content-between">
-                                <p
-                                  className={
-                                    "m-0 me-1 fw-semibold fs-5 " +
-                                    ((whichStation == "allStation"
-                                      ? e.battery
-                                      : e.stations?.battery) >= 70
-                                      ? "text-success"
-                                      : (whichStation == "allStation"
-                                          ? e.battery
-                                          : e.stations?.battery) < 70 &&
-                                        (whichStation == "allStation"
-                                          ? e.battery
-                                          : e.stations?.battery) >= 30
-                                      ? "text-warning"
-                                      : (whichStation == "allStation"
-                                          ? e.battery
-                                          : e.stations?.battery) < 30
-                                      ? "text-danger"
-                                      : " ")
-                                  }
-                                >
-                                  {whichStation == "allStation"
-                                    ? e.battery
-                                    : e.stations?.battery}
-                                  %
-                                </p>
-                                <img
-                                  src={
-                                    (whichStation == "allStation"
-                                      ? e.battery
-                                      : e.stations?.battery) == 100
-                                      ? batteryFull
-                                      : (whichStation == "allStation"
-                                          ? e.battery
-                                          : e.stations?.battery) == 0
-                                      ? batteryNo
-                                      : (whichStation == "allStation"
-                                          ? e.battery
-                                          : e.stations?.battery) >= 70 &&
-                                        (whichStation == "allStation"
-                                          ? e.battery
-                                          : e.stations?.battery) < 100
-                                      ? batteryPow
-                                      : (whichStation == "allStation"
-                                          ? e.battery
-                                          : e.stations?.battery) < 30
-                                      ? batteryRed
-                                      : (whichStation == "allStation"
-                                          ? e.battery
-                                          : e.stations?.battery >= 30) &&
-                                        (whichStation == "allStation"
-                                          ? e.battery
-                                          : e.stations?.battery < 70)
-                                      ? batteryLow
-                                      : null
-                                  }
-                                  alt="battery"
-                                  width={35}
-                                  height={35}
-                                />
-                              </div>
-                            </div>
-                            {whichStation == "allStation" ? (
-                              <span
-                                className={
-                                  checkStationWorkingOrNot(e.lastData) == 0
-                                    ? "user-last-data-list-item-href-green"
-                                    : checkStationWorkingOrNot(e.lastData) <= 3
-                                    ? "user-last-data-list-item-href-lime-green"
-                                    : checkStationWorkingOrNot(e.lastData) ==
-                                      "one month"
-                                    ? "user-last-data-list-item-href-yellow"
-                                    : checkStationWorkingOrNot(e.lastData) ==
-                                      "after one month"
-                                    ? "user-last-data-list-item-href-orange"
-                                    : "user-last-data-list-item-href-orange"
-                                }
-                              ></span>
-                            ) : (
-                              <span className={colorCard}></span>
-                            )}
-
-                            <span className="">
-                              <div className="text-end mt-2">
-                                <div className="d-flex align-items-center">
-                                  <p className="m-0 user-lastdata-level-desc">
-                                    Sath:{" "}
-                                  </p>
-                                  <span className="fw-bold text-end w-100 user-lastdata-level-desc">
-                                    {whichStation == "allStation"
-                                      ? Number(e.lastData?.level).toFixed()
-                                      : Number(e?.level).toFixed()}{" "}
-                                    sm
-                                  </span>
-                                </div>
-                                <div className="d-flex align-items-center">
-                                  <p className="m-0 user-lastdata-level-desc">
-                                    Sho'rlanish:{" "}
-                                  </p>
-                                  <span className="fw-bold text-end w-100 user-lastdata-level-desc">
-                                    {whichStation == "allStation"
-                                      ? Number(
-                                          e.lastData?.conductivity
-                                        ).toFixed()
-                                      : Number(e?.conductivity).toFixed()}{" "}
-                                    g/l
-                                  </span>
-                                </div>
-                                <div className="d-flex align-items-center">
-                                  <p className="m-0 user-lastdata-level-desc">
-                                    Temperatura:{" "}
-                                  </p>
-                                  <span className="fw-bold text-end w-100 user-lastdata-level-desc">
-                                    {whichStation == "allStation"
-                                      ? Number(e.lastData?.temp).toFixed()
-                                      : Number(e?.temp).toFixed()}{" "}
-                                    °C
-                                  </span>
-                                </div>
-                              </div>
-
-                              <div className="mt-2">
-                                <p className="m-0">
-                                  {returnFixdDate(
+                  {loader ? (
+                    <div className="d-flex align-items-center justify-content-center hour-spinner-wrapper">
+                      <span className="loader"></span>
+                    </div>
+                  ) : (
+                    <ol className="user-last-data-list list-unstyled m-0 mt-4 mb-4 d-flex align-items-center justify-content-between flex-wrap">
+                      {allStation?.map((e, i) => {
+                        return (
+                          <li className="user-last-data-list-item mt-4" key={i}>
+                            <a
+                              onClick={() => {
+                                navigate(
+                                  `/user/lastdata/${
                                     whichStation == "allStation"
-                                      ? e?.lastData?.date
-                                      : e.date
-                                  )}
-                                </p>
+                                      ? e._id
+                                      : e.stationsId
+                                  }`
+                                );
+                                localStorage.setItem(
+                                  "stationName",
+                                  whichStation == "allStation"
+                                    ? e.name
+                                    : e.stations?.name
+                                );
+                                localStorage.setItem(
+                                  "location",
+                                  whichStation == "allStation"
+                                    ? e.location
+                                    : e.stations?.location
+                                );
+                              }}
+                            >
+                              <div className="user-last-data-list-item-top d-flex align-items-center justify-content-between">
+                                <h3 className="fs-5 m-0">
+                                  {whichStation == "allStation"
+                                    ? e.name
+                                    : e.stations?.name}
+                                </h3>
+                                <div className="d-flex align-items-center justify-content-between">
+                                  <p
+                                    className={
+                                      "m-0 me-1 fw-semibold fs-5 " +
+                                      ((whichStation == "allStation"
+                                        ? e.battery
+                                        : e.stations?.battery) >= 70
+                                        ? "text-success"
+                                        : (whichStation == "allStation"
+                                            ? e.battery
+                                            : e.stations?.battery) < 70 &&
+                                          (whichStation == "allStation"
+                                            ? e.battery
+                                            : e.stations?.battery) >= 30
+                                        ? "text-warning"
+                                        : (whichStation == "allStation"
+                                            ? e.battery
+                                            : e.stations?.battery) < 30
+                                        ? "text-danger"
+                                        : " ")
+                                    }
+                                  >
+                                    {whichStation == "allStation"
+                                      ? e.battery
+                                      : e.stations?.battery}
+                                    %
+                                  </p>
+                                  <img
+                                    src={
+                                      (whichStation == "allStation"
+                                        ? e.battery
+                                        : e.stations?.battery) == 100
+                                        ? batteryFull
+                                        : (whichStation == "allStation"
+                                            ? e.battery
+                                            : e.stations?.battery) == 0
+                                        ? batteryNo
+                                        : (whichStation == "allStation"
+                                            ? e.battery
+                                            : e.stations?.battery) >= 70 &&
+                                          (whichStation == "allStation"
+                                            ? e.battery
+                                            : e.stations?.battery) < 100
+                                        ? batteryPow
+                                        : (whichStation == "allStation"
+                                            ? e.battery
+                                            : e.stations?.battery) < 30
+                                        ? batteryRed
+                                        : (whichStation == "allStation"
+                                            ? e.battery
+                                            : e.stations?.battery >= 30) &&
+                                          (whichStation == "allStation"
+                                            ? e.battery
+                                            : e.stations?.battery < 70)
+                                        ? batteryLow
+                                        : null
+                                    }
+                                    alt="battery"
+                                    width={35}
+                                    height={35}
+                                  />
+                                </div>
                               </div>
-                            </span>
-                          </a>
-                        </li>
-                      );
-                    })}
-                  </ol>
+                              {whichStation == "allStation" ? (
+                                <span
+                                  className={
+                                    checkStationWorkingOrNot(e.lastData) == 0
+                                      ? "user-last-data-list-item-href-green"
+                                      : checkStationWorkingOrNot(e.lastData) <=
+                                        3
+                                      ? "user-last-data-list-item-href-lime-green"
+                                      : checkStationWorkingOrNot(e.lastData) ==
+                                        "one month"
+                                      ? "user-last-data-list-item-href-yellow"
+                                      : checkStationWorkingOrNot(e.lastData) ==
+                                        "after one month"
+                                      ? "user-last-data-list-item-href-orange"
+                                      : "user-last-data-list-item-href-orange"
+                                  }
+                                ></span>
+                              ) : (
+                                <span className={colorCard}></span>
+                              )}
+
+                              <span className="">
+                                <div className="text-end mt-2">
+                                  <div className="d-flex align-items-center">
+                                    <p className="m-0 user-lastdata-level-desc">
+                                      Sath:{" "}
+                                    </p>
+                                    <span className="fw-bold text-end w-100 user-lastdata-level-desc">
+                                      {whichStation == "allStation"
+                                        ? Number(e.lastData?.level).toFixed()
+                                        : Number(e?.level).toFixed()}{" "}
+                                      sm
+                                    </span>
+                                  </div>
+                                  <div className="d-flex align-items-center">
+                                    <p className="m-0 user-lastdata-level-desc">
+                                      Sho'rlanish:{" "}
+                                    </p>
+                                    <span className="fw-bold text-end w-100 user-lastdata-level-desc">
+                                      {whichStation == "allStation"
+                                        ? Number(
+                                            e.lastData?.conductivity
+                                          ).toFixed()
+                                        : Number(
+                                            e?.conductivity
+                                          ).toFixed()}{" "}
+                                      g/l
+                                    </span>
+                                  </div>
+                                  <div className="d-flex align-items-center">
+                                    <p className="m-0 user-lastdata-level-desc">
+                                      Temperatura:{" "}
+                                    </p>
+                                    <span className="fw-bold text-end w-100 user-lastdata-level-desc">
+                                      {whichStation == "allStation"
+                                        ? Number(e.lastData?.temp).toFixed()
+                                        : Number(e?.temp).toFixed()}{" "}
+                                      °C
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="mt-2">
+                                  <p className="m-0">
+                                    {returnFixdDate(
+                                      whichStation == "allStation"
+                                        ? e?.lastData?.date
+                                        : e.date
+                                    )}
+                                  </p>
+                                </div>
+                              </span>
+                            </a>
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  )}
 
                   <ReactPaginate
                     pageCount={totalPages}
@@ -1041,7 +1070,7 @@ const UserLastData = (prop) => {
                     <circle cx="20" cy="20" r="20" />
                   </svg>
                 </div>
-                <div div className="ripple ripple-1">
+                <div className="ripple ripple-1">
                   <svg
                     className="ripple-svg"
                     viewBox="0 0 60 60"

@@ -562,7 +562,7 @@ const UserMap = () => {
                       <circle cx="20" cy="20" r="20" />
                     </svg>
                   </div>
-                  <div div className="ripple ripple-1">
+                  <div className="ripple ripple-1">
                     <svg
                       className="ripple-svg"
                       viewBox="0 0 60 60"

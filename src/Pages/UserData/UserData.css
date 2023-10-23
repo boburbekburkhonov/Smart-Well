@@ -157,3 +157,41 @@ td {
   color: #0CC0CE !important;
   border: 2px solid #0CC0CE;
 }
+
+.color-seach--daily-label {
+	font-weight: 500;
+  color: #0CC0CE !important;
+}
+
+.search-between-btn {
+	padding: 5px 5px;
+	border: transparent;
+	background: #0CC0CE;
+	color: #ffffff;
+	border-radius: 3px;
+}
+
+/* ! SPINNER */
+.hour-spinner-wrapper {
+	height: 60vh;
+}
+
+.loader {
+	width: 48px;
+	height: 48px;
+	border: 5px solid #0CC0CE;
+	border-bottom-color: transparent;
+	border-radius: 50%;
+	display: inline-block;
+	box-sizing: border-box;
+	animation: rotation 1s linear infinite;
+	}
+
+	@keyframes rotation {
+	0% {
+			transform: rotate(0deg);
+	}
+	100% {
+			transform: rotate(360deg);
+	}
+	}

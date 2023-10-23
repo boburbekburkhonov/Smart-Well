@@ -21,6 +21,7 @@ const UserDashboard = (prop) => {
   const { balanceOrg } = prop;
   const name = window.localStorage.getItem("name");
   const role = window.localStorage.getItem("role");
+  const [loader, setLoader] = useState(false);
   const [dataOrStation, setDataOrStation] = useState("data");
   const [stationBattery, setStationBattery] = useState([]);
   const [stationStatistic, settationStatistic] = useState([]);
@@ -511,11 +512,43 @@ const UserDashboard = (prop) => {
     }
   };
 
-  // ! SAVE DATA EXCEL
+  //! SAVE DATA EXCEL
   const exportDataToExcel = () => {
     if (dataOrStation == "data") {
+      const resultExcelData = [];
+
+      viewStation.forEach((e) => {
+        resultExcelData.push({
+          nomi: whichStation == "allStation" ? e.name : e.stations.name,
+          imei: whichStation == "allStation" ? e.imel : e.stations.imel,
+          battery:
+            whichStation == "allStation" ? e.battery : e.stations.battery,
+          sath:
+            whichStation == "allStation"
+              ? Number(e.lastData?.level).toFixed(2)
+              : Number(e.level).toFixed(2),
+          shurlanish:
+            whichStation == "allStation"
+              ? Number(e.lastData?.conductivity).toFixed(2)
+              : Number(e.conductivity).toFixed(2),
+          temperatura:
+            whichStation == "allStation"
+              ? Number(e.lastData?.temp).toFixed(2)
+              : Number(e.temp).toFixed(2),
+          date: whichStation == "allStation" ? e.lastData?.date : e.date,
+          Integratsiya:
+            whichStation == "allStation"
+              ? e?.isIntegration == true
+                ? "true"
+                : "false"
+              : e.stations.isIntegration == true
+              ? "true"
+              : "false",
+        });
+      });
+
       const workBook = XLSX.utils.book_new();
-      const workSheet = XLSX.utils.json_to_sheet(viewStation);
+      const workSheet = XLSX.utils.json_to_sheet(resultExcelData);
 
       XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
 
@@ -536,8 +569,34 @@ const UserDashboard = (prop) => {
         );
       }
     } else if (dataOrStation == "station") {
+      const resultExcelData = [];
+
+      viewStationByChar.forEach((e) => {
+        resultExcelData.push({
+          id: e._id,
+          Nomi: e.name,
+          Imei: e.imel,
+          Lokatsiya: e.location,
+          Qurilma_Telefon_Raqami: e.devicePhoneNum,
+          User_Telefon_Raqami: e.userPhoneNum,
+          Programma_Versiyasi: e.programVersion,
+          Status: e.status,
+          Signal: e.signal,
+          Temperture: e.temperture,
+          Battereya: e.battery,
+          Datani_yuborish_vaqti: e.sendDataTime,
+          Infoni_yuborish_vaqti: e.sendInfoTime,
+          User_Id: e.userId,
+          Region_Id: e.region_id,
+          Balans_Tashkiloti_Id: e.balance_organization_id,
+          Tuman_Id: e.district_id,
+          date: e.lastData?.date,
+          Integratsiya: e?.isIntegration == true ? "true" : "false",
+        });
+      });
+
       const workBook = XLSX.utils.book_new();
-      const workSheet = XLSX.utils.json_to_sheet(viewStationByChar);
+      const workSheet = XLSX.utils.json_to_sheet(resultExcelData);
 
       XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
 
@@ -599,6 +658,14 @@ const UserDashboard = (prop) => {
     ) {
       return "after one month";
     }
+  };
+
+  const loaderFunc = () => {
+    setLoader(true);
+
+    setTimeout(() => {
+      setLoader(false);
+    }, 500);
   };
 
   return (
@@ -897,6 +964,7 @@ const UserDashboard = (prop) => {
                         setWhichStation("allStation");
                         setTableTitle("Umumiy stansiyalar soni");
                         setDataOrStation("data");
+                        loaderFunc();
                       }}
                     >
                       <img
@@ -926,6 +994,7 @@ const UserDashboard = (prop) => {
                         setWhichStation("todayStation");
                         setTableTitle("Bugun ishlayotganlar stansiyalar");
                         setDataOrStation("data");
+                        loaderFunc();
                       }}
                     >
                       <img
@@ -960,6 +1029,7 @@ const UserDashboard = (prop) => {
                         setWhichStation("withinThreeDayStation");
                         setTableTitle("3 kun ichida ishlagan stansiyalar");
                         setDataOrStation("data");
+                        loaderFunc();
                       }}
                     >
                       <img
@@ -994,6 +1064,7 @@ const UserDashboard = (prop) => {
                         setWhichStation("totalMonthWorkStation");
                         setTableTitle("Oxirgi oy ishlagan stansiyalar");
                         setDataOrStation("data");
+                        loaderFunc();
                       }}
                     >
                       <img
@@ -1029,6 +1100,7 @@ const UserDashboard = (prop) => {
                         setWhichStation("totalMoreWorkStations");
                         setTableTitle("Uzoq vaqt ishlamagan qurilmalar");
                         setDataOrStation("data");
+                        loaderFunc();
                       }}
                     >
                       <img
@@ -1064,6 +1136,7 @@ const UserDashboard = (prop) => {
                         setWhichStation("notWorkStation");
                         setTableTitle("Umuman ishlamagan stansiyalar");
                         setDataOrStation("data");
+                        loaderFunc();
                       }}
                     >
                       <img
@@ -1093,220 +1166,233 @@ const UserDashboard = (prop) => {
                 </ul>
               </div>
 
-              <div className="table-char-wrapperlist d-flex flex-wrap justify-content-between">
-                <div className="dashboard-table mt-5">
-                  <div className="d-flex justify-content-between align-items-center">
-                    <h2>{tableTitle}</h2>
-                    <span
-                      data-bs-toggle="modal"
-                      data-bs-target="#exampleModal"
-                      className="dashboard-fullscreen-wrapper"
-                    >
-                      <img
-                        src={fullScreen}
-                        alt="fullScreen"
-                        width={20}
-                        height={20}
-                      />
-                    </span>
-                  </div>
-                  {dataOrStation == "data" ? (
-                    <table className="table mt-4">
-                      <thead>
-                        <tr>
-                          <th
-                            scope="col"
-                            className="text-center user-dashboard-table-thead"
-                          >
-                            Nomi
-                          </th>
-                          <th
-                            scope="col"
-                            className="text-center user-dashboard-table-thead"
-                          >
-                            Sath (sm)
-                          </th>
-                          <th
-                            scope="col"
-                            className="text-center user-dashboard-table-thead"
-                          >
-                            Sho'rlanish (g/l)
-                          </th>
-                          <th
-                            scope="col"
-                            className="text-center user-dashboard-table-thead"
-                          >
-                            Temperatura (°C)
-                          </th>
-                          <th
-                            scope="col"
-                            className="text-center user-dashboard-table-thead"
-                          >
-                            {whichStation == "todayStation" ? "Vaqt" : "Sana"}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {viewStationLimit?.map((e, i) => {
-                          return (
-                            <tr key={i}>
-                              <td className="text-center fw-bold">
+              {loader ? (
+                <div className="d-flex align-items-center justify-content-center hour-spinner-wrapper">
+                  <span className="loader"></span>
+                </div>
+              ) : (
+                <div className="table-char-wrapperlist d-flex flex-wrap justify-content-between">
+                  <div className="dashboard-table mt-5">
+                    <div className="d-flex justify-content-between align-items-center">
+                      <h2>{tableTitle}</h2>
+                      <span
+                        data-bs-toggle="modal"
+                        data-bs-target="#exampleModal"
+                        className="dashboard-fullscreen-wrapper"
+                      >
+                        <img
+                          src={fullScreen}
+                          alt="fullScreen"
+                          width={20}
+                          height={20}
+                        />
+                      </span>
+                    </div>
+                    {dataOrStation == "data" ? (
+                      <table className="table mt-4">
+                        <thead>
+                          <tr>
+                            <th
+                              scope="col"
+                              className="text-center user-dashboard-table-thead"
+                            >
+                              Nomi
+                            </th>
+                            <th
+                              scope="col"
+                              className="text-center user-dashboard-table-thead"
+                            >
+                              Sath (sm)
+                            </th>
+                            <th
+                              scope="col"
+                              className="text-center user-dashboard-table-thead"
+                            >
+                              Sho'rlanish (g/l)
+                            </th>
+                            <th
+                              scope="col"
+                              className="text-center user-dashboard-table-thead"
+                            >
+                              Temperatura (°C)
+                            </th>
+                            <th
+                              scope="col"
+                              className="text-center user-dashboard-table-thead"
+                            >
+                              {whichStation == "todayStation" ? "Vaqt" : "Sana"}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {viewStationLimit?.map((e, i) => {
+                            return (
+                              <tr key={i}>
+                                <td className="text-center fw-bold">
+                                  {whichStation == "allStation" ||
+                                  whichStation == "notWorkStation"
+                                    ? e?.name
+                                    : e.stations?.name}
+                                </td>
+                                <td className="text-center fw-bold">
+                                  {whichStation == "allStation" &&
+                                  e.lastData?.level != undefined
+                                    ? Number(e.lastData?.level).toFixed(2)
+                                    : e.level != undefined
+                                    ? Number(e.level).toFixed(2)
+                                    : "-"}
+                                </td>
+                                <td className="text-center fw-bold">
+                                  {whichStation == "allStation" &&
+                                  e.lastData?.conductivity != undefined
+                                    ? Number(e.lastData?.conductivity).toFixed(
+                                        2
+                                      )
+                                    : e.conductivity != undefined
+                                    ? Number(e.conductivity).toFixed(2)
+                                    : "-"}
+                                </td>
+                                <td className="text-center fw-bold">
+                                  {whichStation == "allStation" &&
+                                  e.lastData?.temp != undefined
+                                    ? Number(e.lastData?.temp).toFixed(2)
+                                    : e.temp != undefined
+                                    ? Number(e.temp).toFixed(2)
+                                    : "-"}
+                                </td>
                                 {whichStation == "allStation" ||
-                                whichStation == "notWorkStation"
-                                  ? e?.name
-                                  : e.stations?.name}
-                              </td>
-                              <td className="text-center fw-bold">
-                                {whichStation == "allStation" &&
-                                e.lastData?.level != undefined
-                                  ? Number(e.lastData?.level).toFixed(2)
-                                  : e.level != undefined
-                                  ? Number(e.level).toFixed(2)
-                                  : "-"}
-                              </td>
-                              <td className="text-center fw-bold">
-                                {whichStation == "allStation" &&
-                                e.lastData?.conductivity != undefined
-                                  ? Number(e.lastData?.conductivity).toFixed(2)
-                                  : e.conductivity != undefined
-                                  ? Number(e.conductivity).toFixed(2)
-                                  : "-"}
-                              </td>
-                              <td className="text-center fw-bold">
-                                {whichStation == "allStation" &&
-                                e.lastData?.temp != undefined
-                                  ? Number(e.lastData?.temp).toFixed(2)
-                                  : e.temp != undefined
-                                  ? Number(e.temp).toFixed(2)
-                                  : "-"}
-                              </td>
-                              {whichStation == "allStation" ||
-                              whichStation == "notWorkStation" ? (
-                                <td
-                                  className={`text-center fw-bold ${
-                                    checkStationWorkingOrNot(
-                                      e.lastData?.date
-                                    ) == 0
-                                      ? "color-green"
-                                      : checkStationWorkingOrNot(
-                                          e.lastData?.date
-                                        ) <= 3
-                                      ? "color-azeu"
-                                      : checkStationWorkingOrNot(
-                                          e.lastData?.date
-                                        ) > 3
-                                      ? "color-yellow"
-                                      : checkStationWorkingOrNot(
-                                          e.lastData?.date
-                                        ) == "after one month"
-                                      ? "text-danger"
-                                      : checkStationWorkingOrNot(
-                                          e.lastData?.date
-                                        ) == "undefined"
-                                      ? "text-danger"
-                                      : "text-danger"
-                                  }`}
-                                >
-                                  {filteredStationDate(e.lastData?.date)}
+                                whichStation == "notWorkStation" ? (
+                                  <td
+                                    className={`text-center fw-bold ${
+                                      checkStationWorkingOrNot(
+                                        e.lastData?.date
+                                      ) == 0
+                                        ? "color-green"
+                                        : checkStationWorkingOrNot(
+                                            e.lastData?.date
+                                          ) <= 3
+                                        ? "color-azeu"
+                                        : checkStationWorkingOrNot(
+                                            e.lastData?.date
+                                          ) > 3
+                                        ? "color-yellow"
+                                        : checkStationWorkingOrNot(
+                                            e.lastData?.date
+                                          ) == "after one month"
+                                        ? "text-danger"
+                                        : checkStationWorkingOrNot(
+                                            e.lastData?.date
+                                          ) == "undefined"
+                                        ? "text-danger"
+                                        : "text-danger"
+                                    }`}
+                                  >
+                                    {filteredStationDate(e.lastData?.date)}
+                                  </td>
+                                ) : (
+                                  <td
+                                    className={`text-center fw-bold ${
+                                      whichStation == "todayStation"
+                                        ? "text-success"
+                                        : whichStation ==
+                                          "withinThreeDayStation"
+                                        ? "color-azeu"
+                                        : whichStation ==
+                                          "totalMonthWorkStation"
+                                        ? "color-yellow"
+                                        : whichStation ==
+                                          "totalMoreWorkStations"
+                                        ? "color-orange"
+                                        : whichStation == "notWorkStation"
+                                        ? "text-danger"
+                                        : null
+                                    }`}
+                                  >
+                                    {filteredStationDate(e?.date)}
+                                  </td>
+                                )}
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <table className="table mt-4">
+                        <thead>
+                          <tr>
+                            <th
+                              scope="col"
+                              className="text-center user-dashboard-table-thead"
+                            >
+                              Nomi
+                            </th>
+                            <th
+                              scope="col"
+                              className="text-center user-dashboard-table-thead"
+                            >
+                              Batareya (%)
+                            </th>
+                            <th
+                              scope="col"
+                              className="text-center user-dashboard-table-thead"
+                            >
+                              Signal
+                            </th>
+                            <th
+                              scope="col"
+                              className="text-center user-dashboard-table-thead"
+                            >
+                              Status
+                            </th>
+                            <th
+                              scope="col"
+                              className="text-center user-dashboard-table-thead"
+                            >
+                              {whichStation == "todayStation" ? "Vaqt" : "Sana"}
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {viewStationByCharLimit?.map((e, i) => {
+                            return (
+                              <tr key={i}>
+                                <td className="text-center fw-bold">
+                                  {e?.name}
                                 </td>
-                              ) : (
-                                <td
-                                  className={`text-center fw-bold ${
-                                    whichStation == "todayStation"
-                                      ? "text-success"
-                                      : whichStation == "withinThreeDayStation"
-                                      ? "color-azeu"
-                                      : whichStation == "totalMonthWorkStation"
-                                      ? "color-yellow"
-                                      : whichStation == "totalMoreWorkStations"
-                                      ? "color-orange"
-                                      : whichStation == "notWorkStation"
-                                      ? "text-danger"
-                                      : null
-                                  }`}
-                                >
-                                  {filteredStationDate(e?.date)}
+                                <td className="text-center fw-bold">
+                                  {e.battery}
                                 </td>
-                              )}
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  ) : (
-                    <table className="table mt-4">
-                      <thead>
-                        <tr>
-                          <th
-                            scope="col"
-                            className="text-center user-dashboard-table-thead"
-                          >
-                            Nomi
-                          </th>
-                          <th
-                            scope="col"
-                            className="text-center user-dashboard-table-thead"
-                          >
-                            Batareya (%)
-                          </th>
-                          <th
-                            scope="col"
-                            className="text-center user-dashboard-table-thead"
-                          >
-                            Signal
-                          </th>
-                          <th
-                            scope="col"
-                            className="text-center user-dashboard-table-thead"
-                          >
-                            Status
-                          </th>
-                          <th
-                            scope="col"
-                            className="text-center user-dashboard-table-thead"
-                          >
-                            {whichStation == "todayStation" ? "Vaqt" : "Sana"}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {viewStationByCharLimit?.map((e, i) => {
-                          return (
-                            <tr key={i}>
-                              <td className="text-center fw-bold">{e?.name}</td>
-                              <td className="text-center fw-bold">
-                                {e.battery}
-                              </td>
-                              <td className="text-center fw-bold">
-                                {e.signal}
-                              </td>
-                              <td className="text-center fw-bold">
-                                {e.status}
-                              </td>
-                              <td className="text-center fw-bold">
-                                {filteredStationDateByChar(e?.date)}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
+                                <td className="text-center fw-bold">
+                                  {e.signal}
+                                </td>
+                                <td className="text-center fw-bold">
+                                  {e.status}
+                                </td>
+                                <td className="text-center fw-bold">
+                                  {filteredStationDateByChar(e?.date)}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
 
-                <div className="dashboard-dought-wrapper mt-5">
-                  <h3 className="dashboard-dought-wrapper-heading m-0">
-                    Qurilmalarning batareya quvvatlari
-                  </h3>
-                  <Doughnut
-                    className="mx-3"
-                    data={data}
-                    options={options}
-                    onClick={onClick}
-                    ref={chartRef}
-                  ></Doughnut>
+                  <div className="dashboard-dought-wrapper mt-5">
+                    <h3 className="dashboard-dought-wrapper-heading m-0">
+                      Qurilmalarning batareya quvvatlari
+                    </h3>
+                    <Doughnut
+                      className="mx-3"
+                      data={data}
+                      options={options}
+                      onClick={onClick}
+                      ref={chartRef}
+                    ></Doughnut>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           ) : (
             <div className="user-map-animation-wrapper">
@@ -1327,7 +1413,7 @@ const UserDashboard = (prop) => {
                     <circle cx="20" cy="20" r="20" />
                   </svg>
                 </div>
-                <div div className="ripple ripple-1">
+                <div className="ripple ripple-1">
                   <svg
                     className="ripple-svg"
                     viewBox="0 0 60 60"
