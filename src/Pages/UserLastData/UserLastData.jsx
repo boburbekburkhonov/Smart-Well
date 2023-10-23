@@ -32,7 +32,6 @@ const UserLastData = (prop) => {
   const [colorCard, setColorCard] = useState(
     "user-last-data-list-item-href-blue"
   );
-  console.log(allStation);
   const minuteLimit = window.localStorage.getItem("minute");
   const minuteNow = new Date().getMinutes();
 

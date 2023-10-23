@@ -479,6 +479,29 @@ const UserLastDataNews = () => {
       .then((data) => setDailyData(data.data));
   };
 
+  const searchBetweenForm = (e) => {
+    e.preventDefault();
+
+    const { dateStart, dateEnd } = e.target;
+
+    console.log(dateStart.value, dateEnd.value);
+
+    fetch(
+      `${api}/allData/getStationIdAndTwoDayBetween?firstDay=${dateStart.value}&stationsId=${news}&secondDay=${dateEnd.value}`,
+      {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
+          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
+        },
+      }
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data);
+      });
+  };
+
   return (
     <HelmetProvider>
       {/* MODAL CHAR */}
@@ -981,9 +1004,21 @@ const UserLastDataNews = () => {
                     Oylik
                   </button>
                 </li>
+
+                <li className="nav-item">
+                  <button
+                    className="nav-link"
+                    data-bs-toggle="tab"
+                    data-bs-target="#profile-search-between"
+                    onClick={() => setWhichData("monthly")}
+                  >
+                    Kun bo'yicha qidirish
+                  </button>
+                </li>
               </ul>
 
               <div className="tab-content">
+                {/* HOUR */}
                 <div
                   className="tab-pane fade show active profile-hour"
                   id="profile-hour"
@@ -1059,6 +1094,7 @@ const UserLastDataNews = () => {
                   </div>
                 </div>
 
+                {/* DAILY */}
                 <div className="tab-pane fade profile-users" id="profile-users">
                   <div className="dashboard-table dashboard-table-user-last-data-news mt-2">
                     <h2 className="m-0 mb-3">
@@ -1142,6 +1178,7 @@ const UserLastDataNews = () => {
                   </div>
                 </div>
 
+                {/* YESTERDAY */}
                 <div
                   className="tab-pane fade profile-users-ten"
                   id="profile-users-ten"
@@ -1217,6 +1254,7 @@ const UserLastDataNews = () => {
                   </div>
                 </div>
 
+                {/* MONTHLY */}
                 <div
                   className="tab-pane fade profile-overview"
                   id="profile-overview"
@@ -1227,6 +1265,133 @@ const UserLastDataNews = () => {
                         {stationName} ning oylik ma'lumotlari
                       </h2>
                       <div className="d-flex align-items-center ms-auto">
+                        <a
+                          className="ms-4"
+                          href="#"
+                          data-bs-toggle="modal"
+                          data-bs-target="#staticBackdrop"
+                        >
+                          <img
+                            src={statistic}
+                            alt="pdf"
+                            width={25}
+                            height={30}
+                          />
+                        </a>
+                        <a
+                          className="ms-4"
+                          data-bs-toggle="modal"
+                          data-bs-target="#modalMapId"
+                          href="#"
+                        >
+                          <img
+                            src={location}
+                            alt="pdf"
+                            width={30}
+                            height={30}
+                          />
+                        </a>
+                        <button
+                          onClick={() => exportNewsByPdf()}
+                          className="ms-4 border border-0"
+                        >
+                          <img src={pdf} alt="pdf" width={23} height={30} />
+                        </button>
+                        <button
+                          onClick={() => exportDataToExcel()}
+                          className="ms-4 border border-0"
+                        >
+                          <img src={excel} alt="excel" width={26} height={30} />
+                        </button>
+                      </div>
+                    </div>
+                    <table className="table mt-4">
+                      <thead>
+                        <tr>
+                          <th scope="col">Oy</th>
+                          <th scope="col">Sath (sm)</th>
+                          <th scope="col">Sho'rlanish (g/l) </th>
+                          <th scope="col">Temperatura (°C)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {monthData.map((e, i) => {
+                          return (
+                            <tr key={i}>
+                              <td>
+                                {valueYear.find(
+                                  (r, i) => i + 1 == e.monthNumber
+                                )}
+                              </td>
+                              <td>{Number(e.level).toFixed(2)}</td>
+                              <td>{Number(e.conductivity).toFixed(2)}</td>
+                              <td>{Number(e.temp).toFixed(2)}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* SEARCH */}
+                <div
+                  className="tab-pane fade profile-overview"
+                  id="profile-search-between"
+                >
+                  <div className="dashboard-table dashboard-table-user-last-data-news mt-2">
+                    <div className="d-flex justify-content-between align-items-start">
+                      <h2 className="m-0 mb-3">
+                        {stationName} ning oylik ma'lumotlari
+                      </h2>
+                      <div className="d-flex align-items-center ms-auto">
+                        <form
+                          onSubmit={searchBetweenForm}
+                          className="search-daily-between-form d-flex align-items-end"
+                        >
+                          <div className="me-3">
+                            <label
+                              htmlFor="dateDaily"
+                              className="color-seach--daily-label"
+                            >
+                              Boshlanish sanasi:
+                            </label>
+                            <input
+                              type="date"
+                              className="form-control"
+                              id="dateMonth"
+                              name="dateStart"
+                              required
+                              defaultValue={new Date()
+                                .toISOString()
+                                .substring(0, 10)}
+                            />
+                          </div>
+
+                          <div>
+                            <label
+                              htmlFor="dateDaily"
+                              className="color-seach--daily-label"
+                            >
+                              Tugash sanasi:
+                            </label>
+                            <input
+                              type="date"
+                              className="form-control"
+                              id="dateMonth"
+                              name="dateEnd"
+                              required
+                              defaultValue={new Date()
+                                .toISOString()
+                                .substring(0, 10)}
+                            />
+                          </div>
+
+                          <button className="search-between-btn ms-3">
+                            Qidirish
+                          </button>
+                        </form>
+
                         <a
                           className="ms-4"
                           href="#"
