@@ -29,91 +29,47 @@ const UserStations = () => {
   const [maximumValue, setMaximumValue] = useState("");
   const name = window.localStorage.getItem("name");
 
-  const minuteLimit = window.localStorage.getItem("minute");
-  const minuteNow = new Date().getMinutes();
-
   // ! REFRESH TOKEN
-  useEffect(() => {
-    let limit;
-    const minute = 60 * 1000;
-
-    if (
-      14 + Number(minuteLimit) == minuteNow ||
-      14 + Number(minuteLimit) == minuteNow + 60
-    ) {
-      fetch(`${api}/auth/signin`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          username: window.localStorage.getItem("username"),
-          password: window.localStorage.getItem("password"),
-        }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          console.log(data);
-          if (data.statusCode == 200) {
-            window.localStorage.setItem("minute", minuteNow);
-            window.localStorage.setItem("accessToken", data.data.accessToken);
-            window.localStorage.setItem("refreshToken", data.data.refreshToken);
-          }
-        });
-    } else if (
-      14 + Number(minuteLimit) >= 60 &&
-      minuteNow < Number(minuteLimit)
-    ) {
-      limit = 14 + Number(minuteLimit) - (minuteNow + 60);
-    } else if (
-      14 + Number(minuteLimit) >= minuteNow &&
-      Number(minuteLimit) <= minuteNow
-    ) {
-      limit = 14 + Number(minuteLimit) - minuteNow;
+  const minuteLimit = window.localStorage.getItem("minute") * 1;
+  const minuteNow = new Date().getMinutes();
+  const minute = 60 * 1000;
+  let responseLimit;
+  if (minuteLimit > minuteNow) {
+    if (minuteLimit - minuteNow <= 1) {
+      responseLimit = 10000;
     } else {
-      fetch(`${api}/auth/signin`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          username: window.localStorage.getItem("username"),
-          password: window.localStorage.getItem("password"),
-        }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          console.log(data);
-          if (data.statusCode == 200) {
-            window.localStorage.setItem("minute", minuteNow);
-            window.localStorage.setItem("accessToken", data.data.accessToken);
-            window.localStorage.setItem("refreshToken", data.data.refreshToken);
-          }
-        });
+      responseLimit = minute * (minuteLimit - minuteNow);
     }
+  } else if (minuteLimit < minuteNow) {
+    if (minuteLimit + 60 - minuteNow <= 1) {
+      responseLimit = 10000;
+    } else {
+      responseLimit = minute * (minuteLimit + 60 - minuteNow);
+    }
+  }
 
-    setInterval(() => {
-      fetch(`${api}/auth/signin`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          username: window.localStorage.getItem("username"),
-          password: window.localStorage.getItem("password"),
-        }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          console.log(data);
-          if (data.statusCode == 200) {
-            window.localStorage.setItem("minute", minuteNow);
-            window.localStorage.setItem("accessToken", data.data.accessToken);
-            window.localStorage.setItem("refreshToken", data.data.refreshToken);
-          }
-        });
-    }, minute * limit);
-  }, []);
+  setTimeout(() => {
+    fetch(`${api}/auth/signin`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        username: window.localStorage.getItem("username"),
+        password: window.localStorage.getItem("password"),
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.statusCode == 200) {
+          let date = new Date();
+          date.setMinutes(new Date().getMinutes() + 14);
+          window.localStorage.setItem("minute", date.getMinutes());
+          window.localStorage.setItem("accessToken", data.data.accessToken);
+          window.localStorage.setItem("refreshToken", data.data.refreshToken);
+        }
+      });
+  }, responseLimit);
 
   useEffect(() => {
     const fetchData = async () => {

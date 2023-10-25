@@ -28,8 +28,18 @@ import autoTable from "jspdf-autotable";
 import ReactPaginate from "react-paginate";
 
 const UserData = () => {
+  const dateSearch = new Date();
+  dateSearch.setDate(new Date().getDate() - 4);
   const [hourSearchBoolean, setHourSearchBoolean] = useState(false);
+  const [searchBetweenStartDate, setSearchBetweenStartDate] = useState(
+    dateSearch.toISOString().substring(0, 10)
+  );
+  const [searchBetweenEndDate, setSearchBetweenEndDate] = useState(
+    new Date().toISOString().substring(0, 10)
+  );
+  const [searchBetweenBoolean, setSearchBetweenBoolean] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
+  const [totalPagesSearchBetween, setTotalPagesSearchBetween] = useState(0);
   const [totalPagesHour, setTotalPagesHour] = useState(0);
   const [totalPagesYesterday, setTotalPagesYesterday] = useState(0);
   const [totalPagesDaily, setTotalPagesDaily] = useState(0);
@@ -37,6 +47,8 @@ const UserData = () => {
   const [activeMarker, setActiveMarker] = useState();
   const [searchDate, setSearchDate] = useState(false);
   const [statisticsStation, setStatisticsStation] = useState([]);
+  const [searchBetweenDataMain, setSearchBetweenDataMain] = useState([]);
+  const [searchBetweenData, setSearchBetweenData] = useState([]);
   const [lastDataMain, setLastDataMain] = useState([]);
   const [lastData, setLastData] = useState([]);
   const [todayDataMain, setTodayDataMain] = useState([]);
@@ -48,6 +60,9 @@ const UserData = () => {
   const [dailydayDataMain, setDailyDataMain] = useState([]);
   const [dailyData, setDailyData] = useState([]);
   const [dailyDataStatistic, setDailyDataStatistic] = useState([]);
+  const [searchBetweenDataStatistic, setSearchBetweenDataStatistic] = useState(
+    []
+  );
   const [monthlydayDataMain, setMonthlyDataMain] = useState([]);
   const [monthlyData, setMonthlyData] = useState([]);
   const [monthlyDataStatistic, setMonthlyDataStatistic] = useState([]);
@@ -114,91 +129,47 @@ const UserData = () => {
     valueMonth.push(String(item).length == 1 ? `0${item}` : item);
   }
 
-  const minuteLimit = window.localStorage.getItem("minute");
-  const minuteNow = new Date().getMinutes();
-
   // ! REFRESH TOKEN
-  useEffect(() => {
-    let limit;
-    const minute = 60 * 1000;
-
-    if (
-      14 + Number(minuteLimit) == minuteNow ||
-      14 + Number(minuteLimit) == minuteNow + 60
-    ) {
-      fetch(`${api}/auth/signin`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          username: window.localStorage.getItem("username"),
-          password: window.localStorage.getItem("password"),
-        }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          console.log(data);
-          if (data.statusCode == 200) {
-            window.localStorage.setItem("minute", minuteNow);
-            window.localStorage.setItem("accessToken", data.data.accessToken);
-            window.localStorage.setItem("refreshToken", data.data.refreshToken);
-          }
-        });
-    } else if (
-      14 + Number(minuteLimit) >= 60 &&
-      minuteNow < Number(minuteLimit)
-    ) {
-      limit = 14 + Number(minuteLimit) - (minuteNow + 60);
-    } else if (
-      14 + Number(minuteLimit) >= minuteNow &&
-      Number(minuteLimit) <= minuteNow
-    ) {
-      limit = 14 + Number(minuteLimit) - minuteNow;
+  const minuteLimit = window.localStorage.getItem("minute") * 1;
+  const minuteNow = new Date().getMinutes();
+  const minute = 60 * 1000;
+  let responseLimit;
+  if (minuteLimit > minuteNow) {
+    if (minuteLimit - minuteNow <= 1) {
+      responseLimit = 10000;
     } else {
-      fetch(`${api}/auth/signin`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          username: window.localStorage.getItem("username"),
-          password: window.localStorage.getItem("password"),
-        }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          console.log(data);
-          if (data.statusCode == 200) {
-            window.localStorage.setItem("minute", minuteNow);
-            window.localStorage.setItem("accessToken", data.data.accessToken);
-            window.localStorage.setItem("refreshToken", data.data.refreshToken);
-          }
-        });
+      responseLimit = minute * (minuteLimit - minuteNow);
     }
+  } else if (minuteLimit < minuteNow) {
+    if (minuteLimit + 60 - minuteNow <= 1) {
+      responseLimit = 10000;
+    } else {
+      responseLimit = minute * (minuteLimit + 60 - minuteNow);
+    }
+  }
 
-    setInterval(() => {
-      fetch(`${api}/auth/signin`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          username: window.localStorage.getItem("username"),
-          password: window.localStorage.getItem("password"),
-        }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          console.log(data);
-          if (data.statusCode == 200) {
-            window.localStorage.setItem("minute", minuteNow);
-            window.localStorage.setItem("accessToken", data.data.accessToken);
-            window.localStorage.setItem("refreshToken", data.data.refreshToken);
-          }
-        });
-    }, minute * limit);
-  }, []);
+  setTimeout(() => {
+    fetch(`${api}/auth/signin`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        username: window.localStorage.getItem("username"),
+        password: window.localStorage.getItem("password"),
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.statusCode == 200) {
+          let date = new Date();
+          date.setMinutes(new Date().getMinutes() + 14);
+          window.localStorage.setItem("minute", date.getMinutes());
+          window.localStorage.setItem("accessToken", data.data.accessToken);
+          window.localStorage.setItem("refreshToken", data.data.refreshToken);
+        }
+      });
+  }, responseLimit);
 
   useEffect(() => {
     const getStationFunc = async () => {
@@ -339,6 +310,27 @@ const UserData = () => {
       setMonthlyDataMain(responseMonthlyData.stations.data);
       setMonthlyData(responseMonthlyData.stations.data);
       setTotalPagesMonthly(responseMonthlyData.stations.totalPages);
+
+      // ! SEARCH BETWEEN
+      setSearchBetweenBoolean(true);
+      const requestSearchBetween = await fetch(
+        `${api}/yesterdayData/getAllDataByTwoDayBetween?page=1&perPage=10&startDay=${searchBetweenStartDate}&endDay=${searchBetweenEndDate}`,
+        {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        }
+      );
+
+      const responseSearchBetween = await requestSearchBetween.json();
+
+      setSearchBetweenDataMain(responseSearchBetween.data);
+      setSearchBetweenData(responseSearchBetween.data);
+      setTotalPagesSearchBetween(responseSearchBetween.totalPages);
+      setSearchBetweenBoolean(false);
     };
 
     getStationFunc();
@@ -367,6 +359,8 @@ const UserData = () => {
       ? yesterdayDataStatistic.yesterdayData?.map((e) => e.date.split(" ")[1])
       : whichData == "daily"
       ? dailyDataStatistic.dailyData?.map((e) => e.date.split("-")[2])
+      : whichData == "search-between"
+      ? searchBetweenDataStatistic.allData?.map((e) => e.date.split(" ")[0])
       : whichData == "monthly"
       ? monthlyDataStatistic.monthlyData?.map((e) => {
           const foundNameMonth = valueYear.find(
@@ -397,6 +391,10 @@ const UserData = () => {
               )
             : whichData == "daily"
             ? dailyDataStatistic.dailyData?.map((e) =>
+                Number(e[valueStatistic]).toFixed(2)
+              )
+            : whichData == "search-between"
+            ? searchBetweenDataStatistic.allData?.map((e) =>
                 Number(e[valueStatistic]).toFixed(2)
               )
             : whichData == "monthly"
@@ -451,6 +449,11 @@ const UserData = () => {
         e.name.toLowerCase().includes(inputValue)
       );
       setMonthlyData(search);
+    } else if (whichData == "search-between") {
+      const search = searchBetweenDataMain.filter((e) =>
+        e.name.toLowerCase().includes(inputValue)
+      );
+      setSearchBetweenData(search);
     }
   };
 
@@ -498,14 +501,13 @@ const UserData = () => {
   };
 
   const searchBetweenForm = (e) => {
+    setSearchBetweenBoolean(true);
     e.preventDefault();
 
     const { dateStart, dateEnd } = e.target;
 
     fetch(
-      `${api}/yesterdayData/getAllDataByTwoDayBetween?page=1&perPage=${10}&startDay=${
-        dateStart.value
-      }&endDay=${dateEnd.value}`,
+      `${api}/yesterdayData/getAllDataByTwoDayBetween?page=1&perPage=10&startDay=${dateStart.value}&endDay=${dateEnd.value}`,
       {
         method: "GET",
         headers: {
@@ -516,7 +518,10 @@ const UserData = () => {
     )
       .then((res) => res.json())
       .then((data) => {
-        console.log(data);
+        setSearchBetweenDataMain(data.data);
+        setSearchBetweenData(data.data);
+        setTotalPagesSearchBetween(data.totalPages);
+        setSearchBetweenBoolean(false);
       });
   };
 
@@ -698,6 +703,7 @@ const UserData = () => {
           });
         });
       });
+      XLSX.utils.aoa_to_sheet();
       const workBook = XLSX.utils.book_new();
       const workSheet = XLSX.utils.json_to_sheet(resultTodayData);
 
@@ -936,6 +942,29 @@ const UserData = () => {
       });
   };
 
+  const handlePageChangeSearchBetween = (selectedPage) => {
+    setSearchBetweenBoolean(true);
+    fetch(
+      `${api}/yesterdayData/getAllDataByTwoDayBetween?page=${
+        selectedPage.selected + 1
+      }&perPage=10&startDay=${searchBetweenStartDate}&endDay=${searchBetweenEndDate}`,
+      {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
+          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
+        },
+      }
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        setSearchBetweenDataMain(data.data);
+        setSearchBetweenData(data.data);
+        setTotalPagesSearchBetween(data.totalPages);
+        setSearchBetweenBoolean(false);
+      });
+  };
+
   return (
     <HelmetProvider>
       {/* MODAL */}
@@ -971,6 +1000,8 @@ const UserData = () => {
                       ? yesterdayDataStatistic.location?.split("-")[0] * 1
                       : whichData == "daily"
                       ? dailyDataStatistic.location?.split("-")[0] * 1
+                      : whichData == "search-between"
+                      ? searchBetweenDataStatistic.location?.split("-")[0] * 1
                       : whichData == "monthly"
                       ? monthlyDataStatistic.location?.split("-")[0] * 1
                       : null,
@@ -981,6 +1012,8 @@ const UserData = () => {
                       ? yesterdayDataStatistic.location?.split("-")[1] * 1
                       : whichData == "daily"
                       ? dailyDataStatistic.location?.split("-")[1] * 1
+                      : whichData == "search-between"
+                      ? searchBetweenDataStatistic.location?.split("-")[1] * 1
                       : whichData == "monthly"
                       ? monthlyDataStatistic.location?.split("-")[1] * 1
                       : null,
@@ -996,6 +1029,8 @@ const UserData = () => {
                         ? yesterdayDataStatistic.location?.split("-")[0] * 1
                         : whichData == "daily"
                         ? dailyDataStatistic.location?.split("-")[0] * 1
+                        : whichData == "search-between"
+                        ? searchBetweenDataStatistic.location?.split("-")[0] * 1
                         : whichData == "monthly"
                         ? monthlyDataStatistic.location?.split("-")[0] * 1
                         : null,
@@ -1006,6 +1041,8 @@ const UserData = () => {
                         ? yesterdayDataStatistic.location?.split("-")[1] * 1
                         : whichData == "daily"
                         ? dailyDataStatistic.location?.split("-")[1] * 1
+                        : whichData == "search-between"
+                        ? searchBetweenDataStatistic.location?.split("-")[1] * 1
                         : whichData == "monthly"
                         ? monthlyDataStatistic.location?.split("-")[1] * 1
                         : null,
@@ -1017,6 +1054,8 @@ const UserData = () => {
                       ? yesterdayDataStatistic.name
                       : whichData == "daily"
                       ? dailyDataStatistic.name
+                      : whichData == "search-between"
+                      ? searchBetweenDataStatistic.name
                       : whichData == "monthly"
                       ? monthlyDataStatistic.name
                       : null
@@ -1397,6 +1436,105 @@ const UserData = () => {
                                   dailyDataStatistic.dailyData[0].date.split(
                                     "-"
                                   )[2]
+                                }
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <h3 className="fw-semibold text-success fs-6 text-center">
+                              {dailyDataStatistic.name}
+                            </h3>
+                            <div className="d-flex align-items-center justify-content-center">
+                              <img
+                                src={circleRed}
+                                alt="circleBlue"
+                                width={18}
+                                height={18}
+                              />
+                              <p className="m-0 infowindow-desc-not-last-data fs-6 ms-1 me-1 ">
+                                Ma'lumot kelmagan...
+                              </p>
+                            </div>{" "}
+                          </div>
+                        )
+                      ) : whichData == "search-between" ? (
+                        searchBetweenData.length > 0 ? (
+                          <div>
+                            <h3 className="fw-semibold text-success fs-6">
+                              {searchBetweenDataStatistic.name}
+                            </h3>
+
+                            <div className="d-flex align-items-center mb-1">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="infowindow-desc m-0 ms-1 me-1">
+                                Sath:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {Number(
+                                  searchBetweenDataStatistic.allData[0].level
+                                ).toFixed(2)}{" "}
+                                sm
+                              </span>
+                            </div>
+
+                            <div className="d-flex align-items-center mb-1">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="m-0 infowindow-desc ms-1 me-1 ">
+                                Sho'rlanish:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {Number(
+                                  searchBetweenDataStatistic.allData[0]
+                                    .conductivity
+                                ).toFixed(2)}{" "}
+                                g/l
+                              </span>
+                            </div>
+
+                            <div className="d-flex align-items-center mb-1">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="m-0 infowindow-desc ms-1 me-1 ">
+                                Temperatura:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {Number(
+                                  searchBetweenDataStatistic.allData[0].temp
+                                ).toFixed(2)}{" "}
+                                °C
+                              </span>
+                            </div>
+
+                            <div className="d-flex align-items-center">
+                              <img
+                                src={circleBlue}
+                                alt="circleBlue"
+                                width={12}
+                                height={12}
+                              />
+                              <p className="m-0 infowindow-desc ms-1 me-1">
+                                Kun:
+                              </p>{" "}
+                              <span className="infowindow-span">
+                                {
+                                  searchBetweenDataStatistic.allData[0].date.split(
+                                    " "
+                                  )[0]
                                 }
                               </span>
                             </div>
@@ -1819,7 +1957,7 @@ const UserData = () => {
 
                   {/* YESTERDAY */}
                   <div
-                    className="tab-pane fade profile-users-ten"
+                    className="tab-pane tab-pane-hour fade profile-users-ten"
                     id="profile-users-ten"
                   >
                     <div className="containerr">
@@ -2108,7 +2246,7 @@ const UserData = () => {
 
                   {/* MONTHLY */}
                   <div
-                    className="tab-pane fade profile-overview"
+                    className="tab-pane tab-pane-hour fade profile-overview"
                     id="profile-overview"
                   >
                     <div className="containerr">
@@ -2239,31 +2377,31 @@ const UserData = () => {
 
                   {/* SEARCH */}
                   <div
-                    className="tab-pane fade profile-search-between"
+                    className="tab-pane tab-pane-hour fade profile-search-between"
                     id="profile-search-between"
                   >
                     <div className="containerr">
                       <div className="user-data-hour-wrapper">
-                        <div className="d-flex justify-content-between align-items-start">
-                          <input
-                            className="form-control user-lastdata-news-search"
-                            type="text"
-                            placeholder="Search..."
-                            onChange={(e) =>
-                              searchTodayDataWithInput(
-                                e.target.value.toLowerCase()
-                              )
-                            }
-                          />
-                          <div className="d-flex align-items-end ms-auto">
+                        <div className="d-flex justify-content-between align-items-start flex-column">
+                          <div className="d-flex align-items-center w-100">
+                            <input
+                              className="form-control user-lastdata-news-search"
+                              type="text"
+                              placeholder="Search..."
+                              onChange={(e) =>
+                                searchTodayDataWithInput(
+                                  e.target.value.toLowerCase()
+                                )
+                              }
+                            />
                             <form
                               onSubmit={searchBetweenForm}
-                              className="search-daily-between-form d-flex align-items-end"
+                              className="search-daily-between-form d-flex align-items-end ms-auto"
                             >
                               <div className="me-3">
                                 <label
                                   htmlFor="dateDaily"
-                                  className="color-seach--daily-label"
+                                  className="color-seach--daily-label mb-1"
                                 >
                                   Boshlanish sanasi:
                                 </label>
@@ -2276,13 +2414,16 @@ const UserData = () => {
                                   defaultValue={new Date()
                                     .toISOString()
                                     .substring(0, 10)}
+                                  onChange={(e) =>
+                                    setSearchBetweenStartDate(e.target.value)
+                                  }
                                 />
                               </div>
 
                               <div>
                                 <label
                                   htmlFor="dateDaily"
-                                  className="color-seach--daily-label"
+                                  className="color-seach--daily-label mb-1"
                                 >
                                   Tugash sanasi:
                                 </label>
@@ -2295,6 +2436,9 @@ const UserData = () => {
                                   defaultValue={new Date()
                                     .toISOString()
                                     .substring(0, 10)}
+                                  onChange={(e) =>
+                                    setSearchBetweenEndDate(e.target.value)
+                                  }
                                 />
                               </div>
 
@@ -2321,79 +2465,100 @@ const UserData = () => {
                               />
                             </button>
                           </div>
+                          <select
+                            onChange={(e) => setValueTodayData(e.target.value)}
+                            className="form-select select-user-data-today ms-auto mt-3"
+                          >
+                            <option value="level">Sathi (sm)</option>
+                            <option value="conductivity">
+                              Sho'rlanish (g/l)
+                            </option>
+                            <option value="temp">Temperatura (°C)</option>
+                          </select>
                         </div>
                         <div className="tableFlexible mt-3">
                           <div className="tableFlexible-width">
-                            <table className="table-style">
-                              <thead className="">
-                                <tr>
-                                  <th rowSpan="2" className="sticky">
-                                    T/R
-                                  </th>
-                                  <th
-                                    rowSpan="2"
-                                    className="sticky"
-                                    style={{ left: "57px" }}
-                                  >
-                                    Stantsiya nomi
-                                  </th>
-                                  <th colSpan={12}>
-                                    {new Date().toISOString().substring(0, 4)}
-                                  </th>
-                                </tr>
-                                <tr>
-                                  {valueYear.map((r, l) => {
-                                    return <th key={l}>{r}</th>;
-                                  })}
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {monthlyData?.map((e, i) => {
-                                  return (
-                                    <tr
-                                      className="tr0"
-                                      data-bs-toggle="modal"
-                                      data-bs-target="#exampleModal"
-                                      key={i}
-                                      onClick={() => {
-                                        setMonthlyDataStatistic(e);
-                                      }}
+                            {searchBetweenBoolean ? (
+                              <div className="d-flex align-items-center justify-content-center hour-spinner-wrapper">
+                                <span className="loader"></span>
+                              </div>
+                            ) : (
+                              <table className="table-style">
+                                <thead className="">
+                                  <tr>
+                                    <th rowSpan="2" className="sticky">
+                                      T/R
+                                    </th>
+                                    <th
+                                      rowSpan="2"
+                                      className="sticky"
+                                      style={{ left: "57px" }}
                                     >
-                                      <td className="sticky">{i + 1}</td>
-                                      <td
-                                        className="text-start sticky fix-with"
-                                        style={{ left: "57px" }}
+                                      Stantsiya nomi
+                                    </th>
+                                    <th
+                                      colSpan={lastDateOfMonth}
+                                    >{`${searchBetweenStartDate} / ${searchBetweenEndDate}`}</th>
+                                  </tr>
+                                  <tr>
+                                    {valueMonth.map((r, l) => {
+                                      return <th key={l}>{r}</th>;
+                                    })}
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {searchBetweenData?.map((e, i) => {
+                                    return (
+                                      <tr
+                                        className="tr0"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#exampleModal"
+                                        key={i}
+                                        onClick={() => {
+                                          setSearchBetweenDataStatistic(e);
+                                        }}
                                       >
-                                        {e.name}
-                                      </td>
-                                      {valueYear.map((d, w) => {
-                                        const existedValue = e.monthlyData.find(
-                                          (a) => a.monthNumber == w + 1
-                                        );
-
-                                        if (existedValue) {
-                                          return (
-                                            <td key={w}>
-                                              {Number(
-                                                existedValue[valueTodayData]
-                                              ).toFixed(2)}
-                                            </td>
+                                        <td className="sticky" style={{}}>
+                                          {i + 1}
+                                        </td>
+                                        <td
+                                          className="text-start sticky fix-with"
+                                          style={{ left: "57px" }}
+                                        >
+                                          {e.name}
+                                        </td>
+                                        {valueMonth.map((d, w) => {
+                                          const existedValue = e.allData?.find(
+                                            (a) =>
+                                              a.date
+                                                .split("-")[2]
+                                                .slice(0, 2) == d
                                           );
-                                        } else {
-                                          return <td key={w}>-</td>;
-                                        }
-                                      })}
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
+
+                                          if (existedValue) {
+                                            return (
+                                              <td key={w}>
+                                                {Number(
+                                                  existedValue[valueTodayData]
+                                                ).toFixed(2)}
+                                              </td>
+                                            );
+                                          } else {
+                                            return <td key={w}>-</td>;
+                                          }
+                                        })}
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            )}
                           </div>
                         </div>
 
                         <ReactPaginate
-                          pageCount={totalPagesMonthly}
-                          onPageChange={handlePageChangeMonthly}
+                          pageCount={totalPagesSearchBetween}
+                          onPageChange={handlePageChangeSearchBetween}
                           forcePage={currentPage}
                           previousLabel={"<<"}
                           nextLabel={">>"}

@@ -27,6 +27,8 @@ moment.locale("uz-latn");
 
 const UserLastDataNews = () => {
   const { news } = useParams();
+  const [loader, setLoader] = useState(false);
+  const [searchBetweenData, setSearchBetweenData] = useState([]);
   const [todayData, setTodayData] = useState([]);
   const [yesterdayData, setYesterdayData] = useState([]);
   const [dailyData, setDailyData] = useState([]);
@@ -50,92 +52,50 @@ const UserLastDataNews = () => {
     "Noyabr",
     "Dekabr",
   ];
-
-  const minuteLimit = window.localStorage.getItem("minute");
-  const minuteNow = new Date().getMinutes();
+  const dateSearch = new Date();
+  dateSearch.setDate(new Date().getDate() - 4);
 
   // ! REFRESH TOKEN
-  useEffect(() => {
-    let limit;
-    const minute = 60 * 1000;
-
-    if (
-      14 + Number(minuteLimit) == minuteNow ||
-      14 + Number(minuteLimit) == minuteNow + 60
-    ) {
-      fetch(`${api}/auth/signin`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          username: window.localStorage.getItem("username"),
-          password: window.localStorage.getItem("password"),
-        }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          console.log(data);
-          if (data.statusCode == 200) {
-            window.localStorage.setItem("minute", minuteNow);
-            window.localStorage.setItem("accessToken", data.data.accessToken);
-            window.localStorage.setItem("refreshToken", data.data.refreshToken);
-          }
-        });
-    } else if (
-      14 + Number(minuteLimit) >= 60 &&
-      minuteNow < Number(minuteLimit)
-    ) {
-      limit = 14 + Number(minuteLimit) - (minuteNow + 60);
-    } else if (
-      14 + Number(minuteLimit) >= minuteNow &&
-      Number(minuteLimit) <= minuteNow
-    ) {
-      limit = 14 + Number(minuteLimit) - minuteNow;
+  const minuteLimit = window.localStorage.getItem("minute") * 1;
+  const minuteNow = new Date().getMinutes();
+  const minute = 60 * 1000;
+  let responseLimit;
+  if (minuteLimit > minuteNow) {
+    if (minuteLimit - minuteNow <= 1) {
+      responseLimit = 10000;
     } else {
-      fetch(`${api}/auth/signin`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          username: window.localStorage.getItem("username"),
-          password: window.localStorage.getItem("password"),
-        }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          console.log(data);
-          if (data.statusCode == 200) {
-            window.localStorage.setItem("minute", minuteNow);
-            window.localStorage.setItem("accessToken", data.data.accessToken);
-            window.localStorage.setItem("refreshToken", data.data.refreshToken);
-          }
-        });
+      responseLimit = minute * (minuteLimit - minuteNow);
     }
+  } else if (minuteLimit < minuteNow) {
+    if (minuteLimit + 60 - minuteNow <= 1) {
+      responseLimit = 10000;
+    } else {
+      responseLimit = minute * (minuteLimit + 60 - minuteNow);
+    }
+  }
 
-    setInterval(() => {
-      fetch(`${api}/auth/signin`, {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          username: window.localStorage.getItem("username"),
-          password: window.localStorage.getItem("password"),
-        }),
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          console.log(data);
-          if (data.statusCode == 200) {
-            window.localStorage.setItem("minute", minuteNow);
-            window.localStorage.setItem("accessToken", data.data.accessToken);
-            window.localStorage.setItem("refreshToken", data.data.refreshToken);
-          }
-        });
-    }, minute * limit);
-  }, []);
+  setTimeout(() => {
+    fetch(`${api}/auth/signin`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        username: window.localStorage.getItem("username"),
+        password: window.localStorage.getItem("password"),
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.statusCode == 200) {
+          let date = new Date();
+          date.setMinutes(new Date().getMinutes() + 14);
+          window.localStorage.setItem("minute", date.getMinutes());
+          window.localStorage.setItem("accessToken", data.data.accessToken);
+          window.localStorage.setItem("refreshToken", data.data.refreshToken);
+        }
+      });
+  }, responseLimit);
 
   useEffect(() => {
     const todayData = async () => {
@@ -203,6 +163,26 @@ const UserLastDataNews = () => {
     )
       .then((res) => res.json())
       .then((data) => setYesterdayData(data.data));
+
+    // ! SEARCH DATA
+    fetch(
+      `${api}/allData/getStationIdAndTwoDayBetween?firstDay=${dateSearch
+        .toISOString()
+        .substring(0, 10)}&stationsId=${news}&secondDay=${new Date()
+        .toISOString()
+        .substring(0, 10)}`,
+      {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
+          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
+        },
+      }
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        setSearchBetweenData(data.data);
+      });
   }, []);
 
   const { isLoaded } = useLoadScript({
@@ -226,6 +206,8 @@ const UserLastDataNews = () => {
       ? yesterdayData.map((e) => e.date.split(" ")[1])
       : whichData == "daily"
       ? dailyData.map((e) => e.date.split("-")[2].slice(0, 2))
+      : whichData == "search-between"
+      ? searchBetweenData.map((e) => e.date.split("-")[2].slice(0, 2))
       : whichData == "monthly"
       ? monthData?.map((e) => {
           const foundNameMonth = valueYear.find(
@@ -248,6 +230,8 @@ const UserLastDataNews = () => {
             ? yesterdayData.map((e) => e[valueStatistic])
             : whichData == "daily"
             ? dailyData.map((e) => e[valueStatistic])
+            : whichData == "search-between"
+            ? searchBetweenData.map((e) => e[valueStatistic])
             : whichData == "monthly"
             ? monthData.map((e) => e[valueStatistic])
             : null,
@@ -461,6 +445,30 @@ const UserLastDataNews = () => {
           `${stationName} ning kecha kelgan ma'lumotlari ${resultDate}.xlsx`
         );
       }
+    } else if (whichData == "search-between") {
+      const resultData = [];
+
+      searchBetweenData.forEach((e) => {
+        resultData.push({
+          nomi: stationName,
+          sath: Number(e.level).toFixed(2),
+          shurlanish: Number(e.conductivity).toFixed(2),
+          temperatura: Number(e.temp).toFixed(2),
+          sana: e.date.split(" ")[0],
+        });
+      });
+
+      const workBook = XLSX.utils.book_new();
+      const workSheet = XLSX.utils.json_to_sheet(resultData);
+
+      XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
+
+      if (yesterdayData.length > 0) {
+        XLSX.writeFile(
+          workBook,
+          `${stationName} ning ma'lumotlari ${resultDate}.xlsx`
+        );
+      }
     }
   };
 
@@ -480,11 +488,10 @@ const UserLastDataNews = () => {
   };
 
   const searchBetweenForm = (e) => {
+    setLoader(true);
     e.preventDefault();
 
     const { dateStart, dateEnd } = e.target;
-
-    console.log(dateStart.value, dateEnd.value);
 
     fetch(
       `${api}/allData/getStationIdAndTwoDayBetween?firstDay=${dateStart.value}&stationsId=${news}&secondDay=${dateEnd.value}`,
@@ -498,7 +505,8 @@ const UserLastDataNews = () => {
     )
       .then((res) => res.json())
       .then((data) => {
-        console.log(data);
+        setSearchBetweenData(data.data);
+        setLoader(false);
       });
   };
 
@@ -833,10 +841,102 @@ const UserLastDataNews = () => {
                                   height={12}
                                 />
                                 <p className="m-0 infowindow-desc ms-1 me-1">
-                                  Kun:
+                                  Sana:
                                 </p>{" "}
                                 <span className="infowindow-span">
-                                  {dailyData[0].date.split("-")[2].slice(0, 2)}
+                                  {dailyData[0].date.split(" ")[0]}
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div>
+                              <h3 className="fw-semibold text-success fs-6 text-center">
+                                {stationName}
+                              </h3>
+                              <div className="d-flex align-items-center justify-content-center">
+                                <img
+                                  src={circleRed}
+                                  alt="circleBlue"
+                                  width={18}
+                                  height={18}
+                                />
+                                <p className="m-0 infowindow-desc-not-last-data fs-6 ms-1 me-1 ">
+                                  Ma'lumot kelmagan...
+                                </p>
+                              </div>{" "}
+                            </div>
+                          )
+                        ) : whichData == "search-between" ? (
+                          searchBetweenData.length > 0 ? (
+                            <div>
+                              <h3 className="fw-semibold text-success fs-6">
+                                {stationName}
+                              </h3>
+
+                              <div className="d-flex align-items-center mb-1">
+                                <img
+                                  src={circleBlue}
+                                  alt="circleBlue"
+                                  width={12}
+                                  height={12}
+                                />
+                                <p className="infowindow-desc m-0 ms-1 me-1">
+                                  Sath:
+                                </p>{" "}
+                                <span className="infowindow-span">
+                                  {Number(searchBetweenData[0].level).toFixed(
+                                    2
+                                  )}{" "}
+                                  sm
+                                </span>
+                              </div>
+
+                              <div className="d-flex align-items-center mb-1">
+                                <img
+                                  src={circleBlue}
+                                  alt="circleBlue"
+                                  width={12}
+                                  height={12}
+                                />
+                                <p className="m-0 infowindow-desc ms-1 me-1 ">
+                                  Sho'rlanish:
+                                </p>{" "}
+                                <span className="infowindow-span">
+                                  {Number(
+                                    searchBetweenData[0].conductivity
+                                  ).toFixed(2)}{" "}
+                                  g/l
+                                </span>
+                              </div>
+
+                              <div className="d-flex align-items-center mb-1">
+                                <img
+                                  src={circleBlue}
+                                  alt="circleBlue"
+                                  width={12}
+                                  height={12}
+                                />
+                                <p className="m-0 infowindow-desc ms-1 me-1 ">
+                                  Temperatura:
+                                </p>{" "}
+                                <span className="infowindow-span">
+                                  {Number(searchBetweenData[0].temp).toFixed(2)}{" "}
+                                  °C
+                                </span>
+                              </div>
+
+                              <div className="d-flex align-items-center">
+                                <img
+                                  src={circleBlue}
+                                  alt="circleBlue"
+                                  width={12}
+                                  height={12}
+                                />
+                                <p className="m-0 infowindow-desc ms-1 me-1">
+                                  Sana:
+                                </p>{" "}
+                                <span className="infowindow-span">
+                                  {searchBetweenData[0].date.split(" ")[0]}
                                 </span>
                               </div>
                             </div>
@@ -1010,7 +1110,7 @@ const UserLastDataNews = () => {
                     className="nav-link"
                     data-bs-toggle="tab"
                     data-bs-target="#profile-search-between"
-                    onClick={() => setWhichData("monthly")}
+                    onClick={() => setWhichData("search-between")}
                   >
                     Kun bo'yicha qidirish
                   </button>
@@ -1069,28 +1169,39 @@ const UserLastDataNews = () => {
                         </button>
                       </div>
                     </div>
-                    <table className="table mt-4">
-                      <thead>
-                        <tr>
-                          <th scope="col">Vaqt</th>
-                          <th scope="col">Sath (sm)</th>
-                          <th scope="col">Sho'rlanish (g/l) </th>
-                          <th scope="col">Temperatura (°C)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {todayData.map((e, i) => {
-                          return (
-                            <tr key={i}>
-                              <td>{e.date?.split(" ")[1]}</td>
-                              <td>{Number(e.level).toFixed(2)}</td>
-                              <td>{Number(e.conductivity).toFixed(2)}</td>
-                              <td>{Number(e.temp).toFixed(2)}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                    {todayData.length > 0 ? (
+                      <table className="table mt-4">
+                        <thead>
+                          <tr>
+                            <th scope="col">Vaqt</th>
+                            <th scope="col">Sath (sm)</th>
+                            <th scope="col">Sho'rlanish (g/l) </th>
+                            <th scope="col">Temperatura (°C)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {todayData.map((e, i) => {
+                            return (
+                              <tr key={i}>
+                                <td>{e.date?.split(" ")[1]}</td>
+                                <td>{Number(e.level).toFixed(2)}</td>
+                                <td>{Number(e.conductivity).toFixed(2)}</td>
+                                <td>{Number(e.temp).toFixed(2)}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div className="user-last-data-alert-wrapper d-flex align-items-center justify-content-center">
+                        <div
+                          className="alert alert-danger text-center fw-bold fs-5 w-100 user-last-data-alert"
+                          role="alert"
+                        >
+                          Ma'lumot hozircha kelmagan...
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1153,28 +1264,39 @@ const UserLastDataNews = () => {
                         </button>
                       </div>
                     </div>
-                    <table className="table mt-4">
-                      <thead>
-                        <tr>
-                          <th scope="col">Sana</th>
-                          <th scope="col">Sath (sm)</th>
-                          <th scope="col">Sho'rlanish (g/l) </th>
-                          <th scope="col">Temperatura (°C)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {dailyData.map((e, i) => {
-                          return (
-                            <tr key={i}>
-                              <td>{e.date.split(" ")[0]}</td>
-                              <td>{Number(e.level).toFixed(2)}</td>
-                              <td>{Number(e.conductivity).toFixed(2)}</td>
-                              <td>{Number(e.temp).toFixed(2)}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                    {dailyData.length > 0 ? (
+                      <table className="table mt-4">
+                        <thead>
+                          <tr>
+                            <th scope="col">Sana</th>
+                            <th scope="col">Sath (sm)</th>
+                            <th scope="col">Sho'rlanish (g/l) </th>
+                            <th scope="col">Temperatura (°C)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {dailyData.map((e, i) => {
+                            return (
+                              <tr key={i}>
+                                <td>{e.date.split(" ")[0]}</td>
+                                <td>{Number(e.level).toFixed(2)}</td>
+                                <td>{Number(e.conductivity).toFixed(2)}</td>
+                                <td>{Number(e.temp).toFixed(2)}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div className="user-last-data-alert-wrapper d-flex align-items-center justify-content-center">
+                        <div
+                          className="alert alert-danger text-center fw-bold fs-5 w-100 user-last-data-alert"
+                          role="alert"
+                        >
+                          Ma'lumot hozircha kelmagan...
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1229,28 +1351,39 @@ const UserLastDataNews = () => {
                         </button>
                       </div>
                     </div>
-                    <table className="table mt-4">
-                      <thead>
-                        <tr>
-                          <th scope="col">Vaqt</th>
-                          <th scope="col">Sath (sm)</th>
-                          <th scope="col">Sho'rlanish (g/l) </th>
-                          <th scope="col">Temperatura (°C)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {yesterdayData.map((e, i) => {
-                          return (
-                            <tr key={i}>
-                              <td>{e.date.split(" ")[1]}</td>
-                              <td>{Number(e.level).toFixed(2)}</td>
-                              <td>{Number(e.conductivity).toFixed(2)}</td>
-                              <td>{Number(e.temp).toFixed(2)}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                    {yesterdayData.length > 0 ? (
+                      <table className="table mt-4">
+                        <thead>
+                          <tr>
+                            <th scope="col">Vaqt</th>
+                            <th scope="col">Sath (sm)</th>
+                            <th scope="col">Sho'rlanish (g/l) </th>
+                            <th scope="col">Temperatura (°C)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {yesterdayData.map((e, i) => {
+                            return (
+                              <tr key={i}>
+                                <td>{e.date.split(" ")[1]}</td>
+                                <td>{Number(e.level).toFixed(2)}</td>
+                                <td>{Number(e.conductivity).toFixed(2)}</td>
+                                <td>{Number(e.temp).toFixed(2)}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div className="user-last-data-alert-wrapper d-flex align-items-center justify-content-center">
+                        <div
+                          className="alert alert-danger text-center fw-bold fs-5 w-100 user-last-data-alert"
+                          role="alert"
+                        >
+                          Ma'lumot hozircha kelmagan...
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1305,32 +1438,43 @@ const UserLastDataNews = () => {
                         </button>
                       </div>
                     </div>
-                    <table className="table mt-4">
-                      <thead>
-                        <tr>
-                          <th scope="col">Oy</th>
-                          <th scope="col">Sath (sm)</th>
-                          <th scope="col">Sho'rlanish (g/l) </th>
-                          <th scope="col">Temperatura (°C)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {monthData.map((e, i) => {
-                          return (
-                            <tr key={i}>
-                              <td>
-                                {valueYear.find(
-                                  (r, i) => i + 1 == e.monthNumber
-                                )}
-                              </td>
-                              <td>{Number(e.level).toFixed(2)}</td>
-                              <td>{Number(e.conductivity).toFixed(2)}</td>
-                              <td>{Number(e.temp).toFixed(2)}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                    {monthData.length > 0 ? (
+                      <table className="table mt-4">
+                        <thead>
+                          <tr>
+                            <th scope="col">Oy</th>
+                            <th scope="col">Sath (sm)</th>
+                            <th scope="col">Sho'rlanish (g/l) </th>
+                            <th scope="col">Temperatura (°C)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {monthData.map((e, i) => {
+                            return (
+                              <tr key={i}>
+                                <td>
+                                  {valueYear.find(
+                                    (r, i) => i + 1 == e.monthNumber
+                                  )}
+                                </td>
+                                <td>{Number(e.level).toFixed(2)}</td>
+                                <td>{Number(e.conductivity).toFixed(2)}</td>
+                                <td>{Number(e.temp).toFixed(2)}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div className="user-last-data-alert-wrapper d-flex align-items-center justify-content-center">
+                        <div
+                          className="alert alert-danger text-center fw-bold fs-5 w-100 user-last-data-alert"
+                          role="alert"
+                        >
+                          Ma'lumot hozircha kelmagan...
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1362,7 +1506,7 @@ const UserLastDataNews = () => {
                               id="dateMonth"
                               name="dateStart"
                               required
-                              defaultValue={new Date()
+                              defaultValue={dateSearch
                                 .toISOString()
                                 .substring(0, 10)}
                             />
@@ -1432,32 +1576,43 @@ const UserLastDataNews = () => {
                         </button>
                       </div>
                     </div>
-                    <table className="table mt-4">
-                      <thead>
-                        <tr>
-                          <th scope="col">Oy</th>
-                          <th scope="col">Sath (sm)</th>
-                          <th scope="col">Sho'rlanish (g/l) </th>
-                          <th scope="col">Temperatura (°C)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {monthData.map((e, i) => {
-                          return (
-                            <tr key={i}>
-                              <td>
-                                {valueYear.find(
-                                  (r, i) => i + 1 == e.monthNumber
-                                )}
-                              </td>
-                              <td>{Number(e.level).toFixed(2)}</td>
-                              <td>{Number(e.conductivity).toFixed(2)}</td>
-                              <td>{Number(e.temp).toFixed(2)}</td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                    {loader ? (
+                      <div className="d-flex align-items-center justify-content-center hour-spinner-wrapper">
+                        <span className="loader"></span>
+                      </div>
+                    ) : searchBetweenData.length > 0 ? (
+                      <table className="table mt-4">
+                        <thead>
+                          <tr>
+                            <th scope="col">Sana</th>
+                            <th scope="col">Sath (sm)</th>
+                            <th scope="col">Sho'rlanish (g/l) </th>
+                            <th scope="col">Temperatura (°C)</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {searchBetweenData.map((e, i) => {
+                            return (
+                              <tr key={i}>
+                                <td>{e.date.split(" ")[0]}</td>
+                                <td>{Number(e.level).toFixed(2)}</td>
+                                <td>{Number(e.conductivity).toFixed(2)}</td>
+                                <td>{Number(e.temp).toFixed(2)}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div className="user-last-data-alert-wrapper d-flex align-items-center justify-content-center">
+                        <div
+                          className="alert alert-danger text-center fw-bold fs-5 w-100 user-last-data-alert"
+                          role="alert"
+                        >
+                          Ma'lumot hozircha kelmagan...
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

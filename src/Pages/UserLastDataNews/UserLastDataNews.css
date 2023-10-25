@@ -61,3 +61,12 @@
   height: 300px;
   color: #85e6ec;
 }
+
+.user-last-data-alert-wrapper {
+  height: 60vh;
+}
+
+.user-last-data-alert {
+  padding-top: 40px;
+  padding-bottom: 40px;
+}
