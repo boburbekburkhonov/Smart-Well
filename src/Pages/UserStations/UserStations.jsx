@@ -329,6 +329,16 @@ const UserStations = () => {
 
   // ! SAVE DATA EXCEL
   const exportDataToExcel = async () => {
+    const fixedDate = new Date();
+
+    const resultDate = `${fixedDate.getDate()}/${
+      fixedDate.getMonth() + 1
+    }/${fixedDate.getFullYear()} ${fixedDate.getHours()}:${
+      String(fixedDate.getMinutes()).length == 1
+        ? "0" + fixedDate.getMinutes()
+        : fixedDate.getMinutes()
+    }`;
+
     if (whichData == "allStation") {
       const requestAllStation = await fetch(
         `${api}/stations/all?page=1&perPage=${totalPages * 10}`,
@@ -348,25 +358,20 @@ const UserStations = () => {
 
       responseAllStation.data.data.forEach((e) => {
         resultExcelData.push({
-          id: e._id,
           Nomi: e.name,
           Imei: e.imel,
           Lokatsiya: e.location,
           Qurilma_Telefon_Raqami: e.devicePhoneNum,
           User_Telefon_Raqami: e.userPhoneNum,
           Programma_Versiyasi: e.programVersion,
-          Status: e.status,
+          Status: e.status == 1 ? "ishlayapti" : "ishlamayapti",
+          Integratsiya: e?.isIntegration == true ? "Qilingan" : "Qilinmagan",
           Signal: e.signal,
           Temperture: e.temperture,
-          Battereya: e.battery,
+          Battereya: `${e.battery}%`,
           Datani_yuborish_vaqti: e.sendDataTime,
           Infoni_yuborish_vaqti: e.sendInfoTime,
-          User_Id: e.userId,
-          Region_Id: e.region_id,
-          Balans_Tashkiloti_Id: e.balance_organization_id,
-          Tuman_Id: e.district_id,
-          date: e.lastData?.date,
-          Integratsiya: e?.isIntegration == true ? "true" : "false",
+          date: e.date,
         });
       });
 
@@ -374,16 +379,6 @@ const UserStations = () => {
       const workSheet = XLSX.utils.json_to_sheet(resultExcelData);
 
       XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
-
-      const fixedDate = new Date();
-
-      const resultDate = `${fixedDate.getDate()}/${
-        fixedDate.getMonth() + 1
-      }/${fixedDate.getFullYear()} ${fixedDate.getHours()}:${
-        String(fixedDate.getMinutes()).length == 1
-          ? "0" + fixedDate.getMinutes()
-          : fixedDate.getMinutes()
-      }`;
 
       if (allStation.length > 0) {
         XLSX.writeFile(
@@ -414,25 +409,20 @@ const UserStations = () => {
 
       responseAllStationForBattery.data.data.forEach((e) => {
         resultExcelData.push({
-          id: e._id,
           Nomi: e.name,
           Imei: e.imel,
           Lokatsiya: e.location,
           Qurilma_Telefon_Raqami: e.devicePhoneNum,
           User_Telefon_Raqami: e.userPhoneNum,
           Programma_Versiyasi: e.programVersion,
-          Status: e.status,
+          Status: e.status == 1 ? "ishlayapti" : "ishlamayapti",
+          Integratsiya: e?.isIntegration == true ? "Qilingan" : "Qilinmagan",
           Signal: e.signal,
           Temperture: e.temperture,
-          Battereya: e.battery,
+          Battereya: `${e.battery}%`,
           Datani_yuborish_vaqti: e.sendDataTime,
           Infoni_yuborish_vaqti: e.sendInfoTime,
-          User_Id: e.userId,
-          Region_Id: e.region_id,
-          Balans_Tashkiloti_Id: e.balance_organization_id,
-          Tuman_Id: e.district_id,
-          date: e.lastData?.date,
-          Integratsiya: e?.isIntegration == true ? "true" : "false",
+          date: e.date,
         });
       });
 
@@ -440,16 +430,6 @@ const UserStations = () => {
       const workSheet = XLSX.utils.json_to_sheet(resultExcelData);
 
       XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
-
-      const fixedDate = new Date();
-
-      const resultDate = `${fixedDate.getDate()}/${
-        fixedDate.getMonth() + 1
-      }/${fixedDate.getFullYear()} ${fixedDate.getHours()}:${
-        String(fixedDate.getMinutes()).length == 1
-          ? "0" + fixedDate.getMinutes()
-          : fixedDate.getMinutes()
-      }`;
 
       if (allStationForBattery.length > 0) {
         XLSX.writeFile(
@@ -479,25 +459,20 @@ const UserStations = () => {
 
       responseAllStationForStatus.data.data.forEach((e) => {
         resultExcelData.push({
-          id: e._id,
           Nomi: e.name,
           Imei: e.imel,
           Lokatsiya: e.location,
           Qurilma_Telefon_Raqami: e.devicePhoneNum,
           User_Telefon_Raqami: e.userPhoneNum,
           Programma_Versiyasi: e.programVersion,
-          Status: e.status,
+          Status: e.status == 1 ? "ishlayapti" : "ishlamayapti",
+          Integratsiya: e?.isIntegration == true ? "Qilingan" : "Qilinmagan",
           Signal: e.signal,
           Temperture: e.temperture,
-          Battereya: e.battery,
+          Battereya: `${e.battery}%`,
           Datani_yuborish_vaqti: e.sendDataTime,
           Infoni_yuborish_vaqti: e.sendInfoTime,
-          User_Id: e.userId,
-          Region_Id: e.region_id,
-          Balans_Tashkiloti_Id: e.balance_organization_id,
-          Tuman_Id: e.district_id,
-          date: e.lastData?.date,
-          Integratsiya: e?.isIntegration == true ? "true" : "false",
+          date: e.date,
         });
       });
 
@@ -505,16 +480,6 @@ const UserStations = () => {
       const workSheet = XLSX.utils.json_to_sheet(resultExcelData);
 
       XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
-
-      const fixedDate = new Date();
-
-      const resultDate = `${fixedDate.getDate()}/${
-        fixedDate.getMonth() + 1
-      }/${fixedDate.getFullYear()} ${fixedDate.getHours()}:${
-        String(fixedDate.getMinutes()).length == 1
-          ? "0" + fixedDate.getMinutes()
-          : fixedDate.getMinutes()
-      }`;
 
       if (notWorkingStation.length > 0) {
         XLSX.writeFile(

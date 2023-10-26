@@ -468,36 +468,89 @@ const UserDashboard = (prop) => {
 
   //! SAVE DATA EXCEL
   const exportDataToExcel = () => {
+    let sath = "sath (sm)";
+    let shurlanish = "shurlanish (g/l)";
+    let temperatura = "temperatura (°C)";
+
+    const fixedDate = new Date();
+
+    const resultDate = `${fixedDate.getDate()}/${
+      fixedDate.getMonth() + 1
+    }/${fixedDate.getFullYear()} ${fixedDate.getHours()}:${
+      String(fixedDate.getMinutes()).length == 1
+        ? "0" + fixedDate.getMinutes()
+        : fixedDate.getMinutes()
+    }`;
+
     if (dataOrStation == "data") {
       const resultExcelData = [];
 
       viewStation.forEach((e) => {
         resultExcelData.push({
-          nomi: whichStation == "allStation" ? e.name : e.stations.name,
-          imei: whichStation == "allStation" ? e.imel : e.stations.imel,
+          nomi:
+            whichStation == "allStation" || whichStation == "notWorkStation"
+              ? e.name
+              : e.stations.name,
+          imei:
+            whichStation == "allStation" || whichStation == "notWorkStation"
+              ? e.imel
+              : e.stations.imel,
           battery:
-            whichStation == "allStation" ? e.battery : e.stations.battery,
-          sath:
-            whichStation == "allStation"
-              ? Number(e.lastData?.level).toFixed(2)
-              : Number(e.level).toFixed(2),
-          shurlanish:
-            whichStation == "allStation"
-              ? Number(e.lastData?.conductivity).toFixed(2)
-              : Number(e.conductivity).toFixed(2),
-          temperatura:
-            whichStation == "allStation"
-              ? Number(e.lastData?.temp).toFixed(2)
-              : Number(e.temp).toFixed(2),
-          date: whichStation == "allStation" ? e.lastData?.date : e.date,
-          Integratsiya:
-            whichStation == "allStation"
+            whichStation == "allStation" || whichStation == "notWorkStation"
+              ? e.battery
+              : e.stations.battery,
+          lokatsiya:
+            whichStation == "allStation" || whichStation == "notWorkStation"
+              ? e.location
+              : e.stations.location,
+          programma_versiyasi:
+            whichStation == "allStation" || whichStation == "notWorkStation"
+              ? e.programVersion
+              : e.stations.programVersion,
+          qurilma_telefon_raqami:
+            whichStation == "allStation" || whichStation == "notWorkStation"
+              ? e.devicePhoneNum
+              : e.stations.devicePhoneNum,
+          status:
+            whichStation == "allStation" || whichStation == "notWorkStation"
+              ? e.status == 1
+                ? "ishlayapti"
+                : "ishlamayapti"
+              : e.stations.status == 1
+              ? "ishlayapti"
+              : "ishlamayapti",
+          integratsiya:
+            whichStation == "allStation" || whichStation == "notWorkStation"
               ? e?.isIntegration == true
-                ? "true"
-                : "false"
+                ? "Qilingan"
+                : "Qilinmagan"
               : e.stations.isIntegration == true
-              ? "true"
-              : "false",
+              ? "Qilingan"
+              : "Qilinmagan",
+          [sath]:
+            whichStation == "allStation" || whichStation == "notWorkStation"
+              ? e.lastData?.level == undefined
+                ? "-"
+                : Number(e.lastData?.level).toFixed(2)
+              : Number(e.level).toFixed(2),
+          [shurlanish]:
+            whichStation == "allStation" || whichStation == "notWorkStation"
+              ? e.lastData?.conductivity == undefined
+                ? "-"
+                : Number(e.lastData?.conductivity).toFixed(2)
+              : Number(e.conductivity).toFixed(2),
+          [temperatura]:
+            whichStation == "allStation" || whichStation == "notWorkStation"
+              ? e.lastData?.temp == undefined
+                ? "-"
+                : Number(e.lastData?.temp).toFixed(2)
+              : Number(e.temp).toFixed(2),
+          sana:
+            whichStation == "allStation" || whichStation == "notWorkStation"
+              ? e.lastData?.date == undefined
+                ? "-"
+                : e.lastData?.date
+              : e.date,
         });
       });
 
@@ -505,16 +558,6 @@ const UserDashboard = (prop) => {
       const workSheet = XLSX.utils.json_to_sheet(resultExcelData);
 
       XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
-
-      const fixedDate = new Date();
-
-      const resultDate = `${fixedDate.getDate()}/${
-        fixedDate.getMonth() + 1
-      }/${fixedDate.getFullYear()} ${fixedDate.getHours()}:${
-        String(fixedDate.getMinutes()).length == 1
-          ? "0" + fixedDate.getMinutes()
-          : fixedDate.getMinutes()
-      }`;
 
       if (viewStation.length > 0) {
         XLSX.writeFile(
@@ -527,25 +570,20 @@ const UserDashboard = (prop) => {
 
       viewStationByChar.forEach((e) => {
         resultExcelData.push({
-          id: e._id,
           Nomi: e.name,
           Imei: e.imel,
           Lokatsiya: e.location,
           Qurilma_Telefon_Raqami: e.devicePhoneNum,
           User_Telefon_Raqami: e.userPhoneNum,
           Programma_Versiyasi: e.programVersion,
-          Status: e.status,
+          Status: e.status == 1 ? "ishlayapti" : "ishlamayapti",
+          Integratsiya: e?.isIntegration == true ? "Qilingan" : "Qilinmagan",
           Signal: e.signal,
           Temperture: e.temperture,
-          Battereya: e.battery,
+          Battereya: `${e.battery}%`,
           Datani_yuborish_vaqti: e.sendDataTime,
           Infoni_yuborish_vaqti: e.sendInfoTime,
-          User_Id: e.userId,
-          Region_Id: e.region_id,
-          Balans_Tashkiloti_Id: e.balance_organization_id,
-          Tuman_Id: e.district_id,
-          date: e.lastData?.date,
-          Integratsiya: e?.isIntegration == true ? "true" : "false",
+          date: e.date,
         });
       });
 
@@ -553,16 +591,6 @@ const UserDashboard = (prop) => {
       const workSheet = XLSX.utils.json_to_sheet(resultExcelData);
 
       XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
-
-      const fixedDate = new Date();
-
-      const resultDate = `${fixedDate.getDate()}/${
-        fixedDate.getMonth() + 1
-      }/${fixedDate.getFullYear()} ${fixedDate.getHours()}:${
-        String(fixedDate.getMinutes()).length == 1
-          ? "0" + fixedDate.getMinutes()
-          : fixedDate.getMinutes()
-      }`;
 
       if (viewStationByChar.length > 0) {
         XLSX.writeFile(

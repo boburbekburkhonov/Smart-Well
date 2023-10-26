@@ -339,6 +339,9 @@ const UserLastDataNews = () => {
 
   // ! SAVE DATA
   const exportDataToExcel = () => {
+    let sath = "sath (sm)";
+    let shurlanish = "shurlanish (g/l)";
+    let temperatura = "temperatura (°C)";
     const fixedDate = new Date();
 
     const resultDate = `${fixedDate.getDate()}/${
@@ -355,9 +358,9 @@ const UserLastDataNews = () => {
       todayData.forEach((e) => {
         resultData.push({
           nomi: stationName,
-          sath: Number(e.level).toFixed(2),
-          shurlanish: Number(e.conductivity).toFixed(2),
-          temperatura: Number(e.temp).toFixed(2),
+          [sath]: Number(e.level).toFixed(2),
+          [shurlanish]: Number(e.conductivity).toFixed(2),
+          [temperatura]: Number(e.temp).toFixed(2),
           sana: e.date,
         });
       });
@@ -379,9 +382,9 @@ const UserLastDataNews = () => {
       dailyData.forEach((e) => {
         resultData.push({
           nomi: stationName,
-          sath: Number(e.level).toFixed(2),
-          shurlanish: Number(e.conductivity).toFixed(2),
-          temperatura: Number(e.temp).toFixed(2),
+          [sath]: Number(e.level).toFixed(2),
+          [shurlanish]: Number(e.conductivity).toFixed(2),
+          [temperatura]: Number(e.temp).toFixed(2),
           sana: e.date.split(" ")[0],
         });
       });
@@ -403,9 +406,9 @@ const UserLastDataNews = () => {
       monthData.forEach((e) => {
         resultData.push({
           nomi: stationName,
-          sath: Number(e.level).toFixed(2),
-          shurlanish: Number(e.conductivity).toFixed(2),
-          temperatura: Number(e.temp).toFixed(2),
+          [sath]: Number(e.level).toFixed(2),
+          [shurlanish]: Number(e.conductivity).toFixed(2),
+          [temperatura]: Number(e.temp).toFixed(2),
           oy: valueYear.find((r, i) => i + 1 == e.monthNumber),
         });
       });
@@ -427,9 +430,9 @@ const UserLastDataNews = () => {
       yesterdayData.forEach((e) => {
         resultData.push({
           nomi: stationName,
-          sath: Number(e.level).toFixed(2),
-          shurlanish: Number(e.conductivity).toFixed(2),
-          temperatura: Number(e.temp).toFixed(2),
+          [sath]: Number(e.level).toFixed(2),
+          [shurlanish]: Number(e.conductivity).toFixed(2),
+          [temperatura]: Number(e.temp).toFixed(2),
           sana: e.date.split(" ")[1],
         });
       });
@@ -451,9 +454,9 @@ const UserLastDataNews = () => {
       searchBetweenData.forEach((e) => {
         resultData.push({
           nomi: stationName,
-          sath: Number(e.level).toFixed(2),
-          shurlanish: Number(e.conductivity).toFixed(2),
-          temperatura: Number(e.temp).toFixed(2),
+          [sath]: Number(e.level).toFixed(2),
+          [shurlanish]: Number(e.conductivity).toFixed(2),
+          [temperatura]: Number(e.temp).toFixed(2),
           sana: e.date.split(" ")[0],
         });
       });

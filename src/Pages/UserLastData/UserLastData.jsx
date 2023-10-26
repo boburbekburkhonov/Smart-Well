@@ -428,42 +428,9 @@ const UserLastData = (prop) => {
 
   // ! SAVE DATA EXCEL
   const exportDataToExcel = () => {
-    const resultExcelData = [];
-
-    allStation.forEach((e) => {
-      resultExcelData.push({
-        nomi: whichStation == "allStation" ? e.name : e.stations.name,
-        imei: whichStation == "allStation" ? e.imel : e.stations.imel,
-        battery: whichStation == "allStation" ? e.battery : e.stations.battery,
-        sath:
-          whichStation == "allStation"
-            ? Number(e?.lastData.level).toFixed(2)
-            : Number(e.level).toFixed(2),
-        shurlanish:
-          whichStation == "allStation"
-            ? Number(e?.lastData.conductivity).toFixed(2)
-            : Number(e.conductivity).toFixed(2),
-        temperatura:
-          whichStation == "allStation"
-            ? Number(e?.lastData.temp).toFixed(2)
-            : Number(e.temp).toFixed(2),
-        Sana: whichStation == "allStation" ? e?.lastData.date : e.date,
-        Integratsiya:
-          whichStation == "allStation"
-            ? e?.isIntegration == true
-              ? "true"
-              : "false"
-            : e.stations.isIntegration == true
-            ? "true"
-            : "false",
-      });
-    });
-
-    const workBook = XLSX.utils.book_new();
-    const workSheet = XLSX.utils.json_to_sheet(resultExcelData);
-
-    XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
-
+    let sath = "sath (sm)";
+    let shurlanish = "shurlanish (g/l)";
+    let temperatura = "temperatura (°C)";
     const fixedDate = new Date();
 
     const resultDate = `${fixedDate.getDate()}/${
@@ -474,40 +441,251 @@ const UserLastData = (prop) => {
         : fixedDate.getMinutes()
     }`;
 
-    if (resultExcelData.length > 0 && whichStation == "allStation") {
-      XLSX.writeFile(
-        workBook,
-        `${name} ning umumiy stansiya ma'lumotlari ${resultDate}.xlsx`
-      );
-    } else if (resultExcelData.length > 0 && whichStation == "todayStation") {
-      XLSX.writeFile(
-        workBook,
-        `${name} ning bugun kelgan ma'lumotlari ${resultDate}.xlsx`
-      );
-    } else if (
-      resultExcelData.length > 0 &&
-      whichStation == "withinThreeDayStation"
-    ) {
-      XLSX.writeFile(
-        workBook,
-        `${name} ning 3 ichida kelgan ma'lumotlari ${resultDate}.xlsx`
-      );
-    } else if (
-      resultExcelData.length > 0 &&
-      whichStation == "totalMonthWorkStation"
-    ) {
-      XLSX.writeFile(
-        workBook,
-        `${name} ning so'ngi oy kelgan ma'lumotlari ${resultDate}.xlsx`
-      );
-    } else if (
-      resultExcelData.length > 0 &&
-      whichStation == "totalMoreWorkStations"
-    ) {
-      XLSX.writeFile(
-        workBook,
-        `${name} ning uzoq ishlamagan stansiya ma'lumotlari ${resultDate}.xlsx`
-      );
+    if (whichStation == "allStation") {
+      const userAllDataFunc = async () => {
+        const request = await fetch(
+          `${api}/last-data/allLastData?page=1&perPage=${stationStatistic.totalStationsCount}`,
+          {
+            method: "GET",
+            headers: {
+              "content-type": "application/json",
+              Authorization:
+                "Bearer " + window.localStorage.getItem("accessToken"),
+            },
+          }
+        );
+
+        const response = await request.json();
+
+        const resultExcelData = [];
+
+        response.data.forEach((e) => {
+          resultExcelData.push({
+            nomi: e.name,
+            imei: e.imel,
+            battery: e.battery,
+            lokatsiya: e.location,
+            programma_versiyasi: e.programVersion,
+            qurilma_telefon_raqami: e.devicePhoneNum,
+            status: e.status == 1 ? "ishlayapti" : "ishlamayapti",
+            integratsiya: e?.isIntegration == true ? "Qilingan" : "Qilinmagan",
+            [sath]: Number(e.lastData?.level).toFixed(2),
+            [shurlanish]: Number(e.lastData?.conductivity).toFixed(2),
+            [temperatura]: Number(e.lastData?.temp).toFixed(2),
+            sana: e.lastData?.date,
+          });
+        });
+
+        const workBook = XLSX.utils.book_new();
+        const workSheet = XLSX.utils.json_to_sheet(resultExcelData);
+
+        XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
+
+        if (response.data.length > 0) {
+          XLSX.writeFile(
+            workBook,
+            `${name} ning umumiy stansiya ma'lumotlari ${resultDate}.xlsx`
+          );
+        }
+      };
+
+      userAllDataFunc();
+    } else if (whichStation == "todayStation") {
+      const userTodayDataFunc = async () => {
+        const request = await fetch(
+          `${api}/last-data/todayWorkStations?page=1&perPage=${stationStatistic.totalTodayWorkStationsCount}`,
+          {
+            method: "GET",
+            headers: {
+              "content-type": "application/json",
+              Authorization:
+                "Bearer " + window.localStorage.getItem("accessToken"),
+            },
+          }
+        );
+
+        const response = await request.json();
+
+        const resultExcelData = [];
+        response.data.docs.forEach((e) => {
+          resultExcelData.push({
+            nomi: e.stations.name,
+            imei: e.stations.imel,
+            battery: e.stations.battery,
+            lokatsiya: e.stations.location,
+            programma_versiyasi: e.stations.programVersion,
+            qurilma_telefon_raqami: e.stations.devicePhoneNum,
+            status: e.stations.status == 1 ? "ishlayapti" : "ishlamayapti",
+            integratsiya:
+              e?.stations.isIntegration == true ? "Qilingan" : "Qilinmagan",
+            [sath]: Number(e.level).toFixed(2),
+            [shurlanish]: Number(e.conductivity).toFixed(2),
+            [temperatura]: Number(e.temp).toFixed(2),
+            sana: e.date,
+          });
+        });
+
+        const workBook = XLSX.utils.book_new();
+        const workSheet = XLSX.utils.json_to_sheet(resultExcelData);
+
+        XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
+
+        if (response.data.docs.length > 0) {
+          XLSX.writeFile(
+            workBook,
+            `${name} ning bugun kelgan ma'lumotlari ${resultDate}.xlsx`
+          );
+        }
+      };
+
+      userTodayDataFunc();
+    } else if (whichStation == "withinThreeDayStation") {
+      const userThreeDayDataFunc = async () => {
+        const request = await fetch(
+          `${api}/last-data/treeDaysWorkStations?page=1&perPage=${stationStatistic.totalThreeDayWorkStationsCount}`,
+          {
+            method: "GET",
+            headers: {
+              "content-type": "application/json",
+              Authorization:
+                "Bearer " + window.localStorage.getItem("accessToken"),
+            },
+          }
+        );
+
+        const response = await request.json();
+
+        const resultExcelData = [];
+        response.data.docs.forEach((e) => {
+          resultExcelData.push({
+            nomi: e.stations.name,
+            imei: e.stations.imel,
+            battery: e.stations.battery,
+            lokatsiya: e.stations.location,
+            programma_versiyasi: e.stations.programVersion,
+            qurilma_telefon_raqami: e.stations.devicePhoneNum,
+            status: e.stations.status == 1 ? "ishlayapti" : "ishlamayapti",
+            integratsiya:
+              e?.stations.isIntegration == true ? "Qilingan" : "Qilinmagan",
+            [sath]: Number(e.level).toFixed(2),
+            [shurlanish]: Number(e.conductivity).toFixed(2),
+            [temperatura]: Number(e.temp).toFixed(2),
+            sana: e.date,
+          });
+        });
+
+        const workBook = XLSX.utils.book_new();
+        const workSheet = XLSX.utils.json_to_sheet(resultExcelData);
+
+        XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
+
+        if (response.data.docs.length > 0) {
+          XLSX.writeFile(
+            workBook,
+            `${name} ning 3 ichida kelgan ma'lumotlari ${resultDate}.xlsx`
+          );
+        }
+      };
+
+      userThreeDayDataFunc();
+    } else if (whichStation == "totalMonthWorkStation") {
+      const userLastMonthDataFunc = async () => {
+        const request = await fetch(
+          `${api}/last-data/lastMonthWorkStations?page=1&perPage=${stationStatistic.totalMonthWorkStationsCount}`,
+          {
+            method: "GET",
+            headers: {
+              "content-type": "application/json",
+              Authorization:
+                "Bearer " + window.localStorage.getItem("accessToken"),
+            },
+          }
+        );
+
+        const response = await request.json();
+
+        const resultExcelData = [];
+        response.data.docs.forEach((e) => {
+          resultExcelData.push({
+            nomi: e.stations.name,
+            imei: e.stations.imel,
+            battery: e.stations.battery,
+            lokatsiya: e.stations.location,
+            programma_versiyasi: e.stations.programVersion,
+            qurilma_telefon_raqami: e.stations.devicePhoneNum,
+            status: e.stations.status == 1 ? "ishlayapti" : "ishlamayapti",
+            integratsiya:
+              e?.stations.isIntegration == true ? "Qilingan" : "Qilinmagan",
+            [sath]: Number(e.level).toFixed(2),
+            [shurlanish]: Number(e.conductivity).toFixed(2),
+            [temperatura]: Number(e.temp).toFixed(2),
+            sana: e.date,
+          });
+        });
+
+        const workBook = XLSX.utils.book_new();
+        const workSheet = XLSX.utils.json_to_sheet(resultExcelData);
+
+        XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
+
+        if (response.data.docs.length > 0) {
+          XLSX.writeFile(
+            workBook,
+            `${name} ning so'ngi oy kelgan ma'lumotlari ${resultDate}.xlsx`
+          );
+        }
+      };
+
+      userLastMonthDataFunc();
+    } else if (whichStation == "totalMoreWorkStations") {
+      const userMoreMonthDataFunc = async () => {
+        const request = await fetch(
+          `${api}/last-data/moreWorkStations?page=1&perPage=${stationStatistic.totalMoreWorkStationsCount}`,
+          {
+            method: "GET",
+            headers: {
+              "content-type": "application/json",
+              Authorization:
+                "Bearer " + window.localStorage.getItem("accessToken"),
+            },
+          }
+        );
+
+        const response = await request.json();
+
+        const resultExcelData = [];
+        response.data.docs.forEach((e) => {
+          resultExcelData.push({
+            nomi: e.stations.name,
+            imei: e.stations.imel,
+            battery: e.stations.battery,
+            lokatsiya: e.stations.location,
+            programma_versiyasi: e.stations.programVersion,
+            qurilma_telefon_raqami: e.stations.devicePhoneNum,
+            status: e.stations.status == 1 ? "ishlayapti" : "ishlamayapti",
+            integratsiya:
+              e?.stations.isIntegration == true ? "Qilingan" : "Qilinmagan",
+            [sath]: Number(e.level).toFixed(2),
+            [shurlanish]: Number(e.conductivity).toFixed(2),
+            [temperatura]: Number(e.temp).toFixed(2),
+            sana: e.date,
+          });
+        });
+
+        const workBook = XLSX.utils.book_new();
+        const workSheet = XLSX.utils.json_to_sheet(resultExcelData);
+
+        XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
+
+        if (response.data.docs.length > 0) {
+          XLSX.writeFile(
+            workBook,
+            `${name} ning uzoq ishlamagan stansiya ma'lumotlari ${resultDate}.xlsx`
+          );
+        }
+      };
+
+      userMoreMonthDataFunc();
     }
   };
 
@@ -525,7 +703,12 @@ const UserLastData = (prop) => {
         }
       )
         .then((res) => res.json())
-        .then((data) => setAllStation(data.data.data));
+        .then((data) => {
+          if (data.data.data.length > 0) {
+            setAllStation(data.data.data);
+            setTotalPages(data.data.totalPages);
+          }
+        });
     } else if (whichStation == "todayStation") {
       fetch(
         `${api}/last-data/searchTodayWorkingStations?search=${value}&page=1&perPage=12`,
@@ -539,7 +722,12 @@ const UserLastData = (prop) => {
         }
       )
         .then((res) => res.json())
-        .then((data) => setAllStation(data.data.docs));
+        .then((data) => {
+          if (data.data.docs.length > 0) {
+            setAllStation(data.data.docs);
+            setTotalPages(data.data.totalPages);
+          }
+        });
     } else if (whichStation == "withinThreeDayStation") {
       fetch(
         `${api}/last-data/searchThreeDaysWorkingStations?search=${value}&page=1&perPage=12`,
@@ -553,7 +741,12 @@ const UserLastData = (prop) => {
         }
       )
         .then((res) => res.json())
-        .then((data) => setAllStation(data.data.docs));
+        .then((data) => {
+          if (data.data.docs.length > 0) {
+            setAllStation(data.data.docs);
+            setTotalPages(data.data.totalPages);
+          }
+        });
     } else if (whichStation == "totalMonthWorkStation") {
       fetch(
         `${api}/last-data/searchLastMonthWorkingStations?search=${value}&page=1&perPage=12`,
@@ -567,7 +760,12 @@ const UserLastData = (prop) => {
         }
       )
         .then((res) => res.json())
-        .then((data) => setAllStation(data.data.docs));
+        .then((data) => {
+          if (data.data.docs.length > 0) {
+            setAllStation(data.data.docs);
+            setTotalPages(data.data.totalPages);
+          }
+        });
     } else if (whichStation == "totalMoreWorkStations") {
       fetch(
         `${api}/last-data/searchMoreWorkingStations?search=${value}&page=1&perPage=12`,
@@ -581,7 +779,12 @@ const UserLastData = (prop) => {
         }
       )
         .then((res) => res.json())
-        .then((data) => setAllStation(data.data.docs));
+        .then((data) => {
+          if (data.data.docs.length > 0) {
+            setAllStation(data.data.docs);
+            setTotalPages(data.data.totalPages);
+          }
+        });
     }
   };
 

@@ -537,22 +537,9 @@ const UserData = () => {
         : fixedDate.getMinutes()
     }`;
 
-    const resultTodayDataPdf = [];
-
-    todayData.forEach((e) => {
-      e.todayData.forEach((t) => {
-        resultTodayDataPdf.push({
-          name: e.name,
-          level: t.level,
-          conductivity: t.conductivity,
-          temp: t.temp,
-          date: t.date,
-        });
-      });
-    });
-    const doc = new jsPDF();
-
     if (whichData == "hour") {
+      const doc = new jsPDF("l", "mm", [397, 210]);
+
       doc.text(
         `${nameUser} ga tegishli qurilmalarning bugungi ma'lumotlar`,
         20,
@@ -560,118 +547,93 @@ const UserData = () => {
       );
 
       doc.autoTable({
+        html: "#table-style-hour-id",
+        margin: { right: 5, left: 5 },
+        styles: { halign: "center" },
         theme: "grid",
-        columns: [
-          { header: "Stansiya nomi", dataKey: "name" },
-          { header: "Sath (sm)", dataKey: "level" },
-          { header: "Sho'rlanish (g/l)", dataKey: "conductivity" },
-          { header: "Temperatura (°C)", dataKey: "temp" },
-          { header: "Sana", dataKey: "date" },
-        ],
-        body: resultTodayDataPdf,
+        headStyles: { lineWidth: 0.3, lineColor: [0, 0, 0] },
+        bodyStyles: { lineColor: [0, 0, 0] },
       });
 
-      if (resultTodayDataPdf.length > 0) {
+      if (todayData.length > 0) {
         doc.save(
           `${nameUser} ga tegishli qurilmalarning bugungi ma'lumotlar ${resultDate}.pdf`
         );
       }
     } else if (whichData == "daily") {
-      const resultDailyDataPdf = [];
-
-      dailyData.forEach((e) => {
-        e.dailyData.forEach((t) => {
-          resultDailyDataPdf.push({
-            name: e.name,
-            level: t.level,
-            conductivity: t.conductivity,
-            temp: t.temp,
-            date: t.date,
-          });
-        });
-      });
+      const doc = new jsPDF("l", "mm", [397, 210]);
 
       doc.text(`${nameUser} qurilmaning kunlik ma'lumotlar`, 20, 10);
 
       doc.autoTable({
+        html: "#table-style-daily-id",
+        margin: { right: 5, left: 5 },
+        styles: { halign: "center" },
         theme: "grid",
-        columns: [
-          { header: "Stansiya nomi", dataKey: "name" },
-          { header: "Sath (sm)", dataKey: "level" },
-          { header: "Sho'rlanish (g/l)", dataKey: "conductivity" },
-          { header: "Temperatura (°C)", dataKey: "temp" },
-          { header: "Sana", dataKey: "date" },
-        ],
-        body: resultDailyDataPdf,
+        headStyles: { lineWidth: 0.3, lineColor: [0, 0, 0] },
+        bodyStyles: { lineColor: [0, 0, 0] },
       });
 
-      if (resultDailyDataPdf.length > 0) {
+      if (dailyData.length > 0) {
         doc.save(`${nameUser} ning kunlik ma'lumotlari ${resultDate}.pdf`);
       }
     } else if (whichData == "monthly") {
-      const resultMonthlyDataPdf = [];
-
-      monthlyData.forEach((e) => {
-        e.monthlyData.forEach((t) => {
-          resultMonthlyDataPdf.push({
-            name: e.name,
-            level: t.level,
-            conductivity: t.conductivity,
-            temp: t.temp,
-            date: t.monthNumber,
-          });
-        });
-      });
+      const doc = new jsPDF("l", "mm", [307, 210]);
 
       doc.text(`${nameUser} qurilmaning oylik ma'lumotlar`, 20, 10);
 
       doc.autoTable({
+        html: "#table-style-monthly-id",
+        margin: { right: 5, left: 5 },
+        styles: { halign: "center" },
         theme: "grid",
-        columns: [
-          { header: "Stansiya nomi", dataKey: "name" },
-          { header: "Sath (sm)", dataKey: "level" },
-          { header: "Sho'rlanish (g/l)", dataKey: "conductivity" },
-          { header: "Temperatura (°C)", dataKey: "temp" },
-          { header: "Oy", dataKey: "date" },
-        ],
-        body: resultMonthlyDataPdf,
+        headStyles: { lineWidth: 0.3, lineColor: [0, 0, 0] },
+        bodyStyles: { lineColor: [0, 0, 0] },
       });
 
-      if (resultMonthlyDataPdf.length > 0) {
+      if (monthlyData.length > 0) {
         doc.save(`${nameUser} ning oylik ma'lumotlari ${resultDate}.pdf`);
       }
     } else if (whichData == "yesterday") {
-      const resultYesterdayDataPdf = [];
-
-      yesterdayData.forEach((e) => {
-        e.yesterdayData.forEach((t) => {
-          resultYesterdayDataPdf.push({
-            name: e.name,
-            level: t.level,
-            conductivity: t.conductivity,
-            temp: t.temp,
-            date: t.date,
-          });
-        });
-      });
+      const doc = new jsPDF("l", "mm", [397, 210]);
 
       doc.text(`${nameUser} qurilmaning kecha kelgan ma'lumotlar`, 20, 10);
 
       doc.autoTable({
+        html: "#table-style-yesterday-id",
+        margin: { right: 5, left: 5 },
+        styles: { halign: "center" },
         theme: "grid",
-        columns: [
-          { header: "Stansiya nomi", dataKey: "name" },
-          { header: "Sath (sm)", dataKey: "level" },
-          { header: "Sho'rlanish (g/l)", dataKey: "conductivity" },
-          { header: "Temperatura (°C)", dataKey: "temp" },
-          { header: "Sana", dataKey: "date" },
-        ],
-        body: resultYesterdayDataPdf,
+        headStyles: { lineWidth: 0.3, lineColor: [0, 0, 0] },
+        bodyStyles: { lineColor: [0, 0, 0] },
       });
 
-      if (resultYesterdayDataPdf.length > 0) {
+      if (yesterdayData.length > 0) {
         doc.save(
           `${nameUser} ning kecha kelgan ma'lumotlari ${resultDate}.pdf`
+        );
+      }
+    } else if (whichData == "search-between") {
+      const doc = new jsPDF("l", "mm", [397, 210]);
+
+      doc.text(
+        `${nameUser} ning ${searchBetweenStartDate} dan ${searchBetweenEndDate} gacha oraliqdagi ma'lumotlari ${resultDate}`,
+        20,
+        10
+      );
+
+      doc.autoTable({
+        html: "#table-style-search-id",
+        margin: { right: 5, left: 5 },
+        styles: { halign: "center" },
+        theme: "grid",
+        headStyles: { lineWidth: 0.3, lineColor: [0, 0, 0] },
+        bodyStyles: { lineColor: [0, 0, 0] },
+      });
+
+      if (searchBetweenData.length > 0) {
+        doc.save(
+          `${nameUser} ning ${searchBetweenStartDate} dan ${searchBetweenEndDate} gacha oraliqdagi ma'lumotlari ${resultDate}.pdf`
         );
       }
     }
@@ -690,106 +652,62 @@ const UserData = () => {
     }`;
 
     if (whichData == "hour") {
-      const resultTodayData = [];
+      const tableHour = document.getElementById("table-style-hour-id");
 
-      todayData.forEach((e) => {
-        e.todayData.forEach((t) => {
-          resultTodayData.push({
-            name: e.name,
-            Sath: t.level,
-            Shurlanish: t.conductivity,
-            Temperatura: t.temp,
-            Sana: t.date,
-          });
-        });
-      });
-      XLSX.utils.aoa_to_sheet();
-      const workBook = XLSX.utils.book_new();
-      const workSheet = XLSX.utils.json_to_sheet(resultTodayData);
+      const data = XLSX.utils.table_to_book(tableHour);
 
-      XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
-
-      if (resultTodayData.length > 0) {
+      if (todayData.length > 0) {
         XLSX.writeFile(
-          workBook,
+          data,
           `${nameUser} ning bugungi ma'lumotlari ${resultDate}.xlsx`
         );
       }
     } else if (whichData == "daily") {
-      const resultDailyData = [];
+      const tableDaily = document.getElementById("table-style-daily-id");
 
-      dailyData.forEach((e) => {
-        e.dailyData.forEach((t) => {
-          resultDailyData.push({
-            name: e.name,
-            Sath: t.level,
-            Shurlanish: t.conductivity,
-            Temperatura: t.temp,
-            Sana: t.date,
-          });
-        });
-      });
-      const workBook = XLSX.utils.book_new();
-      const workSheet = XLSX.utils.json_to_sheet(resultDailyData);
+      const data = XLSX.utils.table_to_book(tableDaily);
 
-      XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
-
-      if (resultDailyData.length > 0) {
+      if (dailyData.length > 0) {
         XLSX.writeFile(
-          workBook,
+          data,
           `${nameUser} ning kunlik ma'lumotlari ${resultDate}.xlsx`
         );
       }
     } else if (whichData == "monthly") {
-      const resultMonthlyData = [];
+      const tableMonthly = document.getElementById("table-style-monthly-id");
 
-      monthlyData.forEach((e) => {
-        e.monthlyData.forEach((t) => {
-          resultMonthlyData.push({
-            name: e.name,
-            Sath: t.level,
-            Shurlanish: t.conductivity,
-            Temperatura: t.temp,
-            Oy: valueYear[t.monthNumber - 1],
-          });
-        });
-      });
+      const data = XLSX.utils.table_to_book(tableMonthly);
 
-      const workBook = XLSX.utils.book_new();
-      const workSheet = XLSX.utils.json_to_sheet(resultMonthlyData);
-
-      XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
-
-      if (resultMonthlyData.length > 0) {
+      if (monthlyData.length > 0) {
         XLSX.writeFile(
-          workBook,
+          data,
           `${nameUser} ning oylik ma'lumotlari ${resultDate}.xlsx`
         );
       }
     } else if (whichData == "yesterday") {
-      const resultYesterdayData = [];
+      const tableYesterday = document.getElementById(
+        "table-style-yesterday-id"
+      );
 
-      yesterdayData.forEach((e) => {
-        e.yesterdayData.forEach((t) => {
-          resultYesterdayData.push({
-            name: e.name,
-            Sath: t.level,
-            Shurlanish: t.conductivity,
-            Temperatura: t.temp,
-            Sana: t.date,
-          });
-        });
-      });
+      const data = XLSX.utils.table_to_book(tableYesterday);
 
-      const workBook = XLSX.utils.book_new();
-      const workSheet = XLSX.utils.json_to_sheet(resultYesterdayData);
-
-      XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
-
-      if (resultYesterdayData.length > 0) {
+      if (yesterdayData.length > 0) {
         XLSX.writeFile(
-          workBook,
+          data,
           `${nameUser} ning kecha kelgan ma'lumotlari ${resultDate}.xlsx`
+        );
+      }
+    } else if (whichData == "search-between") {
+      const tableSearchBetween = document.getElementById(
+        "table-style-search-id"
+      );
+
+      const data = XLSX.utils.table_to_book(tableSearchBetween);
+
+      if (searchBetweenData.length > 0) {
+        XLSX.writeFile(
+          data,
+          `${nameUser} ning ${searchBetweenStartDate} dan ${searchBetweenEndDate} gacha oraliqdagi ma'lumotlari ${resultDate}.xlsx`
         );
       }
     }
@@ -1866,7 +1784,10 @@ const UserData = () => {
                                 <span className="loader"></span>
                               </div>
                             ) : (
-                              <table className="table-style">
+                              <table
+                                className="table-style"
+                                id="table-style-hour-id"
+                              >
                                 <thead className="">
                                   <tr>
                                     <th rowSpan="2" className="sticky">
@@ -2007,7 +1928,10 @@ const UserData = () => {
                         </div>
                         <div className="tableFlexible mt-3">
                           <div className="tableFlexible-width">
-                            <table className="table-style">
+                            <table
+                              className="table-style"
+                              id="table-style-yesterday-id"
+                            >
                               <thead className="">
                                 <tr>
                                   <th rowSpan="2" className="sticky">
@@ -2163,7 +2087,10 @@ const UserData = () => {
                                 <span className="loader"></span>
                               </div>
                             ) : (
-                              <table className="table-style">
+                              <table
+                                className="table-style"
+                                id="table-style-daily-id"
+                              >
                                 <thead className="">
                                   <tr>
                                     <th rowSpan="2" className="sticky">
@@ -2296,7 +2223,10 @@ const UserData = () => {
                         </div>
                         <div className="tableFlexible mt-3">
                           <div className="tableFlexible-width">
-                            <table className="table-style">
+                            <table
+                              className="table-style"
+                              id="table-style-monthly-id"
+                            >
                               <thead className="">
                                 <tr>
                                   <th rowSpan="2" className="sticky">
@@ -2411,9 +2341,7 @@ const UserData = () => {
                                   id="dateMonth"
                                   name="dateStart"
                                   required
-                                  defaultValue={new Date()
-                                    .toISOString()
-                                    .substring(0, 10)}
+                                  defaultValue={searchBetweenStartDate}
                                   onChange={(e) =>
                                     setSearchBetweenStartDate(e.target.value)
                                   }
@@ -2433,9 +2361,7 @@ const UserData = () => {
                                   id="dateMonth"
                                   name="dateEnd"
                                   required
-                                  defaultValue={new Date()
-                                    .toISOString()
-                                    .substring(0, 10)}
+                                  defaultValue={searchBetweenEndDate}
                                   onChange={(e) =>
                                     setSearchBetweenEndDate(e.target.value)
                                   }
@@ -2483,7 +2409,10 @@ const UserData = () => {
                                 <span className="loader"></span>
                               </div>
                             ) : (
-                              <table className="table-style">
+                              <table
+                                className="table-style"
+                                id="table-style-search-id"
+                              >
                                 <thead className="">
                                   <tr>
                                     <th rowSpan="2" className="sticky">
