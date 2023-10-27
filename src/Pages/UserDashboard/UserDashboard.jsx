@@ -14,6 +14,7 @@ import { api } from "../Api/Api";
 import { useState } from "react";
 import excel from "../../assets/images/excel.png";
 import * as XLSX from "xlsx";
+import axios from "axios";
 
 Chartjs.register(ArcElement, Tooltip, Legend);
 
@@ -33,245 +34,171 @@ const UserDashboard = (prop) => {
   const [tableTitle, setTableTitle] = useState("Umumiy stansiyalar soni");
   const chartRef = useRef();
 
-  // ! REFRESH TOKEN
-  const minuteLimit = window.localStorage.getItem("minute") * 1;
-  const minuteNow = new Date().getMinutes();
-  const minute = 60 * 1000;
-  let responseLimit;
-  if (minuteLimit > minuteNow) {
-    if (minuteLimit - minuteNow <= 1) {
-      responseLimit = 10000;
-    } else {
-      responseLimit = minute * (minuteLimit - minuteNow);
-    }
-  } else if (minuteLimit < minuteNow) {
-    if (minuteLimit + 60 - minuteNow <= 1) {
-      responseLimit = 10000;
-    } else {
-      responseLimit = minute * (minuteLimit + 60 - minuteNow);
-    }
-  }
+  // ! CUSTOM FETCH
+  const customFetch = axios.create({
+    baseURL: api,
+    headers: {
+      "Content-type": "application/json",
+    },
+    // withCredentials: true,
+  });
 
-  setTimeout(() => {
-    fetch(`${api}/auth/signin`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        username: window.localStorage.getItem("username"),
-        password: window.localStorage.getItem("password"),
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.statusCode == 200) {
-          let date = new Date();
-          date.setMinutes(new Date().getMinutes() + 14);
-          window.localStorage.setItem("minute", date.getMinutes());
-          window.localStorage.setItem("accessToken", data.data.accessToken);
-          window.localStorage.setItem("refreshToken", data.data.refreshToken);
-        }
+  // ! ADD HEADER TOKEN
+  customFetch.interceptors.request.use(
+    async (config) => {
+      const token = window.localStorage.getItem("accessToken");
+      if (token) {
+        config.headers["Authorization"] = ` bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
+    }
+  );
+
+  // ! REFRESH TOKEN
+  const refreshToken = async () => {
+    try {
+      const requestToken = await fetch(`${api}/auth/signin`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          username: window.localStorage.getItem("username"),
+          password: window.localStorage.getItem("password"),
+        }),
       });
-  }, responseLimit);
+
+      const responToken = await requestToken.json();
+      console.log("refresh token", responToken.data.accessToken);
+      return responToken.data.accessToken;
+    } catch (e) {
+      console.log("refreshToken", "Error", e);
+    }
+  };
+
+  // ! GET ACCESS TOKEN
+  customFetch.interceptors.response.use(
+    (response) => {
+      return response;
+    },
+    async function (error) {
+      const originalRequest = error.config;
+      if (
+        (error.response?.status === 403 && !originalRequest._retry) ||
+        (error.response?.status === 401 && !originalRequest._retry)
+      ) {
+        originalRequest._retry = true;
+
+        const resp = await refreshToken();
+
+        const access_token = resp;
+
+        window.localStorage.setItem("accessToken", access_token);
+
+        customFetch.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${access_token}`;
+        return customFetch(originalRequest);
+      }
+      return Promise.reject(error);
+    }
+  );
 
   useEffect(() => {
     const userDashboardFunc = async () => {
       // ! STATION STATISTIC
-      const requestStationStatistic = await fetch(
-        `${api}/last-data/getStatisticStations`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
+      const requestStationStatistic = await customFetch.get(
+        `/last-data/getStatisticStations`
       );
-
-      const responseStationStatistic = await requestStationStatistic.json();
-
-      settationStatistic(responseStationStatistic.data);
+      settationStatistic(requestStationStatistic.data.data);
     };
 
     userDashboardFunc();
 
-    fetch(`${api}/stations/getStatisticStationsByBattery`, {
-      method: "GET",
-      headers: {
-        "content-type": "application/json",
-        Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => setStationBattery(data.data));
+    customFetch
+      .get(`/stations/getStatisticStationsByBattery`)
+      .then((data) => setStationBattery(data.data.data));
   }, []);
 
   useEffect(() => {
     if (whichStation == "allStation") {
-      fetch(
-        `${api}/last-data/allLastData?page=1&perPage=${stationStatistic?.totalStationsCount}`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
-      )
-        .then((res) => res.json())
+      customFetch
+        .get(
+          `last-data/allLastData?page=1&perPage=${stationStatistic?.totalStationsCount}`
+        )
         .then((data) => {
           role == "USER"
-            ? setViewStation(data.data)
-            : setViewStation(data.data);
+            ? setViewStation(data.data.data)
+            : setViewStation(data.data.data);
         });
 
       // ! LIMIT
-      fetch(`${api}/last-data/allLastData?page=1&perPage=8`, {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      })
-        .then((res) => res.json())
-        .then((data) =>
+      customFetch
+        .get(`/last-data/allLastData?page=1&perPage=8`)
+        .then((data) => {
           role == "USER"
-            ? setViewStationLimit(data.data)
-            : setViewStationLimit(data.data)
-        );
+            ? setViewStationLimit(data.data.data)
+            : setViewStationLimit(data.data.data);
+        });
     } else if (whichStation == "todayStation") {
-      fetch(
-        `${api}/last-data/todayWorkStations?page=1&perPage=${stationStatistic?.totalTodayWorkStationsCount}`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
-      )
-        .then((res) => res.json())
-        .then((data) => setViewStation(data.data.docs));
+      customFetch
+        .get(
+          `/last-data/todayWorkStations?page=1&perPage=${stationStatistic?.totalTodayWorkStationsCount}`
+        )
+        .then((data) => setViewStation(data.data.data.docs));
 
       // ! LIMIT
-
-      fetch(`${api}/last-data/todayWorkStations?page=1&perPage=8`, {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      })
-        .then((res) => res.json())
-        .then((data) => setViewStationLimit(data.data.docs));
+      customFetch
+        .get(`/last-data/todayWorkStations?page=1&perPage=8`)
+        .then((data) => setViewStationLimit(data.data.data.docs));
     } else if (whichStation == "withinThreeDayStation") {
-      fetch(
-        `${api}/last-data/treeDaysWorkStations?page=1&perPage=${stationStatistic?.totalThreeDayWorkStationsCount}`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
-      )
-        .then((res) => res.json())
-        .then((data) => setViewStation(data.data.docs));
+      customFetch
+        .get(
+          `/last-data/treeDaysWorkStations?page=1&perPage=${stationStatistic?.totalThreeDayWorkStationsCount}`
+        )
+        .then((data) => setViewStation(data.data.data.docs));
 
       // ! LIMIT
 
-      fetch(`${api}/last-data/treeDaysWorkStations?page=1&perPage=8`, {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      })
-        .then((res) => res.json())
-        .then((data) => setViewStationLimit(data.data.docs));
+      customFetch
+        .get(`${api}/last-data/treeDaysWorkStations?page=1&perPage=8`)
+        .then((data) => setViewStationLimit(data.data.data.docs));
     } else if (whichStation == "totalMonthWorkStation") {
-      fetch(
-        `${api}/last-data/lastMonthWorkStations?page=1&perPage=${stationStatistic?.totalMonthWorkStationsCount}`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
-      )
-        .then((res) => res.json())
-        .then((data) => setViewStation(data.data.docs));
+      customFetch
+        .get(
+          `/last-data/lastMonthWorkStations?page=1&perPage=${stationStatistic?.totalMonthWorkStationsCount}`
+        )
+        .then((data) => setViewStation(data.data.data.docs));
 
       // ! LIMIT
-
-      fetch(`${api}/last-data/lastMonthWorkStations?page=1&perPage=8`, {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      })
-        .then((res) => res.json())
-        .then((data) => setViewStationLimit(data.data.docs));
+      customFetch
+        .get(`/last-data/lastMonthWorkStations?page=1&perPage=8`)
+        .then((data) => setViewStationLimit(data.data.data.docs));
     } else if (whichStation == "totalMoreWorkStations") {
-      fetch(
-        `${api}/last-data/moreWorkStations?page=1&perPage=${stationStatistic?.totalMoreWorkStationsCount}`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
-      )
-        .then((res) => res.json())
-        .then((data) => setViewStation(data.data.docs));
+      customFetch
+        .get(
+          `/last-data/moreWorkStations?page=1&perPage=${stationStatistic?.totalMoreWorkStationsCount}`
+        )
+        .then((data) => setViewStation(data.data.data.docs));
 
       // ! LIMIT
-
-      fetch(`${api}/last-data/moreWorkStations?page=1&perPage=8`, {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      })
-        .then((res) => res.json())
-        .then((data) => setViewStationLimit(data.data.docs));
+      customFetch
+        .get(`/last-data/moreWorkStations?page=1&perPage=8`)
+        .then((data) => setViewStationLimit(data.data.data.docs));
     } else if (whichStation == "notWorkStation") {
-      fetch(
-        `${api}/last-data/getNotLastDataStations?page=1&perPage=${stationStatistic?.totalNotDataStationsCount}`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
-      )
-        .then((res) => res.json())
-        .then((data) => setViewStation(data.data.docs));
+      customFetch
+        .get(
+          `/last-data/getNotLastDataStations?page=1&perPage=${stationStatistic?.totalNotDataStationsCount}`
+        )
+        .then((data) => setViewStation(data.data.data.docs));
 
       // ! LIMIT
-
-      fetch(`${api}/last-data/getNotLastDataStations?page=1&perPage=8`, {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      })
-        .then((res) => res.json())
-        .then((data) => setViewStationLimit(data.data.docs));
+      customFetch
+        .get(`${api}/last-data/getNotLastDataStations?page=1&perPage=8`)
+        .then((data) => setViewStationLimit(data.data.data.docs));
     }
   }, [stationStatistic, whichStation]);
 

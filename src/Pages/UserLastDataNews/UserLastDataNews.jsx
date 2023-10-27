@@ -22,6 +22,7 @@ import moment from "moment";
 import "moment/dist/locale/uz-latn";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import axios from "axios";
 
 moment.locale("uz-latn");
 
@@ -55,65 +56,86 @@ const UserLastDataNews = () => {
   const dateSearch = new Date();
   dateSearch.setDate(new Date().getDate() - 4);
 
-  // ! REFRESH TOKEN
-  const minuteLimit = window.localStorage.getItem("minute") * 1;
-  const minuteNow = new Date().getMinutes();
-  const minute = 60 * 1000;
-  let responseLimit;
-  if (minuteLimit > minuteNow) {
-    if (minuteLimit - minuteNow <= 1) {
-      responseLimit = 10000;
-    } else {
-      responseLimit = minute * (minuteLimit - minuteNow);
-    }
-  } else if (minuteLimit < minuteNow) {
-    if (minuteLimit + 60 - minuteNow <= 1) {
-      responseLimit = 10000;
-    } else {
-      responseLimit = minute * (minuteLimit + 60 - minuteNow);
-    }
-  }
+  // ! CUSTOM FETCH
+  const customFetch = axios.create({
+    baseURL: api,
+    headers: {
+      "Content-type": "application/json",
+    },
+    // withCredentials: true,
+  });
 
-  setTimeout(() => {
-    fetch(`${api}/auth/signin`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        username: window.localStorage.getItem("username"),
-        password: window.localStorage.getItem("password"),
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.statusCode == 200) {
-          let date = new Date();
-          date.setMinutes(new Date().getMinutes() + 14);
-          window.localStorage.setItem("minute", date.getMinutes());
-          window.localStorage.setItem("accessToken", data.data.accessToken);
-          window.localStorage.setItem("refreshToken", data.data.refreshToken);
-        }
+  // ! ADD HEADER TOKEN
+  customFetch.interceptors.request.use(
+    async (config) => {
+      const token = window.localStorage.getItem("accessToken");
+      if (token) {
+        config.headers["Authorization"] = ` bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
+    }
+  );
+
+  // ! REFRESH TOKEN
+  const refreshToken = async () => {
+    try {
+      const requestToken = await fetch(`${api}/auth/signin`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          username: window.localStorage.getItem("username"),
+          password: window.localStorage.getItem("password"),
+        }),
       });
-  }, responseLimit);
+
+      const responToken = await requestToken.json();
+      console.log("refresh token", responToken.data.accessToken);
+      return responToken.data.accessToken;
+    } catch (e) {
+      console.log("refreshToken", "Error", e);
+    }
+  };
+
+  // ! GET ACCESS TOKEN
+  customFetch.interceptors.response.use(
+    (response) => {
+      return response;
+    },
+    async function (error) {
+      const originalRequest = error.config;
+      if (
+        (error.response?.status === 403 && !originalRequest._retry) ||
+        (error.response?.status === 401 && !originalRequest._retry)
+      ) {
+        originalRequest._retry = true;
+
+        const resp = await refreshToken();
+
+        const access_token = resp;
+
+        window.localStorage.setItem("accessToken", access_token);
+
+        customFetch.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${access_token}`;
+        return customFetch(originalRequest);
+      }
+      return Promise.reject(error);
+    }
+  );
 
   useEffect(() => {
     const todayData = async () => {
-      const request = await fetch(
-        `${api}/mqttDataWrite/getTodayDataByStationId?stationId=${news}`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
+      const request = await customFetch.get(
+        `/mqttDataWrite/getTodayDataByStationId?stationId=${news}`
       );
 
-      const response = await request.json();
-
-      setTodayData(response.data);
+      setTodayData(request.data.data);
     };
 
     todayData();
@@ -121,67 +143,37 @@ const UserLastDataNews = () => {
     const date = new Date();
 
     // ! MONTH DATA
-    fetch(
-      `${api}/monthlyData/getStationDataByYearAndStationId?year=${date.getFullYear()}&stationsId=${news}`,
-      {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      }
-    )
-      .then((res) => res.json())
-      .then((data) => setMonthData(data.stations));
+    customFetch
+      .get(
+        `/monthlyData/getStationDataByYearAndStationId?year=${date.getFullYear()}&stationsId=${news}`
+      )
+      .then((data) => setMonthData(data.data.stations));
 
     // ! DAILY DATA
-    fetch(
-      `${api}/dailyData/getStationDailyDataById?stationId=${news}&month=${new Date()
-        .toISOString()
-        .substring(0, 7)}`,
-      {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      }
-    )
-      .then((res) => res.json())
-      .then((data) => setDailyData(data.data));
+    customFetch
+      .get(
+        `/dailyData/getStationDailyDataById?stationId=${news}&month=${new Date()
+          .toISOString()
+          .substring(0, 7)}`
+      )
+      .then((data) => setDailyData(data.data.data));
 
-    // ! DAILY DATA
-    fetch(
-      `${api}/yesterdayData/getYesterdayDataByStationId?stationId=${news}`,
-      {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      }
-    )
-      .then((res) => res.json())
-      .then((data) => setYesterdayData(data.data));
+    // ! YESTERDAY DATA
+    customFetch
+      .get(`/yesterdayData/getYesterdayDataByStationId?stationId=${news}`)
+      .then((data) => setYesterdayData(data.data.data));
 
     // ! SEARCH DATA
-    fetch(
-      `${api}/allData/getStationIdAndTwoDayBetween?firstDay=${dateSearch
-        .toISOString()
-        .substring(0, 10)}&stationsId=${news}&secondDay=${new Date()
-        .toISOString()
-        .substring(0, 10)}`,
-      {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      }
-    )
-      .then((res) => res.json())
+    customFetch
+      .get(
+        `/allData/getStationIdAndTwoDayBetween?firstDay=${dateSearch
+          .toISOString()
+          .substring(0, 10)}&stationsId=${news}&secondDay=${new Date()
+          .toISOString()
+          .substring(0, 10)}`
+      )
       .then((data) => {
-        setSearchBetweenData(data.data);
+        setSearchBetweenData(data.data.data);
       });
   }, []);
 
@@ -334,6 +326,23 @@ const UserLastDataNews = () => {
       if (yesterdayData.length > 0) {
         doc.save(`${stationName} ning kecha kelgan ma'lumotlari.pdf`);
       }
+    } else if (whichData == "search-between") {
+      doc.text(`${stationName} ning ma'lumotlari`, 20, 10);
+
+      doc.autoTable({
+        theme: "grid",
+        columns: [
+          { header: "Sath (sm)", dataKey: "level" },
+          { header: "Sho'rlanish (g/l)", dataKey: "conductivity" },
+          { header: "Temperatura (°C)", dataKey: "temp" },
+          { header: "Sana", dataKey: "date" },
+        ],
+        body: searchBetweenData,
+      });
+
+      if (searchBetweenData.length > 0) {
+        doc.save(`${stationName} ning ma'lumotlari.pdf`);
+      }
     }
   };
 
@@ -476,18 +485,11 @@ const UserLastDataNews = () => {
   };
 
   const changeDailyData = (month) => {
-    fetch(
-      `${api}/dailyData/getStationDailyDataById?stationId=${news}&month=${month}`,
-      {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      }
-    )
-      .then((res) => res.json())
-      .then((data) => setDailyData(data.data));
+    customFetch
+      .get(
+        `/dailyData/getStationDailyDataById?stationId=${news}&month=${month}`
+      )
+      .then((data) => setDailyData(data.data.data));
   };
 
   const searchBetweenForm = (e) => {
@@ -496,19 +498,10 @@ const UserLastDataNews = () => {
 
     const { dateStart, dateEnd } = e.target;
 
-    fetch(
-      `${api}/allData/getStationIdAndTwoDayBetween?firstDay=${dateStart.value}&stationsId=${news}&secondDay=${dateEnd.value}`,
-      {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      }
-    )
-      .then((res) => res.json())
+    customFetch.get(
+      `/allData/getStationIdAndTwoDayBetween?firstDay=${dateStart.value}&stationsId=${news}&secondDay=${dateEnd.value}`)
       .then((data) => {
-        setSearchBetweenData(data.data);
+        setSearchBetweenData(data.data.data);
         setLoader(false);
       });
   };

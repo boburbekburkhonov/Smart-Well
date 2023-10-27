@@ -15,6 +15,7 @@ import locationGreen from "../../assets/images/location-green.png";
 import locationYellow from "../../assets/images/location-yellow.png";
 import locationOrange from "../../assets/images/location-orange.png";
 import { api } from "../Api/Api";
+import axios from "axios";
 
 const UserMap = () => {
   const [lastData, setLastData] = useState([]);
@@ -35,83 +36,98 @@ const UserMap = () => {
   const center = useMemo(() => location, [count]);
   const role = window.localStorage.getItem("role");
 
-  // ! REFRESH TOKEN
-  const minuteLimit = window.localStorage.getItem("minute") * 1;
-  const minuteNow = new Date().getMinutes();
-  const minute = 60 * 1000;
-  let responseLimit;
-  if (minuteLimit > minuteNow) {
-    if (minuteLimit - minuteNow <= 1) {
-      responseLimit = 10000;
-    } else {
-      responseLimit = minute * (minuteLimit - minuteNow);
-    }
-  } else if (minuteLimit < minuteNow) {
-    if (minuteLimit + 60 - minuteNow <= 1) {
-      responseLimit = 10000;
-    } else {
-      responseLimit = minute * (minuteLimit + 60 - minuteNow);
-    }
-  }
+  // ! CUSTOM FETCH
+  const customFetch = axios.create({
+    baseURL: api,
+    headers: {
+      "Content-type": "application/json",
+    },
+    // withCredentials: true,
+  });
 
-  setTimeout(() => {
-    fetch(`${api}/auth/signin`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        username: window.localStorage.getItem("username"),
-        password: window.localStorage.getItem("password"),
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.statusCode == 200) {
-          let date = new Date();
-          date.setMinutes(new Date().getMinutes() + 14);
-          window.localStorage.setItem("minute", date.getMinutes());
-          window.localStorage.setItem("accessToken", data.data.accessToken);
-          window.localStorage.setItem("refreshToken", data.data.refreshToken);
-        }
+  // ! ADD HEADER TOKEN
+  customFetch.interceptors.request.use(
+    async (config) => {
+      const token = window.localStorage.getItem("accessToken");
+      if (token) {
+        config.headers["Authorization"] = ` bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
+    }
+  );
+
+  // ! REFRESH TOKEN
+  const refreshToken = async () => {
+    try {
+      const requestToken = await fetch(`${api}/auth/signin`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          username: window.localStorage.getItem("username"),
+          password: window.localStorage.getItem("password"),
+        }),
       });
-  }, responseLimit);
+
+      const responToken = await requestToken.json();
+      console.log("refresh token", responToken.data.accessToken);
+      return responToken.data.accessToken;
+    } catch (e) {
+      console.log("refreshToken", "Error", e);
+    }
+  };
+
+  // ! GET ACCESS TOKEN
+  customFetch.interceptors.response.use(
+    (response) => {
+      return response;
+    },
+    async function (error) {
+      const originalRequest = error.config;
+      if (
+        (error.response?.status === 403 && !originalRequest._retry) ||
+        (error.response?.status === 401 && !originalRequest._retry)
+      ) {
+        originalRequest._retry = true;
+
+        const resp = await refreshToken();
+
+        const access_token = resp;
+
+        window.localStorage.setItem("accessToken", access_token);
+
+        customFetch.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${access_token}`;
+        return customFetch(originalRequest);
+      }
+      return Promise.reject(error);
+    }
+  );
 
   useEffect(() => {
     const userMap = async () => {
       // ! STATISTICS
-      const requestStationStatistics = await fetch(
-        `${api}/last-data/getStatisticStations`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
+      const requestStationStatistics = await customFetch.get(
+        `/last-data/getStatisticStations`
       );
-
-      const responseStationStatistic = await requestStationStatistics.json();
 
       // ! LAST DATA
-      const request = await fetch(
-        `${api}/last-data/allLastData?page=1&perPage=${responseStationStatistic.data.totalStationsCount}`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
+      const request = await customFetch.get(
+        `${api}/last-data/allLastData?page=1&perPage=${requestStationStatistics.data.data.totalStationsCount}`
       );
 
-      const response = await request.json();
-
       role == "USER"
-        ? `${setLastData(response.data)} ${setLastDataForList(response.data)}`
-        : `${setLastData(response.data)} ${setLastDataForList(response.data)}`;
+        ? `${setLastData(request.data.data)} ${setLastDataForList(
+            request.data.data
+          )}`
+        : `${setLastData(request.data.data)} ${setLastDataForList(
+            request.data.data
+          )}`;
     };
 
     userMap();
@@ -156,8 +172,10 @@ const UserMap = () => {
     const search = lastData.filter((e) =>
       e.name.toLowerCase().includes(inputValue)
     );
-    setLastDataForList(search);
-    setActive(null);
+    if (search.length > 0) {
+      setLastDataForList(search);
+      setActive(null);
+    }
   };
 
   const zoomLocation = (station) => {

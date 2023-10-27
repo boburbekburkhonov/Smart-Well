@@ -16,6 +16,7 @@ import { api } from "../Api/Api";
 import ReactPaginate from "react-paginate";
 import * as XLSX from "xlsx";
 import excel from "../../assets/images/excel.png";
+import axios from "axios";
 
 const UserLastData = (prop) => {
   const [loader, setLoader] = useState(false);
@@ -33,89 +34,87 @@ const UserLastData = (prop) => {
     "user-last-data-list-item-href-blue"
   );
 
-  // ! REFRESH TOKEN
-  const minuteLimit = window.localStorage.getItem("minute") * 1;
-  const minuteNow = new Date().getMinutes();
-  const minute = 60 * 1000;
-  let responseLimit;
-  if (minuteLimit > minuteNow) {
-    if (minuteLimit - minuteNow <= 1) {
-      responseLimit = 10000;
-    } else {
-      responseLimit = minute * (minuteLimit - minuteNow);
-    }
-  } else if (minuteLimit < minuteNow) {
-    if (minuteLimit + 60 - minuteNow <= 1) {
-      responseLimit = 10000;
-    } else {
-      responseLimit = minute * (minuteLimit + 60 - minuteNow);
-    }
-  }
+  // ! CUSTOM FETCH
+  const customFetch = axios.create({
+    baseURL: api,
+    headers: {
+      "Content-type": "application/json",
+    },
+    // withCredentials: true,
+  });
 
-  setTimeout(() => {
-    fetch(`${api}/auth/signin`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        username: window.localStorage.getItem("username"),
-        password: window.localStorage.getItem("password"),
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.statusCode == 200) {
-          let date = new Date();
-          date.setMinutes(new Date().getMinutes() + 14);
-          window.localStorage.setItem("minute", date.getMinutes());
-          window.localStorage.setItem("accessToken", data.data.accessToken);
-          window.localStorage.setItem("refreshToken", data.data.refreshToken);
-        }
+  // ! ADD HEADER TOKEN
+  customFetch.interceptors.request.use(
+    async (config) => {
+      const token = window.localStorage.getItem("accessToken");
+      if (token) {
+        config.headers["Authorization"] = ` bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
+    }
+  );
+
+  // ! REFRESH TOKEN
+  const refreshToken = async () => {
+    try {
+      const requestToken = await fetch(`${api}/auth/signin`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          username: window.localStorage.getItem("username"),
+          password: window.localStorage.getItem("password"),
+        }),
       });
-  }, responseLimit);
+
+      const responToken = await requestToken.json();
+      console.log("refresh token", responToken.data.accessToken);
+      return responToken.data.accessToken;
+    } catch (e) {
+      console.log("refreshToken", "Error", e);
+    }
+  };
+
+  // ! GET ACCESS TOKEN
+  customFetch.interceptors.response.use(
+    (response) => {
+      return response;
+    },
+    async function (error) {
+      const originalRequest = error.config;
+      if (
+        (error.response?.status === 403 && !originalRequest._retry) ||
+        (error.response?.status === 401 && !originalRequest._retry)
+      ) {
+        originalRequest._retry = true;
+
+        const resp = await refreshToken();
+
+        const access_token = resp;
+
+        window.localStorage.setItem("accessToken", access_token);
+
+        customFetch.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${access_token}`;
+        return customFetch(originalRequest);
+      }
+      return Promise.reject(error);
+    }
+  );
 
   useEffect(() => {
     const userDashboardFunc = async () => {
       // ! STATION STATISTIC
-      const requestStationStatistic = await fetch(
-        `${api}/last-data/getStatisticStations`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
+      const requestStationStatistic = await customFetch.get(
+        `/last-data/getStatisticStations`
       );
 
-      const responseStationStatistic = await requestStationStatistic.json();
-
-      settationStatistic(responseStationStatistic.data);
-
-      if (responseStationStatistic.statusCode == 401) {
-        const request = await fetch(`${api}/auth/signin`, {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({
-            username: window.localStorage.getItem("username"),
-            password: window.localStorage.getItem("password"),
-          }),
-        });
-
-        const response = await request.json();
-
-        if (response.statusCode == 200) {
-          window.localStorage.setItem("accessToken", response.data.accessToken);
-          window.localStorage.setItem(
-            "refreshToken",
-            response.data.refreshToken
-          );
-        }
-      }
+      settationStatistic(requestStationStatistic.data.data);
     };
 
     userDashboardFunc();
@@ -123,22 +122,12 @@ const UserLastData = (prop) => {
 
   useEffect(() => {
     const userLastDataFunc = async () => {
-      const request = await fetch(
-        `${api}/last-data/allLastData?page=1&perPage=12`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
+      const request = await customFetch.get(
+        `/last-data/allLastData?page=1&perPage=12`
       );
 
-      const response = await request.json();
-
-      setAllStation(response.data);
-      setTotalPages(response.totalPages);
+      setAllStation(request.data.data);
+      setTotalPages(request.data.totalPages);
     };
 
     userLastDataFunc();
@@ -147,117 +136,81 @@ const UserLastData = (prop) => {
   useEffect(() => {
     if (whichStation == "allStation") {
       // ! LIMIT
-      fetch(`${api}/last-data/allLastData?page=1&perPage=12`, {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      })
-        .then((res) => res.json())
+      customFetch
+        .get(`/last-data/allLastData?page=1&perPage=12`)
         .then((data) => {
           role == "USER"
-            ? `${setAllStation(data.data)} ${setTotalPages(data.totalPages)}`
-            : `${setAllStation(data.data)} ${setTotalPages(data.totalPages)}`;
+            ? `${setAllStation(data.data.data)} ${setTotalPages(
+                data.data.totalPages
+              )}`
+            : `${setAllStation(data.data.data)} ${setTotalPages(
+                data.data.totalPages
+              )}`;
         });
     } else if (whichStation == "todayStation") {
       // ! LIMIT
-
-      fetch(`${api}/last-data/todayWorkStations?page=1&perPage=12`, {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      })
-        .then((res) => res.json())
+      customFetch
+        .get(`/last-data/todayWorkStations?page=1&perPage=12`)
         .then((data) => {
           role == "USER"
-            ? `${setAllStation(data.data.docs)} ${setTotalPages(
+            ? `${setAllStation(data.data.data.docs)} ${setTotalPages(
                 data.totalPages
               )}`
-            : `${setAllStation(data.data.docs)} ${setTotalPages(
-                data.data.totalPages
+            : `${setAllStation(data.data.data.docs)} ${setTotalPages(
+                data.data.data.totalPages
               )}`;
         });
     } else if (whichStation == "withinThreeDayStation") {
       // ! LIMIT
-
-      fetch(`${api}/last-data/treeDaysWorkStations?page=1&perPage=12`, {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      })
-        .then((res) => res.json())
+      customFetch
+        .get(`/last-data/treeDaysWorkStations?page=1&perPage=12`)
         .then((data) => {
           role == "USER"
-            ? `${setAllStation(data.data.docs)} ${setTotalPages(
+            ? `${setAllStation(data.data.data.docs)} ${setTotalPages(
                 data.totalPages
               )}`
-            : `${setAllStation(data.data.docs)} ${setTotalPages(
-                data.data.totalPages
+            : `${setAllStation(data.data.data.docs)} ${setTotalPages(
+                data.data.data.totalPages
               )}`;
         });
     } else if (whichStation == "totalMonthWorkStation") {
       // ! LIMIT
-
-      fetch(`${api}/last-data/lastMonthWorkStations?page=1&perPage=12`, {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      })
-        .then((res) => res.json())
+      customFetch
+        .get(`/last-data/lastMonthWorkStations?page=1&perPage=12`)
         .then((data) => {
           role == "USER"
-            ? `${setAllStation(data.data.docs)} ${setTotalPages(
+            ? `${setAllStation(data.data.data.docs)} ${setTotalPages(
                 data.totalPages
               )}`
-            : `${setAllStation(data.data.docs)} ${setTotalPages(
-                data.data.totalPages
+            : `${setAllStation(data.data.data.docs)} ${setTotalPages(
+                data.data.data.totalPages
               )}`;
         });
     } else if (whichStation == "totalMoreWorkStations") {
       // ! LIMIT
-
-      fetch(`${api}/last-data/moreWorkStations?page=1&perPage=12`, {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      })
-        .then((res) => res.json())
+      customFetch
+        .get(`/last-data/moreWorkStations?page=1&perPage=12`)
         .then((data) => {
           role == "USER"
-            ? `${setAllStation(data.data.docs)} ${setTotalPages(
+            ? `${setAllStation(data.data.data.docs)} ${setTotalPages(
                 data.totalPages
               )}`
-            : `${setAllStation(data.data.docs)} ${setTotalPages(
+            : `${setAllStation(data.data.data.docs)} ${setTotalPages(
                 data.data.totalPages
               )}`;
         });
     } else if (whichStation == "notWorkStation") {
       // ! LIMIT
-
-      fetch(`${api}/last-data/getNotLastDataStations?page=1&perPage=12`, {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      })
+      customFetch
+        .get(`${api}/last-data/getNotLastDataStations?page=1&perPage=12`)
         .then((res) => res.json())
         .then((data) => {
           role == "USER"
-            ? `${setAllStation(data.data.docs)} ${setTotalPages(
-                data.totalPages
-              )}`
-            : `${setAllStation(data.data.docs)} ${setTotalPages(
+            ? `${setAllStation(data.data.data.docs)} ${setTotalPages(
                 data.data.totalPages
+              )}`
+            : `${setAllStation(data.data.data.docs)} ${setTotalPages(
+                data.data.dataz.totalPages
               )}`;
         });
     }
@@ -266,104 +219,58 @@ const UserLastData = (prop) => {
   const handlePageChange = (selectedPage) => {
     if (whichStation == "allStation") {
       // ! LIMIT
-      fetch(
-        `${api}/last-data/allLastData?page=${
-          selectedPage.selected + 1
-        }&perPage=12`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
-      )
-        .then((res) => res.json())
+      customFetch
+        .get(
+          `/last-data/allLastData?page=${selectedPage.selected + 1}&perPage=12`
+        )
         .then((data) =>
           role == "USER"
-            ? `${setAllStation(data.data)}`
-            : `${setAllStation(data.data)}`
+            ? `${setAllStation(data.data.data)}`
+            : `${setAllStation(data.data.data)}`
         );
     } else if (whichStation == "todayStation") {
       // ! LIMIT
-
-      fetch(
-        `${api}/last-data/todayWorkStations?page=${
-          selectedPage.selected + 1
-        }&perPage=12`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
-      )
-        .then((res) => res.json())
+      customFetch
+        .get(
+          `/last-data/todayWorkStations?page=${
+            selectedPage.selected + 1
+          }&perPage=12`
+        )
         .then((data) => {
-          setAllStation(data.data.docs);
+          setAllStation(data.data.data.docs);
         });
     } else if (whichStation == "withinThreeDayStation") {
       // ! LIMIT
-
-      fetch(
-        `${api}/last-data/treeDaysWorkStations?page=${
-          selectedPage.selected + 1
-        }&perPage=12`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
-      )
-        .then((res) => res.json())
+      customFetch
+        .get(
+          `/last-data/treeDaysWorkStations?page=${
+            selectedPage.selected + 1
+          }&perPage=12`
+        )
         .then((data) => {
-          setAllStation(data.data.docs);
+          setAllStation(data.data.data.docs);
         });
     } else if (whichStation == "totalMonthWorkStation") {
       // ! LIMIT
-
-      fetch(
-        `${api}/last-data/lastMonthWorkStations?page=${
-          selectedPage.selected + 1
-        }&perPage=12`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
-      )
-        .then((res) => res.json())
+      customFetch
+        .get(
+          `/last-data/lastMonthWorkStations?page=${
+            selectedPage.selected + 1
+          }&perPage=12`
+        )
         .then((data) => {
-          setAllStation(data.data.docs);
+          setAllStation(data.data.data.docs);
         });
     } else if (whichStation == "totalMoreWorkStations") {
       // ! LIMIT
-
-      fetch(
-        `${api}/last-data/moreWorkStations?page=${
-          selectedPage.selected + 1
-        }&perPage=12`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
-      )
-        .then((res) => res.json())
+      customFetch
+        .get(
+          `/last-data/moreWorkStations?page=${
+            selectedPage.selected + 1
+          }&perPage=12`
+        )
         .then((data) => {
-          setAllStation(data.data.docs);
+          setAllStation(data.data.data.docs);
         });
     }
   };
@@ -443,23 +350,13 @@ const UserLastData = (prop) => {
 
     if (whichStation == "allStation") {
       const userAllDataFunc = async () => {
-        const request = await fetch(
-          `${api}/last-data/allLastData?page=1&perPage=${stationStatistic.totalStationsCount}`,
-          {
-            method: "GET",
-            headers: {
-              "content-type": "application/json",
-              Authorization:
-                "Bearer " + window.localStorage.getItem("accessToken"),
-            },
-          }
+        const request = await customFetch.get(
+          `/last-data/allLastData?page=1&perPage=${stationStatistic.totalStationsCount}`
         );
-
-        const response = await request.json();
 
         const resultExcelData = [];
 
-        response.data.forEach((e) => {
+        request.data.data.forEach((e) => {
           resultExcelData.push({
             nomi: e.name,
             imei: e.imel,
@@ -481,7 +378,7 @@ const UserLastData = (prop) => {
 
         XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
 
-        if (response.data.length > 0) {
+        if (request.data.data.length > 0) {
           XLSX.writeFile(
             workBook,
             `${name} ning umumiy stansiya ma'lumotlari ${resultDate}.xlsx`
@@ -492,22 +389,12 @@ const UserLastData = (prop) => {
       userAllDataFunc();
     } else if (whichStation == "todayStation") {
       const userTodayDataFunc = async () => {
-        const request = await fetch(
-          `${api}/last-data/todayWorkStations?page=1&perPage=${stationStatistic.totalTodayWorkStationsCount}`,
-          {
-            method: "GET",
-            headers: {
-              "content-type": "application/json",
-              Authorization:
-                "Bearer " + window.localStorage.getItem("accessToken"),
-            },
-          }
+        const request = await customFetch.get(
+          `/last-data/todayWorkStations?page=1&perPage=${stationStatistic.totalTodayWorkStationsCount}`
         );
 
-        const response = await request.json();
-
         const resultExcelData = [];
-        response.data.docs.forEach((e) => {
+        request.data.data.docs.forEach((e) => {
           resultExcelData.push({
             nomi: e.stations.name,
             imei: e.stations.imel,
@@ -530,7 +417,7 @@ const UserLastData = (prop) => {
 
         XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
 
-        if (response.data.docs.length > 0) {
+        if (request.data.data.docs.length > 0) {
           XLSX.writeFile(
             workBook,
             `${name} ning bugun kelgan ma'lumotlari ${resultDate}.xlsx`
@@ -541,22 +428,12 @@ const UserLastData = (prop) => {
       userTodayDataFunc();
     } else if (whichStation == "withinThreeDayStation") {
       const userThreeDayDataFunc = async () => {
-        const request = await fetch(
-          `${api}/last-data/treeDaysWorkStations?page=1&perPage=${stationStatistic.totalThreeDayWorkStationsCount}`,
-          {
-            method: "GET",
-            headers: {
-              "content-type": "application/json",
-              Authorization:
-                "Bearer " + window.localStorage.getItem("accessToken"),
-            },
-          }
+        const request = await customFetch.get(
+          `/last-data/treeDaysWorkStations?page=1&perPage=${stationStatistic.totalThreeDayWorkStationsCount}`
         );
 
-        const response = await request.json();
-
         const resultExcelData = [];
-        response.data.docs.forEach((e) => {
+        request.data.data.docs.forEach((e) => {
           resultExcelData.push({
             nomi: e.stations.name,
             imei: e.stations.imel,
@@ -579,7 +456,7 @@ const UserLastData = (prop) => {
 
         XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
 
-        if (response.data.docs.length > 0) {
+        if (request.data.data.docs.length > 0) {
           XLSX.writeFile(
             workBook,
             `${name} ning 3 ichida kelgan ma'lumotlari ${resultDate}.xlsx`
@@ -590,22 +467,12 @@ const UserLastData = (prop) => {
       userThreeDayDataFunc();
     } else if (whichStation == "totalMonthWorkStation") {
       const userLastMonthDataFunc = async () => {
-        const request = await fetch(
-          `${api}/last-data/lastMonthWorkStations?page=1&perPage=${stationStatistic.totalMonthWorkStationsCount}`,
-          {
-            method: "GET",
-            headers: {
-              "content-type": "application/json",
-              Authorization:
-                "Bearer " + window.localStorage.getItem("accessToken"),
-            },
-          }
+        const request = await customFetch.get(
+          `/last-data/lastMonthWorkStations?page=1&perPage=${stationStatistic.totalMonthWorkStationsCount}`
         );
 
-        const response = await request.json();
-
         const resultExcelData = [];
-        response.data.docs.forEach((e) => {
+        request.data.data.docs.forEach((e) => {
           resultExcelData.push({
             nomi: e.stations.name,
             imei: e.stations.imel,
@@ -628,7 +495,7 @@ const UserLastData = (prop) => {
 
         XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
 
-        if (response.data.docs.length > 0) {
+        if (request.data.data.docs.length > 0) {
           XLSX.writeFile(
             workBook,
             `${name} ning so'ngi oy kelgan ma'lumotlari ${resultDate}.xlsx`
@@ -639,22 +506,12 @@ const UserLastData = (prop) => {
       userLastMonthDataFunc();
     } else if (whichStation == "totalMoreWorkStations") {
       const userMoreMonthDataFunc = async () => {
-        const request = await fetch(
-          `${api}/last-data/moreWorkStations?page=1&perPage=${stationStatistic.totalMoreWorkStationsCount}`,
-          {
-            method: "GET",
-            headers: {
-              "content-type": "application/json",
-              Authorization:
-                "Bearer " + window.localStorage.getItem("accessToken"),
-            },
-          }
+        const request = await customFetch.get(
+          `/last-data/moreWorkStations?page=1&perPage=${stationStatistic.totalMoreWorkStationsCount}`
         );
 
-        const response = await request.json();
-
         const resultExcelData = [];
-        response.data.docs.forEach((e) => {
+        request.data.data.docs.forEach((e) => {
           resultExcelData.push({
             nomi: e.stations.name,
             imei: e.stations.imel,
@@ -677,7 +534,7 @@ const UserLastData = (prop) => {
 
         XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
 
-        if (response.data.docs.length > 0) {
+        if (request.data.data.docs.length > 0) {
           XLSX.writeFile(
             workBook,
             `${name} ning uzoq ishlamagan stansiya ma'lumotlari ${resultDate}.xlsx`
@@ -691,98 +548,58 @@ const UserLastData = (prop) => {
 
   const searchStationByInput = (value) => {
     if (whichStation == "allStation") {
-      fetch(
-        `${api}/last-data/searchLastDataByStation?search=${value}&page=1&perPage=12`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
-      )
-        .then((res) => res.json())
+      customFetch
+        .get(
+          `/last-data/searchLastDataByStation?search=${value}&page=1&perPage=12`
+        )
         .then((data) => {
-          if (data.data.data.length > 0) {
-            setAllStation(data.data.data);
-            setTotalPages(data.data.totalPages);
+          if (data.data.data.data.length > 0) {
+            setAllStation(data.data.data.data);
+            setTotalPages(data.data.data.totalPages);
           }
         });
     } else if (whichStation == "todayStation") {
-      fetch(
-        `${api}/last-data/searchTodayWorkingStations?search=${value}&page=1&perPage=12`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
-      )
-        .then((res) => res.json())
+      customFetch
+        .get(
+          `/last-data/searchTodayWorkingStations?search=${value}&page=1&perPage=12`
+        )
         .then((data) => {
-          if (data.data.docs.length > 0) {
-            setAllStation(data.data.docs);
-            setTotalPages(data.data.totalPages);
+          if (data.data.data.docs.length > 0) {
+            setAllStation(data.data.data.docs);
+            setTotalPages(data.data.data.totalPages);
           }
         });
     } else if (whichStation == "withinThreeDayStation") {
-      fetch(
-        `${api}/last-data/searchThreeDaysWorkingStations?search=${value}&page=1&perPage=12`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
-      )
-        .then((res) => res.json())
+      customFetch
+        .get(
+          `/last-data/searchThreeDaysWorkingStations?search=${value}&page=1&perPage=12`
+        )
         .then((data) => {
-          if (data.data.docs.length > 0) {
-            setAllStation(data.data.docs);
-            setTotalPages(data.data.totalPages);
+          if (data.data.data.docs.length > 0) {
+            setAllStation(data.data.data.docs);
+            setTotalPages(data.data.data.totalPages);
           }
         });
     } else if (whichStation == "totalMonthWorkStation") {
-      fetch(
-        `${api}/last-data/searchLastMonthWorkingStations?search=${value}&page=1&perPage=12`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
-      )
-        .then((res) => res.json())
+      customFetch
+        .get(
+          `/last-data/searchLastMonthWorkingStations?search=${value}&page=1&perPage=12`
+        )
         .then((data) => {
-          if (data.data.docs.length > 0) {
-            setAllStation(data.data.docs);
-            setTotalPages(data.data.totalPages);
+          if (data.data.data.docs.length > 0) {
+            setAllStation(data.data.data.docs);
+            setTotalPages(data.data.data.totalPages);
           }
         });
     } else if (whichStation == "totalMoreWorkStations") {
-      fetch(
-        `${api}/last-data/searchMoreWorkingStations?search=${value}&page=1&perPage=12`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
-      )
-        .then((res) => res.json())
+      customFetch
+        .get(
+          `/last-data/searchMoreWorkingStations?search=${value}&page=1&perPage=12`
+        )
         .then((data) => {
-          if (data.data.docs.length > 0) {
-            setAllStation(data.data.docs);
-            setTotalPages(data.data.totalPages);
+          if (data.data.data.docs.length > 0) {
+            setAllStation(data.data.data.docs);
+            setTotalPages(data.data.data.totalPages);
           }
         });
     }

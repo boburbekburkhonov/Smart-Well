@@ -9,6 +9,7 @@ import moment from "moment";
 import { api } from "../Api/Api";
 import excel from "../../assets/images/excel.png";
 import * as XLSX from "xlsx";
+import axios from "axios";
 
 const UserStations = () => {
   const [count, setCount] = useState(0);
@@ -29,111 +30,113 @@ const UserStations = () => {
   const [maximumValue, setMaximumValue] = useState("");
   const name = window.localStorage.getItem("name");
 
-  // ! REFRESH TOKEN
-  const minuteLimit = window.localStorage.getItem("minute") * 1;
-  const minuteNow = new Date().getMinutes();
-  const minute = 60 * 1000;
-  let responseLimit;
-  if (minuteLimit > minuteNow) {
-    if (minuteLimit - minuteNow <= 1) {
-      responseLimit = 10000;
-    } else {
-      responseLimit = minute * (minuteLimit - minuteNow);
-    }
-  } else if (minuteLimit < minuteNow) {
-    if (minuteLimit + 60 - minuteNow <= 1) {
-      responseLimit = 10000;
-    } else {
-      responseLimit = minute * (minuteLimit + 60 - minuteNow);
-    }
-  }
+  // ! CUSTOM FETCH
+  const customFetch = axios.create({
+    baseURL: api,
+    headers: {
+      "Content-type": "application/json",
+    },
+  });
 
-  setTimeout(() => {
-    fetch(`${api}/auth/signin`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        username: window.localStorage.getItem("username"),
-        password: window.localStorage.getItem("password"),
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.statusCode == 200) {
-          let date = new Date();
-          date.setMinutes(new Date().getMinutes() + 14);
-          window.localStorage.setItem("minute", date.getMinutes());
-          window.localStorage.setItem("accessToken", data.data.accessToken);
-          window.localStorage.setItem("refreshToken", data.data.refreshToken);
-        }
+  // ! ADD HEADER TOKEN
+  customFetch.interceptors.request.use(
+    async (config) => {
+      const token = window.localStorage.getItem("accessToken");
+      if (token) {
+        config.headers["Authorization"] = ` bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
+    }
+  );
+
+  // ! REFRESH TOKEN
+  const refreshToken = async () => {
+    try {
+      const requestToken = await fetch(`${api}/auth/signin`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          username: window.localStorage.getItem("username"),
+          password: window.localStorage.getItem("password"),
+        }),
       });
-  }, responseLimit);
+
+      const responToken = await requestToken.json();
+      console.log("refresh token", responToken.data.accessToken);
+      return responToken.data.accessToken;
+    } catch (e) {
+      console.log("refreshToken", "Error", e);
+    }
+  };
+
+  // ! GET ACCESS TOKEN
+  customFetch.interceptors.response.use(
+    (response) => {
+      return response;
+    },
+    async function (error) {
+      const originalRequest = error.config;
+      if (
+        (error.response?.status === 403 && !originalRequest._retry) ||
+        (error.response?.status === 401 && !originalRequest._retry)
+      ) {
+        originalRequest._retry = true;
+
+        const resp = await refreshToken();
+
+        const access_token = resp;
+
+        window.localStorage.setItem("accessToken", access_token);
+
+        customFetch.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${access_token}`;
+        return customFetch(originalRequest);
+      }
+      return Promise.reject(error);
+    }
+  );
 
   useEffect(() => {
     const fetchData = async () => {
       // ! ALL STATIONS
-      const request = await fetch(`${api}/stations/all?page=1&perPage=10`, {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      });
+      const request = await customFetch.get(`/stations/all?page=1&perPage=10`);
 
-      const response = await request.json();
+      setAllStation(request.data.data.data);
+      setTotalPages(request.data.data.metadata.lastPage);
 
-      setAllStation(response.data.data);
-      setTotalPages(response.data.metadata.lastPage);
-
-      setAllStationForBattery(response.data.data);
-      setTotalPagesForBattery(response.data.metadata.lastPage);
+      setAllStationForBattery(request.data.data.data);
+      setTotalPagesForBattery(request.data.data.metadata.lastPage);
     };
 
     fetchData();
   }, [count]);
 
   useEffect(() => {
-    fetch(`${api}/sensorType/getAll`, {
-      method: "GET",
-      headers: {
-        "content-type": "application/json",
-        Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.statusCode == 200) {
-          setSensorType(data.data);
-        }
-      });
+    customFetch.get(`/sensorType/getAll`).then((data) => {
+      if (data.data.statusCode == 200) {
+        setSensorType(data.data.data);
+      }
+    });
     // ! NOT WORKING STATIONS
-    fetch(`${api}/stations/all/statusOff?&page=1&perPage=10`, {
-      method: "GET",
-      headers: {
-        "content-type": "application/json",
-        Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-      },
-    })
-      .then((res) => res.json())
+    customFetch
+      .get(`/stations/all/statusOff?&page=1&perPage=10`)
       .then((data) => {
-        setNotWorkingStation(data.data.data);
-        setTotalPagesForStatus(data.data.metadata.lastPage);
+        setNotWorkingStation(data.data.data.data);
+        setTotalPagesForStatus(data.data.data.metadata.lastPage);
       });
   }, []);
 
   const handlePageChange = (selectedPage) => {
-    fetch(`${api}/stations/all?page=${selectedPage.selected + 1}&perPage=10`, {
-      method: "GET",
-      headers: {
-        "content-type": "application/json",
-        Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-      },
-    })
-      .then((res) => res.json())
+    customFetch
+      .get(`/stations/all?page=${selectedPage.selected + 1}&perPage=10`)
       .then((data) => {
-        setAllStation(data.data.data);
+        setAllStation(data.data.data.data);
       });
   };
 
@@ -142,120 +145,61 @@ const UserStations = () => {
       nameOrImeiInputMax.value.length == 0 ||
       nameOrImeiInputMin.value.length == 0
     ) {
-      fetch(
-        `${api}/stations/all?page=${selectedPage.selected + 1}&perPage=10`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
-      )
-        .then((res) => res.json())
-        .then((data) => setAllStationForBattery(data.data.data));
+      customFetch
+        .get(`/stations/all?page=${selectedPage.selected + 1}&perPage=10`)
+        .then((data) => setAllStationForBattery(data.data.data.data));
     } else {
-      fetch(
-        `${api}/last-data/getGreaterAndLessByStations?great=${
-          nameOrImeiInputMin.value
-        }&page=${selectedPage.selected + 1}&perPage=10&less=${
-          nameOrImeiInputMax.value
-        }`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
-      )
-        .then((res) => res.json())
+      customFetch
+        .get(
+          `/last-data/getGreaterAndLessByStations?great=${
+            nameOrImeiInputMin.value
+          }&page=${selectedPage.selected + 1}&perPage=10&less=${
+            nameOrImeiInputMax.value
+          }`
+        )
         .then((data) => {
-          setAllStationForBattery(data.data.data);
+          setAllStationForBattery(data.data.data.data);
         });
     }
   };
 
   const handlePageChangeForStatus = (selectedPage) => {
-    fetch(
-      `${api}/stations/all/statusOff?&page=${
-        selectedPage.selected + 1
-      }&perPage=10`,
-      {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      }
-    )
-      .then((res) => res.json())
+    customFetch
+      .get(
+        `/stations/all/statusOff?&page=${selectedPage.selected + 1}&perPage=10`
+      )
       .then((data) => {
-        setNotWorkingStation(data.data.data);
+        setNotWorkingStation(data.data.data.data);
       });
   };
 
   const getStationWithImei = async (imei) => {
-    const requestStationOne = await fetch(
-      `${api}/stations/searchImel?imel=${imei}`,
-      {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      }
+    const requestStationOne = await customFetch.get(
+      `/stations/searchImel?imel=${imei}`
     );
-    const responseStationOne = await requestStationOne.json();
-    setStationOne(responseStationOne?.data.data[0]);
+
+    setStationOne(requestStationOne.data?.data.data[0]);
 
     // REGION NAME
-    const requestRegionName = await fetch(
-      `${api}/regions/getById?id=${responseStationOne?.data.data[0]?.region_id}`,
-      {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      }
+    const requestRegionName = await customFetch.get(
+      `/regions/getById?id=${requestStationOne.data?.data.data[0]?.region_id}`
     );
-    const responseRegionName = await requestRegionName.json();
 
-    setStationRegionName(responseRegionName.region.name);
+    setStationRegionName(requestRegionName.data.region.name);
 
     // DISTRICT NAME
-    const requestDistrictName = await fetch(
-      `${api}/districts/${responseStationOne?.data.data[0].region_id}`,
-      {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      }
+    const requestDistrictName = await customFetch.get(
+      `/districts/${requestStationOne.data?.data.data[0].region_id}`
     );
 
-    const responseDistrictName = await requestDistrictName.json();
-
-    setStationDistrictName(responseDistrictName.district);
+    setStationDistrictName(requestDistrictName.data.district);
 
     // BALANS ORGANIZATION NAME
-    const requestBalansOrgName = await fetch(
-      `${api}/balance-organizations/${responseStationOne?.data.data[0].region_id}`,
-      {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      }
+    const requestBalansOrgName = await customFetch.get(
+      `/balance-organizations/${requestStationOne.data?.data.data[0].region_id}`
     );
 
-    const responseBalansOrgName = await requestBalansOrgName.json();
-    setStationBalansOrgName(responseBalansOrgName.balanceOrganization);
+    setStationBalansOrgName(requestBalansOrgName.data.balanceOrganization);
   };
 
   const searchNameOrImei = (e) => {
@@ -264,44 +208,28 @@ const UserStations = () => {
     const { nameOrImeiInput, nameOrImeiSelect } = e.target;
 
     if (nameOrImeiSelect.value == "name") {
-      fetch(`${api}/stations/searchByName?name=${nameOrImeiInput.value}`, {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      })
-        .then((res) => res.json())
+      customFetch
+        .get(`/stations/searchByName?name=${nameOrImeiInput.value}`)
         .then((data) => {
-          setTotalPages(0);
-          setAllStation(data.data.data);
+          if (data.data.data.data.length > 0) {
+            setTotalPages(0);
+            setAllStation(data.data.data.data);
+          }
         });
     } else if (nameOrImeiSelect.value == "imei") {
-      fetch(`${api}/stations/searchImel?imel=${nameOrImeiInput.value}`, {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      })
-        .then((res) => res.json())
+      customFetch
+        .get(`/stations/searchImel?imel=${nameOrImeiInput.value}`)
         .then((data) => {
-          setTotalPages(0);
-          setAllStation(data.data.data);
+          if (data.data.data.data.length > 0) {
+            setTotalPages(0);
+            setAllStation(data.data.data.data);
+          }
         });
     } else if (nameOrImeiSelect.value == "all") {
-      fetch(`${api}/stations/all?page=1&perPage=10`, {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          setTotalPages(data.metadata.lastPage);
-          setAllStation(data.data);
-        });
+      customFetch.get(`/stations/all?page=1&perPage=10`).then((data) => {
+        setTotalPages(data.data.data.metadata.lastPage);
+        setAllStation(data.data.data.data);
+      });
     }
   };
 
@@ -310,20 +238,13 @@ const UserStations = () => {
 
     const { nameOrImeiInputMin, nameOrImeiInputMax } = e.target;
 
-    fetch(
-      `${api}/last-data/getGreaterAndLessByStations?great=${nameOrImeiInputMin.value}&page=1&perPage=10&less=${nameOrImeiInputMax.value}`,
-      {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      }
-    )
-      .then((res) => res.json())
+    customFetch
+      .get(
+        `/last-data/getGreaterAndLessByStations?great=${nameOrImeiInputMin.value}&page=1&perPage=10&less=${nameOrImeiInputMax.value}`
+      )
       .then((data) => {
-        setAllStationForBattery(data.data.data);
-        setTotalPagesForBattery(data.data.metadata.lastPage);
+        setAllStationForBattery(data.data.data.data);
+        setTotalPagesForBattery(data.data.data.metadata.lastPage);
       });
   };
 
@@ -340,23 +261,13 @@ const UserStations = () => {
     }`;
 
     if (whichData == "allStation") {
-      const requestAllStation = await fetch(
-        `${api}/stations/all?page=1&perPage=${totalPages * 10}`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
+      const requestAllStation = await customFetch.get(
+        `${api}/stations/all?page=1&perPage=${totalPages * 10}`
       );
-
-      const responseAllStation = await requestAllStation.json();
 
       const resultExcelData = [];
 
-      responseAllStation.data.data.forEach((e) => {
+      requestAllStation.data.data.data.forEach((e) => {
         resultExcelData.push({
           Nomi: e.name,
           Imei: e.imel,
@@ -371,7 +282,7 @@ const UserStations = () => {
           Battereya: `${e.battery}%`,
           Datani_yuborish_vaqti: e.sendDataTime,
           Infoni_yuborish_vaqti: e.sendInfoTime,
-          date: e.date,
+          Sana: e.date,
         });
       });
 
@@ -387,27 +298,17 @@ const UserStations = () => {
         );
       }
     } else if (whichData == "StationForBattery") {
-      const requestAllStationForBattery = await fetch(
-        `${api}/last-data/getGreaterAndLessByStations?great=${
+      const requestAllStationForBattery = await customFetch.get(
+        `/last-data/getGreaterAndLessByStations?great=${
           minimumValue.length > 0 ? minimumValue : 0
         }&page=1&perPage=${totalPages * 10}&less=${
           maximumValue.length > 0 ? maximumValue : 100
-        }`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
+        }`
       );
 
-      const responseAllStationForBattery =
-        await requestAllStationForBattery.json();
       const resultExcelData = [];
 
-      responseAllStationForBattery.data.data.forEach((e) => {
+      requestAllStationForBattery.data.data.data.forEach((e) => {
         resultExcelData.push({
           Nomi: e.name,
           Imei: e.imel,
@@ -422,7 +323,7 @@ const UserStations = () => {
           Battereya: `${e.battery}%`,
           Datani_yuborish_vaqti: e.sendDataTime,
           Infoni_yuborish_vaqti: e.sendInfoTime,
-          date: e.date,
+          Sana: e.date,
         });
       });
 
@@ -434,30 +335,17 @@ const UserStations = () => {
       if (allStationForBattery.length > 0) {
         XLSX.writeFile(
           workBook,
-          `${name} ning umumiy stansiyalari ${resultDate}.xlsx`
+          `${name} ning stansiyalari ${resultDate}.xlsx`
         );
       }
     } else if (whichData == "StationForStatus") {
-      const requestAllStationForStatus = await fetch(
-        `${api}/stations/all/statusOff?&page=1&perPage=${
-          totalPagesForStatus * 10
-        }`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
+      const requestAllStationForStatus = await customFetch.get(
+        `/stations/all/statusOff?&page=1&perPage=${totalPagesForStatus * 10}`
       );
-
-      const responseAllStationForStatus =
-        await requestAllStationForStatus.json();
 
       const resultExcelData = [];
 
-      responseAllStationForStatus.data.data.forEach((e) => {
+      requestAllStationForStatus.data.data.data.forEach((e) => {
         resultExcelData.push({
           Nomi: e.name,
           Imei: e.imel,
@@ -472,7 +360,7 @@ const UserStations = () => {
           Battereya: `${e.battery}%`,
           Datani_yuborish_vaqti: e.sendDataTime,
           Infoni_yuborish_vaqti: e.sendInfoTime,
-          date: e.date,
+          Sana: e.date,
         });
       });
 
@@ -759,7 +647,6 @@ const UserStations = () => {
                           type="text"
                           className="form-control w-50"
                           placeholder="Qidiruv..."
-                          required
                         />
 
                         <select

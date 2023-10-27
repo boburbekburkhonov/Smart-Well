@@ -26,6 +26,7 @@ import "moment/dist/locale/uz-latn";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import ReactPaginate from "react-paginate";
+import axios from "axios";
 
 const UserData = () => {
   const dateSearch = new Date();
@@ -129,207 +130,148 @@ const UserData = () => {
     valueMonth.push(String(item).length == 1 ? `0${item}` : item);
   }
 
-  // ! REFRESH TOKEN
-  const minuteLimit = window.localStorage.getItem("minute") * 1;
-  const minuteNow = new Date().getMinutes();
-  const minute = 60 * 1000;
-  let responseLimit;
-  if (minuteLimit > minuteNow) {
-    if (minuteLimit - minuteNow <= 1) {
-      responseLimit = 10000;
-    } else {
-      responseLimit = minute * (minuteLimit - minuteNow);
-    }
-  } else if (minuteLimit < minuteNow) {
-    if (minuteLimit + 60 - minuteNow <= 1) {
-      responseLimit = 10000;
-    } else {
-      responseLimit = minute * (minuteLimit + 60 - minuteNow);
-    }
-  }
+  // ! CUSTOM FETCH
+  const customFetch = axios.create({
+    baseURL: api,
+    headers: {
+      "Content-type": "application/json",
+    },
+    // withCredentials: true,
+  });
 
-  setTimeout(() => {
-    fetch(`${api}/auth/signin`, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        username: window.localStorage.getItem("username"),
-        password: window.localStorage.getItem("password"),
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.statusCode == 200) {
-          let date = new Date();
-          date.setMinutes(new Date().getMinutes() + 14);
-          window.localStorage.setItem("minute", date.getMinutes());
-          window.localStorage.setItem("accessToken", data.data.accessToken);
-          window.localStorage.setItem("refreshToken", data.data.refreshToken);
-        }
+  // ! ADD HEADER TOKEN
+  customFetch.interceptors.request.use(
+    async (config) => {
+      const token = window.localStorage.getItem("accessToken");
+      if (token) {
+        config.headers["Authorization"] = ` bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
+    }
+  );
+
+  // ! REFRESH TOKEN
+  const refreshToken = async () => {
+    try {
+      const requestToken = await fetch(`${api}/auth/signin`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          username: window.localStorage.getItem("username"),
+          password: window.localStorage.getItem("password"),
+        }),
       });
-  }, responseLimit);
+
+      const responToken = await requestToken.json();
+      console.log("refresh token", responToken.data.accessToken);
+      return responToken.data.accessToken;
+    } catch (e) {
+      console.log("refreshToken", "Error", e);
+    }
+  };
+
+  // ! GET ACCESS TOKEN
+  customFetch.interceptors.response.use(
+    (response) => {
+      return response;
+    },
+    async function (error) {
+      const originalRequest = error.config;
+      if (
+        (error.response?.status === 403 && !originalRequest._retry) ||
+        (error.response?.status === 401 && !originalRequest._retry)
+      ) {
+        originalRequest._retry = true;
+
+        const resp = await refreshToken();
+
+        const access_token = resp;
+
+        window.localStorage.setItem("accessToken", access_token);
+
+        customFetch.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${access_token}`;
+        return customFetch(originalRequest);
+      }
+      return Promise.reject(error);
+    }
+  );
 
   useEffect(() => {
     const getStationFunc = async () => {
       // ! STATISTICS
-      const requestStationStatistics = await fetch(
-        `${api}/last-data/getStatisticStations`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
+      const requestStationStatistics = await customFetch.get(
+        `/last-data/getStatisticStations`
       );
 
-      const responseStationStatistic = await requestStationStatistics.json();
-
-      // ! REFRESH TOKEN
-      if (responseStationStatistic.statusCode == 401) {
-        const request = await fetch(`${api}/auth/signin`, {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({
-            username: window.localStorage.getItem("username"),
-            password: window.localStorage.getItem("password"),
-          }),
-        });
-
-        const response = await request.json();
-
-        if (response.statusCode == 200) {
-          window.localStorage.setItem("accessToken", response.data.accessToken);
-          window.localStorage.setItem(
-            "refreshToken",
-            response.data.refreshToken
-          );
-        }
-      }
-
-      setStatisticsStation(responseStationStatistic.data);
+      setStatisticsStation(requestStationStatistics.data.data);
 
       // ! TODAY DATA
-      const requestTodayData = await fetch(
-        `${api}/mqttDataWrite/getAllTodayData?page=1&perPage=10`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
+      const requestTodayData = await customFetch.get(
+        `/mqttDataWrite/getAllTodayData?page=1&perPage=10`
       );
 
-      const responseTodayData = await requestTodayData.json();
-      setTodayDataMain(responseTodayData.data);
-      setTodayData(responseTodayData.data);
-      setTotalPagesHour(responseTodayData.totalPages);
+      setTodayDataMain(requestTodayData.data.data);
+      setTodayData(requestTodayData.data.data);
+      setTotalPagesHour(requestTodayData.data.totalPages);
 
       // ! LAST DATA
-      const requestLastData = await fetch(
-        `${api}/last-data/allLastData?page=1&perPage=${responseStationStatistic?.data.totalStationsCount}`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
+      const requestLastData = await customFetch.get(
+        `/last-data/allLastData?page=1&perPage=${requestStationStatistics.data?.data.totalStationsCount}`
       );
 
-      const responseLastData = await requestLastData.json();
-
       role == "USER"
-        ? `${setLastData(responseLastData.data)} ${setLastDataMain(
-            responseLastData.data
+        ? `${setLastData(requestLastData.data.data)} ${setLastDataMain(
+            requestLastData.data.data
           )}`
-        : `${setLastData(responseLastData.data)} ${setLastDataMain(
-            responseLastData.data
+        : `${setLastData(requestLastData.data.data)} ${setLastDataMain(
+            requestLastData.data.data
           )}`;
 
       // ! YESTERDAY DATA
-      const requestYesterdayData = await fetch(
-        `${api}/yesterdayData/getAllYesterdayData?page=1&perPage=10`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
+      const requestYesterdayData = await customFetch.get(
+        `/yesterdayData/getAllYesterdayData?page=1&perPage=10`
       );
 
-      const responseYesterdayData = await requestYesterdayData.json();
-      setYesterdayDataMain(responseYesterdayData.data);
-      setYesterdayData(responseYesterdayData.data);
-      setTotalPagesYesterday(responseYesterdayData.totalPages);
+      setYesterdayDataMain(requestYesterdayData.data.data);
+      setYesterdayData(requestYesterdayData.data.data);
+      setTotalPagesYesterday(requestYesterdayData.data.totalPages);
 
       // ! DAILY DATA
-      const requestDailyData = await fetch(
-        `${api}/dailyData/getAllStationsDataByMonth?page=1&perPage=10&month=${valueDailyDataTable}`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
+      const requestDailyData = await customFetch.get(
+        `/dailyData/getAllStationsDataByMonth?page=1&perPage=10&month=${valueDailyDataTable}`
       );
 
-      const responseDailyData = await requestDailyData.json();
-      setDailyDataMain(responseDailyData.data);
-      setDailyData(responseDailyData.data);
-      setTotalPagesDaily(responseDailyData.totalPages);
+      setDailyDataMain(requestDailyData.data.data);
+      setDailyData(requestDailyData.data.data);
+      setTotalPagesDaily(requestDailyData.data.totalPages);
 
       // ! MONTHLY DATA
-      const requestMonthlyData = await fetch(
-        `${api}/monthlyData/getAllStationDataByYear?page=1&perPage=10&year=${new Date()
+      const requestMonthlyData = await customFetch.get(
+        `/monthlyData/getAllStationDataByYear?page=1&perPage=10&year=${new Date()
           .toISOString()
-          .substring(0, 4)}`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
+          .substring(0, 4)}`
       );
 
-      const responseMonthlyData = await requestMonthlyData.json();
-      setMonthlyDataMain(responseMonthlyData.stations.data);
-      setMonthlyData(responseMonthlyData.stations.data);
-      setTotalPagesMonthly(responseMonthlyData.stations.totalPages);
+      setMonthlyDataMain(requestMonthlyData.data.stations.data);
+      setMonthlyData(requestMonthlyData.data.stations.data);
+      setTotalPagesMonthly(requestMonthlyData.data.stations.totalPages);
 
       // ! SEARCH BETWEEN
       setSearchBetweenBoolean(true);
-      const requestSearchBetween = await fetch(
-        `${api}/yesterdayData/getAllDataByTwoDayBetween?page=1&perPage=10&startDay=${searchBetweenStartDate}&endDay=${searchBetweenEndDate}`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
+      const requestSearchBetween = await customFetch.get(
+        `/yesterdayData/getAllDataByTwoDayBetween?page=1&perPage=10&startDay=${searchBetweenStartDate}&endDay=${searchBetweenEndDate}`
       );
 
-      const responseSearchBetween = await requestSearchBetween.json();
-
-      setSearchBetweenDataMain(responseSearchBetween.data);
-      setSearchBetweenData(responseSearchBetween.data);
-      setTotalPagesSearchBetween(responseSearchBetween.totalPages);
+      setSearchBetweenDataMain(requestSearchBetween.data.data);
+      setSearchBetweenData(requestSearchBetween.data.data);
+      setTotalPagesSearchBetween(requestSearchBetween.data.totalPages);
       setSearchBetweenBoolean(false);
     };
 
@@ -459,43 +401,28 @@ const UserData = () => {
 
   const searchTodayDataWithDate = (date) => {
     setHourSearchBoolean(true);
-    fetch(
-      `${api}/yesterdayData/getAllDataByDay?page=1&perPage=10&day=${date}`,
-      {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      }
-    )
-      .then((res) => res.json())
+    customFetch
+      .get(`/yesterdayData/getAllDataByDay?page=1&perPage=10&day=${date}`)
       .then((data) => {
         setSearchWithDaily(true);
-        setTodayDataMain(data.data);
-        setTodayData(data.data);
-        setTotalPagesHour(data.totalPages);
+        setTodayDataMain(data.data.data);
+        setTodayData(data.data.data);
+        setTotalPagesHour(data.data.totalPages);
         setHourSearchBoolean(false);
       });
   };
 
   const searchDailyDataWithDate = (date) => {
     setHourSearchBoolean(true);
-    fetch(
-      `${api}/dailyData/getAllStationsDataByMonth?page=1&perPage=10&month=${date}`,
-      {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      }
-    )
+    customFetch
+      .get(
+        `/dailyData/getAllStationsDataByMonth?page=1&perPage=10&month=${date}`
+      )
       .then((res) => res.json())
       .then((data) => {
-        setDailyDataMain(data.data);
-        setDailyData(data.data);
-        setTotalPagesDaily(data.totalPages);
+        setDailyDataMain(data.data.data);
+        setDailyData(data.data.data);
+        setTotalPagesDaily(data.data.totalPages);
         setHourSearchBoolean(false);
       });
   };
@@ -506,21 +433,14 @@ const UserData = () => {
 
     const { dateStart, dateEnd } = e.target;
 
-    fetch(
-      `${api}/yesterdayData/getAllDataByTwoDayBetween?page=1&perPage=10&startDay=${dateStart.value}&endDay=${dateEnd.value}`,
-      {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      }
-    )
-      .then((res) => res.json())
+    customFetch
+      .get(
+        `/yesterdayData/getAllDataByTwoDayBetween?page=1&perPage=10&startDay=${dateStart.value}&endDay=${dateEnd.value}`
+      )
       .then((data) => {
-        setSearchBetweenDataMain(data.data);
-        setSearchBetweenData(data.data);
-        setTotalPagesSearchBetween(data.totalPages);
+        setSearchBetweenDataMain(data.data.data);
+        setSearchBetweenData(data.data.data);
+        setTotalPagesSearchBetween(data.data.totalPages);
         setSearchBetweenBoolean(false);
       });
   };
@@ -745,7 +665,9 @@ const UserData = () => {
     const search = lastDataMain.filter((e) =>
       e.name.toLowerCase().includes(inputValue)
     );
-    setLastData(search);
+    if (search.length > 0) {
+      setLastData(search);
+    }
   };
 
   const foundNameMonthForMap = (month) => {
@@ -757,128 +679,84 @@ const UserData = () => {
   const handlePageChangeHour = (selectedPage) => {
     if (searchWithDaily) {
       setHourSearchBoolean(true);
-      fetch(
-        `${api}/yesterdayData/getAllDataByDay?page=${
-          selectedPage.selected + 1
-        }&perPage=10&day=${hourInputValue}`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
-      )
-        .then((res) => res.json())
+      customFetch
+        .get(
+          `/yesterdayData/getAllDataByDay?page=${
+            selectedPage.selected + 1
+          }&perPage=10&day=${hourInputValue}`
+        )
         .then((data) => {
-          setTodayDataMain(data.data);
-          setTodayData(data.data);
+          setTodayDataMain(data.data.data);
+          setTodayData(data.data.data);
           setHourSearchBoolean(false);
         });
     } else {
-      fetch(
-        `${api}/mqttDataWrite/getAllTodayData?page=${
-          selectedPage.selected + 1
-        }&perPage=10`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
-      )
-        .then((res) => res.json())
+      customFetch
+        .get(
+          `/mqttDataWrite/getAllTodayData?page=${
+            selectedPage.selected + 1
+          }&perPage=10`
+        )
         .then((data) => {
-          setTodayDataMain(data.data);
-          setTodayData(data.data);
+          setTodayDataMain(data.data.data);
+          setTodayData(data.data.data);
         });
     }
   };
 
   const handlePageChangeDaily = (selectedPage) => {
     setHourSearchBoolean(true);
-    fetch(
-      `${api}/dailyData/getAllStationsDataByMonth?page=${
-        selectedPage.selected + 1
-      }&perPage=10&month=${valueDailyDataTable}`,
-      {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      }
-    )
-      .then((res) => res.json())
+    customFetch
+      .get(
+        `/dailyData/getAllStationsDataByMonth?page=${
+          selectedPage.selected + 1
+        }&perPage=10&month=${valueDailyDataTable}`
+      )
       .then((data) => {
-        setDailyDataMain(data.data);
-        setDailyData(data.data);
+        setDailyDataMain(data.data.data);
+        setDailyData(data.data.data);
         setHourSearchBoolean(false);
       });
   };
 
   const handlePageChangeMonthly = (selectedPage) => {
-    fetch(
-      `${api}/monthlyData/getAllStationDataByYear?page=${
-        selectedPage.selected + 1
-      }&perPage=10&year=${new Date().toISOString().substring(0, 4)}`,
-      {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      }
-    )
-      .then((res) => res.json())
+    customFetch
+      .get(
+        `/monthlyData/getAllStationDataByYear?page=${
+          selectedPage.selected + 1
+        }&perPage=10&year=${new Date().toISOString().substring(0, 4)}`
+      )
       .then((data) => {
-        setMonthlyDataMain(data.stations.data);
-        setMonthlyData(data.stations.data);
+        setMonthlyDataMain(data.data.stations.data);
+        setMonthlyData(data.data.stations.data);
       });
   };
 
   const handlePageChangeYesterday = (selectedPage) => {
-    fetch(
-      `${api}/yesterdayData/getAllYesterdayData?page=${
-        selectedPage.selected + 1
-      }&perPage=10`,
-      {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      }
-    )
-      .then((res) => res.json())
+    customFetch
+      .get(
+        `/yesterdayData/getAllYesterdayData?page=${
+          selectedPage.selected + 1
+        }&perPage=10`
+      )
       .then((data) => {
-        setYesterdayDataMain(data.data);
-        setYesterdayData(data.data);
+        setYesterdayDataMain(data.data.data);
+        setYesterdayData(data.data.data);
       });
   };
 
   const handlePageChangeSearchBetween = (selectedPage) => {
     setSearchBetweenBoolean(true);
-    fetch(
-      `${api}/yesterdayData/getAllDataByTwoDayBetween?page=${
-        selectedPage.selected + 1
-      }&perPage=10&startDay=${searchBetweenStartDate}&endDay=${searchBetweenEndDate}`,
-      {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      }
-    )
-      .then((res) => res.json())
+    customFetch
+      .get(
+        `/yesterdayData/getAllDataByTwoDayBetween?page=${
+          selectedPage.selected + 1
+        }&perPage=10&startDay=${searchBetweenStartDate}&endDay=${searchBetweenEndDate}`
+      )
       .then((data) => {
-        setSearchBetweenDataMain(data.data);
-        setSearchBetweenData(data.data);
-        setTotalPagesSearchBetween(data.totalPages);
+        setSearchBetweenDataMain(data.data.data);
+        setSearchBetweenData(data.data.data);
+        setTotalPagesSearchBetween(data.data.totalPages);
         setSearchBetweenBoolean(false);
       });
   };
@@ -1181,7 +1059,7 @@ const UserData = () => {
                           </div>
                         )
                       ) : whichData == "monthly" ? (
-                        monthlyDataStatistic.monthlyData.length > 0 ? (
+                        monthlyDataStatistic.monthlyData?.length > 0 ? (
                           <div>
                             <h3 className="fw-semibold text-success fs-6">
                               {monthlyDataStatistic.name}
@@ -1476,8 +1354,9 @@ const UserData = () => {
                           </div>
                         )
                       ) : whichData == "yesterday" ? (
-                        yesterdayDataStatistic.yesterdayData.length > 0 ? (
+                        yesterdayDataStatistic.yesterdayData?.length > 0 ? (
                           <div>
+                            {console.log(yesterdayDataStatistic)}
                             <h3 className="fw-semibold text-success fs-6">
                               {yesterdayDataStatistic.name}
                             </h3>
@@ -1686,26 +1565,6 @@ const UserData = () => {
                       }}
                     >
                       Oylik
-                    </button>
-                  </li>
-
-                  <li className="nav-item">
-                    <button
-                      className="nav-link"
-                      data-bs-toggle="tab"
-                      data-bs-target="#profile-search-between"
-                      onClick={() => {
-                        setWhichData("search-between");
-                        setValueTodayData("level");
-                        setValueStatistic("level");
-                        setSearchDate(false);
-                        setSearchWithDaily(false);
-                        setHourInputValue(
-                          new Date().toISOString().substring(0, 10)
-                        );
-                      }}
-                    >
-                      Kun bo'yicha qidirish
                     </button>
                   </li>
                 </ul>
@@ -2296,198 +2155,6 @@ const UserData = () => {
                         <ReactPaginate
                           pageCount={totalPagesMonthly}
                           onPageChange={handlePageChangeMonthly}
-                          forcePage={currentPage}
-                          previousLabel={"<<"}
-                          nextLabel={">>"}
-                          activeClassName={"pagination__link--active"}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* SEARCH */}
-                  <div
-                    className="tab-pane tab-pane-hour fade profile-search-between"
-                    id="profile-search-between"
-                  >
-                    <div className="containerr">
-                      <div className="user-data-hour-wrapper">
-                        <div className="d-flex justify-content-between align-items-start flex-column">
-                          <div className="d-flex align-items-center w-100">
-                            <input
-                              className="form-control user-lastdata-news-search"
-                              type="text"
-                              placeholder="Search..."
-                              onChange={(e) =>
-                                searchTodayDataWithInput(
-                                  e.target.value.toLowerCase()
-                                )
-                              }
-                            />
-                            <form
-                              onSubmit={searchBetweenForm}
-                              className="search-daily-between-form d-flex align-items-end ms-auto"
-                            >
-                              <div className="me-3">
-                                <label
-                                  htmlFor="dateDaily"
-                                  className="color-seach--daily-label mb-1"
-                                >
-                                  Boshlanish sanasi:
-                                </label>
-                                <input
-                                  type="date"
-                                  className="form-control"
-                                  id="dateMonth"
-                                  name="dateStart"
-                                  required
-                                  defaultValue={searchBetweenStartDate}
-                                  onChange={(e) =>
-                                    setSearchBetweenStartDate(e.target.value)
-                                  }
-                                />
-                              </div>
-
-                              <div>
-                                <label
-                                  htmlFor="dateDaily"
-                                  className="color-seach--daily-label mb-1"
-                                >
-                                  Tugash sanasi:
-                                </label>
-                                <input
-                                  type="date"
-                                  className="form-control"
-                                  id="dateMonth"
-                                  name="dateEnd"
-                                  required
-                                  defaultValue={searchBetweenEndDate}
-                                  onChange={(e) =>
-                                    setSearchBetweenEndDate(e.target.value)
-                                  }
-                                />
-                              </div>
-
-                              <button className="search-between-btn ms-3">
-                                Qidirish
-                              </button>
-                            </form>
-
-                            <button
-                              onClick={() => exportNewsByPdf()}
-                              className="ms-4 border border-0"
-                            >
-                              <img src={pdf} alt="pdf" width={23} height={30} />
-                            </button>
-                            <button
-                              onClick={() => exportDataToExcel()}
-                              className="ms-4 border border-0"
-                            >
-                              <img
-                                src={excel}
-                                alt="excel"
-                                width={26}
-                                height={30}
-                              />
-                            </button>
-                          </div>
-                          <select
-                            onChange={(e) => setValueTodayData(e.target.value)}
-                            className="form-select select-user-data-today ms-auto mt-3"
-                          >
-                            <option value="level">Sathi (sm)</option>
-                            <option value="conductivity">
-                              Sho'rlanish (g/l)
-                            </option>
-                            <option value="temp">Temperatura (°C)</option>
-                          </select>
-                        </div>
-                        <div className="tableFlexible mt-3">
-                          <div className="tableFlexible-width">
-                            {searchBetweenBoolean ? (
-                              <div className="d-flex align-items-center justify-content-center hour-spinner-wrapper">
-                                <span className="loader"></span>
-                              </div>
-                            ) : (
-                              <table
-                                className="table-style"
-                                id="table-style-search-id"
-                              >
-                                <thead className="">
-                                  <tr>
-                                    <th rowSpan="2" className="sticky">
-                                      T/R
-                                    </th>
-                                    <th
-                                      rowSpan="2"
-                                      className="sticky"
-                                      style={{ left: "57px" }}
-                                    >
-                                      Stantsiya nomi
-                                    </th>
-                                    <th
-                                      colSpan={lastDateOfMonth}
-                                    >{`${searchBetweenStartDate} / ${searchBetweenEndDate}`}</th>
-                                  </tr>
-                                  <tr>
-                                    {valueMonth.map((r, l) => {
-                                      return <th key={l}>{r}</th>;
-                                    })}
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {searchBetweenData?.map((e, i) => {
-                                    return (
-                                      <tr
-                                        className="tr0"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#exampleModal"
-                                        key={i}
-                                        onClick={() => {
-                                          setSearchBetweenDataStatistic(e);
-                                        }}
-                                      >
-                                        <td className="sticky" style={{}}>
-                                          {i + 1}
-                                        </td>
-                                        <td
-                                          className="text-start sticky fix-with"
-                                          style={{ left: "57px" }}
-                                        >
-                                          {e.name}
-                                        </td>
-                                        {valueMonth.map((d, w) => {
-                                          const existedValue = e.allData?.find(
-                                            (a) =>
-                                              a.date
-                                                .split("-")[2]
-                                                .slice(0, 2) == d
-                                          );
-
-                                          if (existedValue) {
-                                            return (
-                                              <td key={w}>
-                                                {Number(
-                                                  existedValue[valueTodayData]
-                                                ).toFixed(2)}
-                                              </td>
-                                            );
-                                          } else {
-                                            return <td key={w}>-</td>;
-                                          }
-                                        })}
-                                      </tr>
-                                    );
-                                  })}
-                                </tbody>
-                              </table>
-                            )}
-                          </div>
-                        </div>
-
-                        <ReactPaginate
-                          pageCount={totalPagesSearchBetween}
-                          onPageChange={handlePageChangeSearchBetween}
                           forcePage={currentPage}
                           previousLabel={"<<"}
                           nextLabel={">>"}
