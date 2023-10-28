@@ -1,10 +1,8 @@
 import React, { useEffect } from "react";
 import "./UserData.css";
-import location from "../../assets/images/location-red.png";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import excel from "../../assets/images/excel.png";
 import pdf from "../../assets/images/pdf.jpg";
-import close from "../../assets/images/close-black.png";
 import {
   GoogleMap,
   MarkerF,
@@ -78,7 +76,7 @@ const UserData = () => {
   const [hourInputValue, setHourInputValue] = useState(
     new Date().toISOString().substring(0, 10)
   );
-  const nameUser = localStorage.getItem("name");
+  const balanceOrgName = localStorage.getItem("balanceOrgName");
   const valueYear = [
     "Yanvar",
     "Fevral",
@@ -136,7 +134,6 @@ const UserData = () => {
     headers: {
       "Content-type": "application/json",
     },
-    // withCredentials: true,
   });
 
   // ! ADD HEADER TOKEN
@@ -168,7 +165,6 @@ const UserData = () => {
       });
 
       const responToken = await requestToken.json();
-      console.log("refresh token", responToken.data.accessToken);
       return responToken.data.accessToken;
     } catch (e) {
       console.log("refreshToken", "Error", e);
@@ -321,28 +317,28 @@ const UserData = () => {
         data:
           whichData == "hour" && !searchWithDaily
             ? todayDataStatistic.todayData?.map((e) =>
-                Number(e[valueStatistic]).toFixed(2)
+                Number(e[valueStatistic]).toFixed()
               )
             : whichData == "hour" && searchWithDaily
             ? todayDataStatistic.allData?.map((e) =>
-                Number(e[valueStatistic]).toFixed(2)
+                Number(e[valueStatistic]).toFixed()
               )
             : whichData == "yesterday"
             ? yesterdayDataStatistic.yesterdayData?.map((e) =>
-                Number(e[valueStatistic]).toFixed(2)
+                Number(e[valueStatistic]).toFixed()
               )
             : whichData == "daily"
             ? dailyDataStatistic.dailyData?.map((e) =>
-                Number(e[valueStatistic]).toFixed(2)
+                Number(e[valueStatistic]).toFixed()
               )
             : whichData == "search-between"
             ? searchBetweenDataStatistic.allData?.map((e) =>
-                Number(e[valueStatistic]).toFixed(2)
+                Number(e[valueStatistic]).toFixed()
               )
             : whichData == "monthly"
-            ? monthlyDataStatistic.monthlyData?.map((e) => e[valueStatistic])
+            ? monthlyDataStatistic.monthlyData?.map((e) => Number(e[valueStatistic]).toFixed())
             : null,
-        fill: true,
+        fill: false,
         borderColor: "#EE8A9D",
         backgroundColor: "#F3E5E7",
         tension: 0.4,
@@ -351,6 +347,14 @@ const UserData = () => {
   };
 
   const option = {
+    scales: {
+      y: {
+        grace: 3,
+        ticks: {
+          stepSize: 1,
+        },
+      },
+    },
     plugins: {
       tooltip: {
         boxHeight: 25,
@@ -427,24 +431,6 @@ const UserData = () => {
       });
   };
 
-  const searchBetweenForm = (e) => {
-    setSearchBetweenBoolean(true);
-    e.preventDefault();
-
-    const { dateStart, dateEnd } = e.target;
-
-    customFetch
-      .get(
-        `/yesterdayData/getAllDataByTwoDayBetween?page=1&perPage=10&startDay=${dateStart.value}&endDay=${dateEnd.value}`
-      )
-      .then((data) => {
-        setSearchBetweenDataMain(data.data.data);
-        setSearchBetweenData(data.data.data);
-        setTotalPagesSearchBetween(data.data.totalPages);
-        setSearchBetweenBoolean(false);
-      });
-  };
-
   // ! SAVE DATA PDF
   const exportNewsByPdf = () => {
     const fixedDate = new Date();
@@ -461,7 +447,15 @@ const UserData = () => {
       const doc = new jsPDF("l", "mm", [397, 210]);
 
       doc.text(
-        `${nameUser} ga tegishli qurilmalarning bugungi ma'lumotlar`,
+        `${balanceOrgName} ga tegishli qurilmalarning bugungi ${
+          valueTodayData == "level"
+            ? "sath"
+            : valueTodayData == "conductivity"
+            ? "sho'rlanish"
+            : valueTodayData == "temp"
+            ? "temperatura"
+            : null
+        } ma'lumotlari`,
         20,
         10
       );
@@ -477,13 +471,33 @@ const UserData = () => {
 
       if (todayData.length > 0) {
         doc.save(
-          `${nameUser} ga tegishli qurilmalarning bugungi ma'lumotlar ${resultDate}.pdf`
+          `${balanceOrgName} ga tegishli qurilmalarning bugungi ${
+            valueTodayData == "level"
+              ? "sath"
+              : valueTodayData == "conductivity"
+              ? "sho'rlanish"
+              : valueTodayData == "temp"
+              ? "temperatura"
+              : null
+          } ma'lumotlari ${resultDate}.pdf`
         );
       }
     } else if (whichData == "daily") {
       const doc = new jsPDF("l", "mm", [397, 210]);
 
-      doc.text(`${nameUser} qurilmaning kunlik ma'lumotlar`, 20, 10);
+      doc.text(
+        `${balanceOrgName} qurilmaning kunlik ${
+          valueTodayData == "level"
+            ? "sath"
+            : valueTodayData == "conductivity"
+            ? "sho'rlanish"
+            : valueTodayData == "temp"
+            ? "temperatura"
+            : null
+        } ma'lumotlari`,
+        20,
+        10
+      );
 
       doc.autoTable({
         html: "#table-style-daily-id",
@@ -495,12 +509,34 @@ const UserData = () => {
       });
 
       if (dailyData.length > 0) {
-        doc.save(`${nameUser} ning kunlik ma'lumotlari ${resultDate}.pdf`);
+        doc.save(
+          `${balanceOrgName} ning kunlik ${
+            valueTodayData == "level"
+              ? "sath"
+              : valueTodayData == "conductivity"
+              ? "sho'rlanish"
+              : valueTodayData == "temp"
+              ? "temperatura"
+              : null
+          } ma'lumotlari ${resultDate}.pdf`
+        );
       }
     } else if (whichData == "monthly") {
       const doc = new jsPDF("l", "mm", [307, 210]);
 
-      doc.text(`${nameUser} qurilmaning oylik ma'lumotlar`, 20, 10);
+      doc.text(
+        `${balanceOrgName} qurilmaning oylik ${
+          valueTodayData == "level"
+            ? "sath"
+            : valueTodayData == "conductivity"
+            ? "sho'rlanish"
+            : valueTodayData == "temp"
+            ? "temperatura"
+            : null
+        } ma'lumotlari`,
+        20,
+        10
+      );
 
       doc.autoTable({
         html: "#table-style-monthly-id",
@@ -512,12 +548,34 @@ const UserData = () => {
       });
 
       if (monthlyData.length > 0) {
-        doc.save(`${nameUser} ning oylik ma'lumotlari ${resultDate}.pdf`);
+        doc.save(
+          `${balanceOrgName} ning oylik ${
+            valueTodayData == "level"
+              ? "sath"
+              : valueTodayData == "conductivity"
+              ? "sho'rlanish"
+              : valueTodayData == "temp"
+              ? "temperatura"
+              : null
+          } ma'lumotlari ${resultDate}.pdf`
+        );
       }
     } else if (whichData == "yesterday") {
       const doc = new jsPDF("l", "mm", [397, 210]);
 
-      doc.text(`${nameUser} qurilmaning kecha kelgan ma'lumotlar`, 20, 10);
+      doc.text(
+        `${balanceOrgName} qurilmaning kecha kelgan ${
+          valueTodayData == "level"
+            ? "sath"
+            : valueTodayData == "conductivity"
+            ? "sho'rlanish"
+            : valueTodayData == "temp"
+            ? "temperatura"
+            : null
+        } ma'lumotlari`,
+        20,
+        10
+      );
 
       doc.autoTable({
         html: "#table-style-yesterday-id",
@@ -530,14 +588,30 @@ const UserData = () => {
 
       if (yesterdayData.length > 0) {
         doc.save(
-          `${nameUser} ning kecha kelgan ma'lumotlari ${resultDate}.pdf`
+          `${balanceOrgName} ning kecha kelgan ${
+            valueTodayData == "level"
+              ? "sath"
+              : valueTodayData == "conductivity"
+              ? "sho'rlanish"
+              : valueTodayData == "temp"
+              ? "temperatura"
+              : null
+          } ma'lumotlari ${resultDate}.pdf`
         );
       }
     } else if (whichData == "search-between") {
       const doc = new jsPDF("l", "mm", [397, 210]);
 
       doc.text(
-        `${nameUser} ning ${searchBetweenStartDate} dan ${searchBetweenEndDate} gacha oraliqdagi ma'lumotlari ${resultDate}`,
+        `${balanceOrgName} ning ${searchBetweenStartDate} dan ${searchBetweenEndDate} gacha oraliqdagi ${
+          valueTodayData == "level"
+            ? "sath"
+            : valueTodayData == "conductivity"
+            ? "sho'rlanish"
+            : valueTodayData == "temp"
+            ? "temperatura"
+            : null
+        } ma'lumotlari ${resultDate}`,
         20,
         10
       );
@@ -553,7 +627,15 @@ const UserData = () => {
 
       if (searchBetweenData.length > 0) {
         doc.save(
-          `${nameUser} ning ${searchBetweenStartDate} dan ${searchBetweenEndDate} gacha oraliqdagi ma'lumotlari ${resultDate}.pdf`
+          `${balanceOrgName} ning ${searchBetweenStartDate} dan ${searchBetweenEndDate} gacha oraliqdagi ${
+            valueTodayData == "level"
+              ? "sath"
+              : valueTodayData == "conductivity"
+              ? "sho'rlanish"
+              : valueTodayData == "temp"
+              ? "temperatura"
+              : null
+          } ma'lumotlari ${resultDate}.pdf`
         );
       }
     }
@@ -579,7 +661,15 @@ const UserData = () => {
       if (todayData.length > 0) {
         XLSX.writeFile(
           data,
-          `${nameUser} ning bugungi ma'lumotlari ${resultDate}.xlsx`
+          `${balanceOrgName} ning bugungi ${
+            valueTodayData == "level"
+              ? "sath"
+              : valueTodayData == "conductivity"
+              ? "sho'rlanish"
+              : valueTodayData == "temp"
+              ? "temperatura"
+              : null
+          } ma'lumotlari ${resultDate}.xlsx`
         );
       }
     } else if (whichData == "daily") {
@@ -590,7 +680,15 @@ const UserData = () => {
       if (dailyData.length > 0) {
         XLSX.writeFile(
           data,
-          `${nameUser} ning kunlik ma'lumotlari ${resultDate}.xlsx`
+          `${balanceOrgName} ning kunlik ${
+            valueTodayData == "level"
+              ? "sath"
+              : valueTodayData == "conductivity"
+              ? "sho'rlanish"
+              : valueTodayData == "temp"
+              ? "temperatura"
+              : null
+          } ma'lumotlari ${resultDate}.xlsx`
         );
       }
     } else if (whichData == "monthly") {
@@ -601,7 +699,15 @@ const UserData = () => {
       if (monthlyData.length > 0) {
         XLSX.writeFile(
           data,
-          `${nameUser} ning oylik ma'lumotlari ${resultDate}.xlsx`
+          `${balanceOrgName} ning oylik ${
+            valueTodayData == "level"
+              ? "sath"
+              : valueTodayData == "conductivity"
+              ? "sho'rlanish"
+              : valueTodayData == "temp"
+              ? "temperatura"
+              : null
+          } ma'lumotlari ${resultDate}.xlsx`
         );
       }
     } else if (whichData == "yesterday") {
@@ -614,7 +720,15 @@ const UserData = () => {
       if (yesterdayData.length > 0) {
         XLSX.writeFile(
           data,
-          `${nameUser} ning kecha kelgan ma'lumotlari ${resultDate}.xlsx`
+          `${balanceOrgName} ning kecha kelgan ${
+            valueTodayData == "level"
+              ? "sath"
+              : valueTodayData == "conductivity"
+              ? "sho'rlanish"
+              : valueTodayData == "temp"
+              ? "temperatura"
+              : null
+          } ma'lumotlari ${resultDate}.xlsx`
         );
       }
     } else if (whichData == "search-between") {
@@ -627,7 +741,15 @@ const UserData = () => {
       if (searchBetweenData.length > 0) {
         XLSX.writeFile(
           data,
-          `${nameUser} ning ${searchBetweenStartDate} dan ${searchBetweenEndDate} gacha oraliqdagi ma'lumotlari ${resultDate}.xlsx`
+          `${balanceOrgName} ning ${searchBetweenStartDate} dan ${searchBetweenEndDate} gacha oraliqdagi ${
+            valueTodayData == "level"
+              ? "sath"
+              : valueTodayData == "conductivity"
+              ? "sho'rlanish"
+              : valueTodayData == "temp"
+              ? "temperatura"
+              : null
+          } ma'lumotlari ${resultDate}.xlsx`
         );
       }
     }
@@ -745,22 +867,6 @@ const UserData = () => {
       });
   };
 
-  const handlePageChangeSearchBetween = (selectedPage) => {
-    setSearchBetweenBoolean(true);
-    customFetch
-      .get(
-        `/yesterdayData/getAllDataByTwoDayBetween?page=${
-          selectedPage.selected + 1
-        }&perPage=10&startDay=${searchBetweenStartDate}&endDay=${searchBetweenEndDate}`
-      )
-      .then((data) => {
-        setSearchBetweenDataMain(data.data.data);
-        setSearchBetweenData(data.data.data);
-        setTotalPagesSearchBetween(data.data.totalPages);
-        setSearchBetweenBoolean(false);
-      });
-  };
-
   return (
     <HelmetProvider>
       {/* MODAL */}
@@ -776,7 +882,7 @@ const UserData = () => {
           <div className="modal-content modal-content-user-data">
             <div className="modal-header">
               <h1 className="modal-title fs-5" id="exampleModalLabel">
-                Modal title
+                {balanceOrgName}
               </h1>
               <button
                 type="button"
@@ -885,7 +991,7 @@ const UserData = () => {
                               </p>{" "}
                               <span className="infowindow-span">
                                 {Number(
-                                  todayDataStatistic.todayData[0].level
+                                  todayDataStatistic?.todayData[0]?.level
                                 ).toFixed(2)}{" "}
                                 sm
                               </span>
@@ -903,7 +1009,7 @@ const UserData = () => {
                               </p>{" "}
                               <span className="infowindow-span">
                                 {Number(
-                                  todayDataStatistic.todayData[0].conductivity
+                                  todayDataStatistic?.todayData[0]?.conductivity
                                 ).toFixed(2)}{" "}
                                 g/l
                               </span>
@@ -921,7 +1027,7 @@ const UserData = () => {
                               </p>{" "}
                               <span className="infowindow-span">
                                 {Number(
-                                  todayDataStatistic.todayData[0].temp
+                                  todayDataStatistic?.todayData[0]?.temp
                                 ).toFixed(2)}{" "}
                                 °C
                               </span>
@@ -983,7 +1089,7 @@ const UserData = () => {
                               </p>{" "}
                               <span className="infowindow-span">
                                 {Number(
-                                  todayDataStatistic.allData[0].level
+                                  todayDataStatistic?.allData[0]?.level
                                 ).toFixed(2)}{" "}
                                 sm
                               </span>
@@ -1001,7 +1107,7 @@ const UserData = () => {
                               </p>{" "}
                               <span className="infowindow-span">
                                 {Number(
-                                  todayDataStatistic.allData[0].conductivity
+                                  todayDataStatistic?.allData[0]?.conductivity
                                 ).toFixed(2)}{" "}
                                 g/l
                               </span>
@@ -1019,7 +1125,7 @@ const UserData = () => {
                               </p>{" "}
                               <span className="infowindow-span">
                                 {Number(
-                                  todayDataStatistic.allData[0].temp
+                                  todayDataStatistic?.allData[0]?.temp
                                 ).toFixed(2)}{" "}
                                 °C
                               </span>
@@ -1036,7 +1142,7 @@ const UserData = () => {
                                 Soat:
                               </p>{" "}
                               <span className="infowindow-span">
-                                {todayDataStatistic.allData[0].date}
+                                {todayDataStatistic?.allData[0]?.date}
                               </span>
                             </div>
                           </div>
@@ -1062,7 +1168,7 @@ const UserData = () => {
                         monthlyDataStatistic.monthlyData?.length > 0 ? (
                           <div>
                             <h3 className="fw-semibold text-success fs-6">
-                              {monthlyDataStatistic.name}
+                              {monthlyDataStatistic?.name}
                             </h3>
 
                             <div className="d-flex align-items-center mb-1">
@@ -1077,7 +1183,7 @@ const UserData = () => {
                               </p>{" "}
                               <span className="infowindow-span">
                                 {Number(
-                                  monthlyDataStatistic.monthlyData[0].level
+                                  monthlyDataStatistic?.monthlyData[0]?.level
                                 ).toFixed(2)}{" "}
                                 sm
                               </span>
@@ -1095,8 +1201,8 @@ const UserData = () => {
                               </p>{" "}
                               <span className="infowindow-span">
                                 {Number(
-                                  monthlyDataStatistic.monthlyData[0]
-                                    .conductivity
+                                  monthlyDataStatistic?.monthlyData[0]
+                                    ?.conductivity
                                 ).toFixed(2)}{" "}
                                 g/l
                               </span>
@@ -1114,7 +1220,7 @@ const UserData = () => {
                               </p>{" "}
                               <span className="infowindow-span">
                                 {Number(
-                                  monthlyDataStatistic.monthlyData[0].temp
+                                  monthlyDataStatistic?.monthlyData[0]?.temp
                                 ).toFixed(2)}{" "}
                                 °C
                               </span>
@@ -1132,8 +1238,8 @@ const UserData = () => {
                               </p>{" "}
                               <span className="infowindow-span">
                                 {foundNameMonthForMap(
-                                  monthlyDataStatistic.monthlyData[0]
-                                    .monthNumber
+                                  monthlyDataStatistic?.monthlyData[0]
+                                    ?.monthNumber
                                 )}
                               </span>
                             </div>
@@ -1141,7 +1247,7 @@ const UserData = () => {
                         ) : (
                           <div>
                             <h3 className="fw-semibold text-success fs-6 text-center">
-                              {monthlyDataStatistic.name}
+                              {monthlyDataStatistic?.name}
                             </h3>
                             <div className="d-flex align-items-center justify-content-center">
                               <img
@@ -1175,7 +1281,7 @@ const UserData = () => {
                               </p>{" "}
                               <span className="infowindow-span">
                                 {Number(
-                                  dailyDataStatistic.dailyData[0].level
+                                  dailyDataStatistic?.dailyData[0]?.level
                                 ).toFixed(2)}{" "}
                                 sm
                               </span>
@@ -1193,7 +1299,7 @@ const UserData = () => {
                               </p>{" "}
                               <span className="infowindow-span">
                                 {Number(
-                                  dailyDataStatistic.dailyData[0].conductivity
+                                  dailyDataStatistic?.dailyData[0]?.conductivity
                                 ).toFixed(2)}{" "}
                                 g/l
                               </span>
@@ -1211,7 +1317,7 @@ const UserData = () => {
                               </p>{" "}
                               <span className="infowindow-span">
                                 {Number(
-                                  dailyDataStatistic.dailyData[0].temp
+                                  dailyDataStatistic?.dailyData[0]?.temp
                                 ).toFixed(2)}{" "}
                                 °C
                               </span>
@@ -1229,7 +1335,7 @@ const UserData = () => {
                               </p>{" "}
                               <span className="infowindow-span">
                                 {
-                                  dailyDataStatistic.dailyData[0].date.split(
+                                  dailyDataStatistic?.dailyData[0]?.date.split(
                                     "-"
                                   )[2]
                                 }
@@ -1273,7 +1379,7 @@ const UserData = () => {
                               </p>{" "}
                               <span className="infowindow-span">
                                 {Number(
-                                  searchBetweenDataStatistic.allData[0].level
+                                  searchBetweenDataStatistic?.allData[0]?.level
                                 ).toFixed(2)}{" "}
                                 sm
                               </span>
@@ -1291,8 +1397,8 @@ const UserData = () => {
                               </p>{" "}
                               <span className="infowindow-span">
                                 {Number(
-                                  searchBetweenDataStatistic.allData[0]
-                                    .conductivity
+                                  searchBetweenDataStatistic?.allData[0]
+                                    ?.conductivity
                                 ).toFixed(2)}{" "}
                                 g/l
                               </span>
@@ -1310,7 +1416,7 @@ const UserData = () => {
                               </p>{" "}
                               <span className="infowindow-span">
                                 {Number(
-                                  searchBetweenDataStatistic.allData[0].temp
+                                  searchBetweenDataStatistic?.allData[0]?.temp
                                 ).toFixed(2)}{" "}
                                 °C
                               </span>
@@ -1328,7 +1434,7 @@ const UserData = () => {
                               </p>{" "}
                               <span className="infowindow-span">
                                 {
-                                  searchBetweenDataStatistic.allData[0].date.split(
+                                  searchBetweenDataStatistic?.allData[0]?.date.split(
                                     " "
                                   )[0]
                                 }
@@ -1356,7 +1462,6 @@ const UserData = () => {
                       ) : whichData == "yesterday" ? (
                         yesterdayDataStatistic.yesterdayData?.length > 0 ? (
                           <div>
-                            {console.log(yesterdayDataStatistic)}
                             <h3 className="fw-semibold text-success fs-6">
                               {yesterdayDataStatistic.name}
                             </h3>
@@ -1373,7 +1478,8 @@ const UserData = () => {
                               </p>{" "}
                               <span className="infowindow-span">
                                 {Number(
-                                  yesterdayDataStatistic.yesterdayData[0].level
+                                  yesterdayDataStatistic?.yesterdayData[0]
+                                    ?.level
                                 ).toFixed(2)}{" "}
                                 sm
                               </span>
@@ -1391,8 +1497,8 @@ const UserData = () => {
                               </p>{" "}
                               <span className="infowindow-span">
                                 {Number(
-                                  yesterdayDataStatistic.yesterdayData[0]
-                                    .conductivity
+                                  yesterdayDataStatistic?.yesterdayData[0]
+                                    ?.conductivity
                                 ).toFixed(2)}{" "}
                                 g/l
                               </span>
@@ -1410,7 +1516,7 @@ const UserData = () => {
                               </p>{" "}
                               <span className="infowindow-span">
                                 {Number(
-                                  yesterdayDataStatistic.yesterdayData[0].temp
+                                  yesterdayDataStatistic?.yesterdayData[0]?.temp
                                 ).toFixed(2)}{" "}
                                 °C
                               </span>
@@ -1428,7 +1534,7 @@ const UserData = () => {
                               </p>{" "}
                               <span className="infowindow-span">
                                 {
-                                  yesterdayDataStatistic.yesterdayData[0].date.split(
+                                  yesterdayDataStatistic?.yesterdayData[0]?.date.split(
                                     " "
                                   )[1]
                                 }
@@ -1460,7 +1566,7 @@ const UserData = () => {
               </GoogleMap>
 
               <div className="modal-body pt-0">
-                <div className="char-statistic-frame m-auto">
+                <div className="char-statistic-frame char-statistic-frame-height m-auto">
                   <Line
                     className="char-statistic-wrapper"
                     data={data}

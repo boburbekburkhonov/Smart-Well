@@ -120,6 +120,10 @@ td {
   overflow: auto;
 }
 
+.char-statistic-frame-height {
+	height: 31vh !important;
+}
+
 .char-statistic-frame-user-data {
 	max-width: 500px !important;
 }

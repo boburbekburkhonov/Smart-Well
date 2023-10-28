@@ -62,7 +62,6 @@ const UserLastDataNews = () => {
     headers: {
       "Content-type": "application/json",
     },
-    // withCredentials: true,
   });
 
   // ! ADD HEADER TOKEN
@@ -94,7 +93,6 @@ const UserLastDataNews = () => {
       });
 
       const responToken = await requestToken.json();
-      console.log("refresh token", responToken.data.accessToken);
       return responToken.data.accessToken;
     } catch (e) {
       console.log("refreshToken", "Error", e);
@@ -498,8 +496,10 @@ const UserLastDataNews = () => {
 
     const { dateStart, dateEnd } = e.target;
 
-    customFetch.get(
-      `/allData/getStationIdAndTwoDayBetween?firstDay=${dateStart.value}&stationsId=${news}&secondDay=${dateEnd.value}`)
+    customFetch
+      .get(
+        `/allData/getStationIdAndTwoDayBetween?firstDay=${dateStart.value}&stationsId=${news}&secondDay=${dateEnd.value}`
+      )
       .then((data) => {
         setSearchBetweenData(data.data.data);
         setLoader(false);
@@ -522,7 +522,7 @@ const UserLastDataNews = () => {
           <div className="modal-content modal-content-user-last-data">
             <div className="modal-header">
               <h1 className="modal-title fs-5" id="staticBackdropLabel">
-                218-Kuzatish Quduq
+                {stationName}
               </h1>
               <button
                 type="button"
@@ -1590,7 +1590,7 @@ const UserLastDataNews = () => {
                           {searchBetweenData.map((e, i) => {
                             return (
                               <tr key={i}>
-                                <td>{e.date.split(" ")[0]}</td>
+                                <td>{e.date}</td>
                                 <td>{Number(e.level).toFixed(2)}</td>
                                 <td>{Number(e.conductivity).toFixed(2)}</td>
                                 <td>{Number(e.temp).toFixed(2)}</td>

@@ -5,8 +5,6 @@ import "./Login.css";
 import { api } from "../Api/Api";
 
 const Login = () => {
-  const date = new Date();
-  date.setMinutes(new Date().getMinutes() + 14);
   const [errorMessage, setErrorMessage] = useState("");
   const [error, setError] = useState(false);
   const [checkRemember, setCheckRemember] = useState("off");
@@ -26,7 +24,6 @@ const Login = () => {
         .then((res) => res.json())
         .then((data) => {
           if (data.statusCode == 200) {
-            window.localStorage.setItem("minute", date.getMinutes());
             window.localStorage.setItem("accessToken", data.data.accessToken);
             window.localStorage.setItem("refreshToken", data.data.refreshToken);
             if (data.data.user?.role == "SUPERADMIN") {
@@ -60,7 +57,6 @@ const Login = () => {
     const response = await request.json();
 
     if (response.statusCode == 200) {
-      window.localStorage.setItem("minute", date.getMinutes());
       window.localStorage.setItem("username", username.value);
       window.localStorage.setItem("password", password.value);
       window.localStorage.setItem("name", response.data.user.name);

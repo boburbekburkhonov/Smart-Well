@@ -34,13 +34,19 @@ const UserDashboard = (prop) => {
   const [tableTitle, setTableTitle] = useState("Umumiy stansiyalar soni");
   const chartRef = useRef();
 
+  balanceOrg.find((e) => {
+    if (e.id == name) {
+      window.localStorage.setItem("balanceOrgName", e.name);
+    }
+  });
+  const balanceOrgName = localStorage.getItem("balanceOrgName");
+
   // ! CUSTOM FETCH
   const customFetch = axios.create({
     baseURL: api,
     headers: {
       "Content-type": "application/json",
     },
-    // withCredentials: true,
   });
 
   // ! ADD HEADER TOKEN
@@ -72,7 +78,6 @@ const UserDashboard = (prop) => {
       });
 
       const responToken = await requestToken.json();
-      console.log("refresh token", responToken.data.accessToken);
       return responToken.data.accessToken;
     } catch (e) {
       console.log("refreshToken", "Error", e);
@@ -489,7 +494,7 @@ const UserDashboard = (prop) => {
       if (viewStation.length > 0) {
         XLSX.writeFile(
           workBook,
-          `${name} ning ${tableTitle} ${resultDate}.xlsx`
+          `${balanceOrgName} ning ${tableTitle} ${resultDate}.xlsx`
         );
       }
     } else if (dataOrStation == "station") {
@@ -522,7 +527,7 @@ const UserDashboard = (prop) => {
       if (viewStationByChar.length > 0) {
         XLSX.writeFile(
           workBook,
-          `${name} ning ${tableTitle} ${resultDate}.xlsx`
+          `${balanceOrgName} ning ${tableTitle} ${resultDate}.xlsx`
         );
       }
     }
@@ -855,13 +860,7 @@ const UserDashboard = (prop) => {
                   <h1 className="dashboard-heading ms-2">
                     {balanceOrg.length == 0
                       ? `${name} ga biriktirilgan qurilmalar`
-                      : `${
-                          balanceOrg.find((e) => {
-                            if (e.id == name) {
-                              return e.name;
-                            }
-                          })?.name
-                        } ga biriktirilgan qurilmalar`}
+                      : `${balanceOrgName} ga biriktirilgan qurilmalar`}
                   </h1>
                 </div>
 

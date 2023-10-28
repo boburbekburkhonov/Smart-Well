@@ -29,6 +29,7 @@ const UserStations = () => {
   const [minimumValue, setMinimumValue] = useState("");
   const [maximumValue, setMaximumValue] = useState("");
   const name = window.localStorage.getItem("name");
+  const balanceOrgName = localStorage.getItem("balanceOrgName");
 
   // ! CUSTOM FETCH
   const customFetch = axios.create({
@@ -67,7 +68,6 @@ const UserStations = () => {
       });
 
       const responToken = await requestToken.json();
-      console.log("refresh token", responToken.data.accessToken);
       return responToken.data.accessToken;
     } catch (e) {
       console.log("refreshToken", "Error", e);
@@ -294,7 +294,7 @@ const UserStations = () => {
       if (allStation.length > 0) {
         XLSX.writeFile(
           workBook,
-          `${name} ning umumiy stansiyalari ${resultDate}.xlsx`
+          `${balanceOrgName} ning umumiy stansiyalari ${resultDate}.xlsx`
         );
       }
     } else if (whichData == "StationForBattery") {
@@ -335,7 +335,7 @@ const UserStations = () => {
       if (allStationForBattery.length > 0) {
         XLSX.writeFile(
           workBook,
-          `${name} ning stansiyalari ${resultDate}.xlsx`
+          `${balanceOrgName} ning stansiyalari ${resultDate}.xlsx`
         );
       }
     } else if (whichData == "StationForStatus") {
@@ -372,7 +372,7 @@ const UserStations = () => {
       if (notWorkingStation.length > 0) {
         XLSX.writeFile(
           workBook,
-          `${name} ning ishlamagan stansiyalari ${resultDate}.xlsx`
+          `${balanceOrgName} ning ishlamagan stansiyalari ${resultDate}.xlsx`
         );
       }
     }

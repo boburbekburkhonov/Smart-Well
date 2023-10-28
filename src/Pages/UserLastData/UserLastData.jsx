@@ -33,6 +33,7 @@ const UserLastData = (prop) => {
   const [colorCard, setColorCard] = useState(
     "user-last-data-list-item-href-blue"
   );
+  const balanceOrgName = localStorage.getItem("balanceOrgName");
 
   // ! CUSTOM FETCH
   const customFetch = axios.create({
@@ -40,7 +41,6 @@ const UserLastData = (prop) => {
     headers: {
       "Content-type": "application/json",
     },
-    // withCredentials: true,
   });
 
   // ! ADD HEADER TOKEN
@@ -72,7 +72,6 @@ const UserLastData = (prop) => {
       });
 
       const responToken = await requestToken.json();
-      console.log("refresh token", responToken.data.accessToken);
       return responToken.data.accessToken;
     } catch (e) {
       console.log("refreshToken", "Error", e);
@@ -381,7 +380,7 @@ const UserLastData = (prop) => {
         if (request.data.data.length > 0) {
           XLSX.writeFile(
             workBook,
-            `${name} ning umumiy stansiya ma'lumotlari ${resultDate}.xlsx`
+            `${balanceOrgName} ning umumiy stansiya ma'lumotlari ${resultDate}.xlsx`
           );
         }
       };
@@ -420,7 +419,7 @@ const UserLastData = (prop) => {
         if (request.data.data.docs.length > 0) {
           XLSX.writeFile(
             workBook,
-            `${name} ning bugun kelgan ma'lumotlari ${resultDate}.xlsx`
+            `${balanceOrgName} ning bugun kelgan ma'lumotlari ${resultDate}.xlsx`
           );
         }
       };
@@ -459,7 +458,7 @@ const UserLastData = (prop) => {
         if (request.data.data.docs.length > 0) {
           XLSX.writeFile(
             workBook,
-            `${name} ning 3 ichida kelgan ma'lumotlari ${resultDate}.xlsx`
+            `${balanceOrgName} ning 3 ichida kelgan ma'lumotlari ${resultDate}.xlsx`
           );
         }
       };
@@ -498,7 +497,7 @@ const UserLastData = (prop) => {
         if (request.data.data.docs.length > 0) {
           XLSX.writeFile(
             workBook,
-            `${name} ning so'ngi oy kelgan ma'lumotlari ${resultDate}.xlsx`
+            `${balanceOrgName} ning so'ngi oy kelgan ma'lumotlari ${resultDate}.xlsx`
           );
         }
       };
@@ -537,7 +536,7 @@ const UserLastData = (prop) => {
         if (request.data.data.docs.length > 0) {
           XLSX.writeFile(
             workBook,
-            `${name} ning uzoq ishlamagan stansiya ma'lumotlari ${resultDate}.xlsx`
+            `${balanceOrgName} ning uzoq ishlamagan stansiya ma'lumotlari ${resultDate}.xlsx`
           );
         }
       };
@@ -628,13 +627,7 @@ const UserLastData = (prop) => {
                     <h1 className="mb-3 user-lastdata-heading">
                       {balanceOrg.length == 0
                         ? `${name} ga biriktirilgan qurilmalar`
-                        : `${
-                            balanceOrg.find((e) => {
-                              if (e.id == name) {
-                                return e.name;
-                              }
-                            })?.name
-                          } ga biriktirilgan qurilmalar`}
+                        : `${balanceOrgName} ga biriktirilgan qurilmalar`}
                     </h1>
 
                     <ul className="dashboard-list list-unstyled m-0 d-flex flex-wrap align-items-center justify-content-between mt-4">
