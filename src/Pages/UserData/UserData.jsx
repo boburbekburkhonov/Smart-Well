@@ -336,7 +336,9 @@ const UserData = () => {
                 Number(e[valueStatistic]).toFixed()
               )
             : whichData == "monthly"
-            ? monthlyDataStatistic.monthlyData?.map((e) => Number(e[valueStatistic]).toFixed())
+            ? monthlyDataStatistic.monthlyData?.map((e) =>
+                Number(e[valueStatistic]).toFixed()
+              )
             : null,
         fill: false,
         borderColor: "#EE8A9D",
@@ -349,9 +351,9 @@ const UserData = () => {
   const option = {
     scales: {
       y: {
-        grace: 3,
+        grace: 12,
         ticks: {
-          stepSize: 1,
+          stepSize: 3,
         },
       },
     },
