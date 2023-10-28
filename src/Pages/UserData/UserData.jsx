@@ -351,9 +351,9 @@ const UserData = () => {
   const option = {
     scales: {
       y: {
-        grace: 12,
+        grace: 6,
         ticks: {
-          stepSize: 3,
+          stepSize: 13,
         },
       },
     },
