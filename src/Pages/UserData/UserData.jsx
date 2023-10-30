@@ -908,7 +908,7 @@ const UserData = () => {
                       ? searchBetweenDataStatistic.location?.split("-")[0] * 1
                       : whichData == "monthly"
                       ? monthlyDataStatistic.location?.split("-")[0] * 1
-                      : null,
+                      : 40.77408090036615,
                   lng:
                     whichData == "hour"
                       ? todayDataStatistic.location?.split("-")[1] * 1
@@ -920,7 +920,7 @@ const UserData = () => {
                       ? searchBetweenDataStatistic.location?.split("-")[1] * 1
                       : whichData == "monthly"
                       ? monthlyDataStatistic.location?.split("-")[1] * 1
-                      : null,
+                      : 72.5355339,
                 }}
                 mapContainerClassName="user-data-map"
               >
@@ -937,7 +937,7 @@ const UserData = () => {
                         ? searchBetweenDataStatistic.location?.split("-")[0] * 1
                         : whichData == "monthly"
                         ? monthlyDataStatistic.location?.split("-")[0] * 1
-                        : null,
+                        : 40.77408090036615,
                     lng:
                       whichData == "hour"
                         ? todayDataStatistic.location?.split("-")[1] * 1
@@ -949,7 +949,7 @@ const UserData = () => {
                         ? searchBetweenDataStatistic.location?.split("-")[1] * 1
                         : whichData == "monthly"
                         ? monthlyDataStatistic.location?.split("-")[1] * 1
-                        : null,
+                        : 72.5355339,
                   }}
                   title={
                     whichData == "hour"

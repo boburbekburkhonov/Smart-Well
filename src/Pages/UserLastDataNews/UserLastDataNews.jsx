@@ -225,7 +225,7 @@ const UserLastDataNews = () => {
             : whichData == "monthly"
             ? monthData.map((e) => e[valueStatistic])
             : null,
-        fill: true,
+        fill: false,
         borderColor: "#0CC0CE",
         backgroundColor: "#85e6ec",
         tension: 0.4,
@@ -234,6 +234,23 @@ const UserLastDataNews = () => {
   };
 
   const option = {
+    // scales: {
+    //   xAxes: [
+    //     {
+    //       gridLines: {
+    //         display: false,
+    //       },
+    //     },
+    //   ],
+    //   yAxes: [
+    //     {
+    //       gridLines: {
+    //         display: false,
+    //       },
+    //     },
+    //   ],
+    // },
+    maintainAspectRatio: false,
     plugins: {
       tooltip: {
         boxHeight: 25,
@@ -544,6 +561,8 @@ const UserLastDataNews = () => {
               <div className="char-statistic-frame m-auto">
                 <Line
                   className="char-statistic-wrapper"
+                  width={100}
+                  height={50}
                   data={data}
                   options={option}
                 />

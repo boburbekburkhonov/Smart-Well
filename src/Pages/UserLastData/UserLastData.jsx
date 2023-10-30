@@ -120,19 +120,6 @@ const UserLastData = (prop) => {
   }, []);
 
   useEffect(() => {
-    const userLastDataFunc = async () => {
-      const request = await customFetch.get(
-        `/last-data/allLastData?page=1&perPage=12`
-      );
-
-      setAllStation(request.data.data);
-      setTotalPages(request.data.totalPages);
-    };
-
-    userLastDataFunc();
-  }, []);
-
-  useEffect(() => {
     if (whichStation == "allStation") {
       // ! LIMIT
       customFetch
@@ -213,7 +200,7 @@ const UserLastData = (prop) => {
               )}`;
         });
     }
-  }, [stationStatistic, whichStation]);
+  }, [whichStation]);
 
   const handlePageChange = (selectedPage) => {
     if (whichStation == "allStation") {

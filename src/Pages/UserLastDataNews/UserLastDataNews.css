@@ -3,7 +3,7 @@
 }
 
 .table-location-width-user-last-data-news {
-  max-width: 40vw !important;
+  max-width: 90vw !important;
 }
 
 .table-location-width-map {
@@ -32,33 +32,33 @@
 }
 
 .modal-content-user-last-data {
-  height: 45vh;
+  height: 90vh;
   overflow: auto;
 }
 
 .modal-content-user-last-data-map {
-  height: 55vh;
+  height: 65vh;
   overflow: auto;
 }
 
 .user-last-data-map {
   max-width: 800px;
   width: 100%;
-  height: 40vh;
+  height: 65vh;
   overflow: auto;
 }
 
 .char-statistic-frame {
-  max-width: 600px;
+  max-width: 90vw;
   width: 100%;
-  height: 275px;
+  height: 65vh;
 }
 
 .char-statistic-wrapper {
   position: absolute !important;
-  max-width: 600px !important;
+  max-width: 90vw !important;
   width: 100%;
-  height: 300px;
+  height: 65vh;
   color: #85e6ec;
 }
 
