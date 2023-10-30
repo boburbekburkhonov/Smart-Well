@@ -50,6 +50,7 @@ const UserData = () => {
   const [searchBetweenData, setSearchBetweenData] = useState([]);
   const [lastDataMain, setLastDataMain] = useState([]);
   const [lastData, setLastData] = useState([]);
+  const [lastDataLength, setLastDataLength] = useState(0);
   const [todayDataMain, setTodayDataMain] = useState([]);
   const [todayData, setTodayData] = useState([]);
   const [todayDataStatistic, setTodayDataStatistic] = useState([]);
@@ -217,19 +218,6 @@ const UserData = () => {
       setTodayData(requestTodayData.data.data);
       setTotalPagesHour(requestTodayData.data.totalPages);
 
-      // ! LAST DATA
-      const requestLastData = await customFetch.get(
-        `/last-data/allLastData?page=1&perPage=${requestStationStatistics.data?.data.totalStationsCount}`
-      );
-
-      role == "USER"
-        ? `${setLastData(requestLastData.data.data)} ${setLastDataMain(
-            requestLastData.data.data
-          )}`
-        : `${setLastData(requestLastData.data.data)} ${setLastDataMain(
-            requestLastData.data.data
-          )}`;
-
       // ! YESTERDAY DATA
       const requestYesterdayData = await customFetch.get(
         `/yesterdayData/getAllYesterdayData?page=1&perPage=10`
@@ -273,6 +261,34 @@ const UserData = () => {
 
     getStationFunc();
   }, [searchDate]);
+
+  useEffect(() => {
+    const getLastData = async () => {
+      let end = true;
+      let page = 1;
+
+      while (end) {
+        // ! LAST DATA
+        const requestLastData = await customFetch.get(
+          `/last-data/allLastData?page=${page}&perPage=${20}`
+        );
+
+        if (requestLastData.data.data.length > 0) {
+          requestLastData.data.data.forEach((e) => {
+            lastData.push(e);
+            lastDataMain.push(e);
+          });
+          setLastDataLength(lastData.length);
+          page++;
+
+        } else if (requestLastData.data.data.length == 0) {
+          end = false;
+        }
+      }
+    };
+
+    getLastData();
+  }, []);
 
   const { isLoaded } = useLoadScript({
     googleMapsApiKey:
@@ -2285,7 +2301,7 @@ const UserData = () => {
                           }
                         />
                         <span className="ms-3 me-3 text-danger">
-                          Soni: {lastData?.length} ta
+                          Soni: {lastDataLength} ta
                         </span>
                         <label htmlFor="bbr">
                           <span

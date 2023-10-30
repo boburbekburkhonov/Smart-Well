@@ -19,6 +19,7 @@ import axios from "axios";
 
 const UserMap = () => {
   const [lastData, setLastData] = useState([]);
+  const [lastDataLength, setLastDataLength] = useState(0);
   const [lastDataForList, setLastDataForList] = useState([]);
   const [oneLastData, setOneLastData] = useState([]);
   const [count, setCount] = useState(1);
@@ -115,22 +116,36 @@ const UserMap = () => {
       const requestStationStatistics = await customFetch.get(
         `/last-data/getStatisticStations`
       );
-
-      // ! LAST DATA
-      const request = await customFetch.get(
-        `${api}/last-data/allLastData?page=1&perPage=${requestStationStatistics.data.data.totalStationsCount}`
-      );
-
-      role == "USER"
-        ? `${setLastData(request.data.data)} ${setLastDataForList(
-            request.data.data
-          )}`
-        : `${setLastData(request.data.data)} ${setLastDataForList(
-            request.data.data
-          )}`;
     };
 
     userMap();
+  }, []);
+
+  useEffect(() => {
+    const getLastData = async () => {
+      let end = true;
+      let page = 1;
+
+      while (end) {
+        // ! LAST DATA
+        const requestLastData = await customFetch.get(
+          `/last-data/allLastData?page=${page}&perPage=${20}`
+        );
+
+        if (requestLastData.data.data.length > 0) {
+          requestLastData.data.data.forEach((e) => {
+            lastData.push(e);
+            lastDataForList.push(e);
+          });
+          setLastDataLength(lastData.length);
+          page++;
+        } else if (requestLastData.data.data.length == 0) {
+          end = false;
+        }
+      }
+    };
+
+    getLastData();
   }, []);
 
   const handleActiveMarker = (marker) => {
