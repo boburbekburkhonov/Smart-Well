@@ -367,7 +367,7 @@ const UserLastData = (prop) => {
         if (request.data.data.length > 0) {
           XLSX.writeFile(
             workBook,
-            `${balanceOrgName} ning umumiy stansiya ma'lumotlari ${resultDate}.xlsx`
+            `${role == 'USER' ? name : balanceOrgName} ning umumiy stansiya ma'lumotlari ${resultDate}.xlsx`
           );
         }
       };
@@ -406,7 +406,7 @@ const UserLastData = (prop) => {
         if (request.data.data.docs.length > 0) {
           XLSX.writeFile(
             workBook,
-            `${balanceOrgName} ning bugun kelgan ma'lumotlari ${resultDate}.xlsx`
+            `${role == 'USER' ? name : balanceOrgName} ning bugun kelgan ma'lumotlari ${resultDate}.xlsx`
           );
         }
       };
@@ -445,7 +445,7 @@ const UserLastData = (prop) => {
         if (request.data.data.docs.length > 0) {
           XLSX.writeFile(
             workBook,
-            `${balanceOrgName} ning 3 ichida kelgan ma'lumotlari ${resultDate}.xlsx`
+            `${role == 'USER' ? name : balanceOrgName} ning 3 ichida kelgan ma'lumotlari ${resultDate}.xlsx`
           );
         }
       };
@@ -484,7 +484,7 @@ const UserLastData = (prop) => {
         if (request.data.data.docs.length > 0) {
           XLSX.writeFile(
             workBook,
-            `${balanceOrgName} ning so'ngi oy kelgan ma'lumotlari ${resultDate}.xlsx`
+            `${role == 'USER' ? name : balanceOrgName} ning so'ngi oy kelgan ma'lumotlari ${resultDate}.xlsx`
           );
         }
       };
@@ -523,7 +523,7 @@ const UserLastData = (prop) => {
         if (request.data.data.docs.length > 0) {
           XLSX.writeFile(
             workBook,
-            `${balanceOrgName} ning uzoq ishlamagan stansiya ma'lumotlari ${resultDate}.xlsx`
+            `${role == 'USER' ? name : balanceOrgName} ning uzoq ishlamagan stansiya ma'lumotlari ${resultDate}.xlsx`
           );
         }
       };

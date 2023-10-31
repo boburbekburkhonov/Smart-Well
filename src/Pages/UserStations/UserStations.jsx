@@ -28,8 +28,9 @@ const UserStations = () => {
   const [whichData, setWhichData] = useState("allStation");
   const [minimumValue, setMinimumValue] = useState("");
   const [maximumValue, setMaximumValue] = useState("");
-  const name = window.localStorage.getItem("name");
   const balanceOrgName = localStorage.getItem("balanceOrgName");
+  const name = window.localStorage.getItem("name");
+  const role = window.localStorage.getItem("role");
 
   // ! CUSTOM FETCH
   const customFetch = axios.create({
@@ -180,21 +181,21 @@ const UserStations = () => {
 
     setStationOne(requestStationOne.data?.data.data[0]);
 
-    // REGION NAME
+    // * REGION NAME
     const requestRegionName = await customFetch.get(
       `/regions/getById?id=${requestStationOne.data?.data.data[0]?.region_id}`
     );
 
     setStationRegionName(requestRegionName.data.region.name);
 
-    // DISTRICT NAME
+    //* DISTRICT NAME
     const requestDistrictName = await customFetch.get(
       `/districts/${requestStationOne.data?.data.data[0].region_id}`
     );
 
     setStationDistrictName(requestDistrictName.data.district);
 
-    // BALANS ORGANIZATION NAME
+    //* BALANS ORGANIZATION NAME
     const requestBalansOrgName = await customFetch.get(
       `/balance-organizations/${requestStationOne.data?.data.data[0].region_id}`
     );
@@ -294,7 +295,7 @@ const UserStations = () => {
       if (allStation.length > 0) {
         XLSX.writeFile(
           workBook,
-          `${balanceOrgName} ning umumiy stansiyalari ${resultDate}.xlsx`
+          `${role == 'USER' ? name : balanceOrgName} ning umumiy stansiyalari ${resultDate}.xlsx`
         );
       }
     } else if (whichData == "StationForBattery") {
@@ -335,7 +336,7 @@ const UserStations = () => {
       if (allStationForBattery.length > 0) {
         XLSX.writeFile(
           workBook,
-          `${balanceOrgName} ning stansiyalari ${resultDate}.xlsx`
+          `${role == 'USER' ? name : balanceOrgName} ning stansiyalari ${resultDate}.xlsx`
         );
       }
     } else if (whichData == "StationForStatus") {
@@ -372,7 +373,7 @@ const UserStations = () => {
       if (notWorkingStation.length > 0) {
         XLSX.writeFile(
           workBook,
-          `${balanceOrgName} ning ishlamagan stansiyalari ${resultDate}.xlsx`
+          `${role == 'USER' ? name : balanceOrgName} ning ishlamagan stansiyalari ${resultDate}.xlsx`
         );
       }
     }

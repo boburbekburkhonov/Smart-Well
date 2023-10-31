@@ -494,7 +494,7 @@ const UserDashboard = (prop) => {
       if (viewStation.length > 0) {
         XLSX.writeFile(
           workBook,
-          `${balanceOrgName} ning ${tableTitle} ${resultDate}.xlsx`
+          `${role == 'USER' ? name : balanceOrgName} ning ${tableTitle} ${resultDate}.xlsx`
         );
       }
     } else if (dataOrStation == "station") {
@@ -527,7 +527,7 @@ const UserDashboard = (prop) => {
       if (viewStationByChar.length > 0) {
         XLSX.writeFile(
           workBook,
-          `${balanceOrgName} ning ${tableTitle} ${resultDate}.xlsx`
+          `${role == 'USER' ? name : balanceOrgName} ning ${tableTitle} ${resultDate}.xlsx`
         );
       }
     }

@@ -72,6 +72,7 @@ const UserData = () => {
     new Date().toISOString().substring(0, 7)
   );
   const role = window.localStorage.getItem("role");
+  const name = window.localStorage.getItem("name");
   const [whichData, setWhichData] = useState("hour");
   const [searchWithDaily, setSearchWithDaily] = useState(false);
   const [hourInputValue, setHourInputValue] = useState(
@@ -465,7 +466,7 @@ const UserData = () => {
       const doc = new jsPDF("l", "mm", [397, 210]);
 
       doc.text(
-        `${balanceOrgName} ga tegishli qurilmalarning bugungi ${
+        `${role == 'USER' ? name : balanceOrgName} ga tegishli bugungi ${
           valueTodayData == "level"
             ? "sath"
             : valueTodayData == "conductivity"
@@ -489,7 +490,7 @@ const UserData = () => {
 
       if (todayData.length > 0) {
         doc.save(
-          `${balanceOrgName} ga tegishli qurilmalarning bugungi ${
+          `${role == 'USER' ? name : balanceOrgName} ga tegishli bugungi ${
             valueTodayData == "level"
               ? "sath"
               : valueTodayData == "conductivity"
@@ -504,7 +505,7 @@ const UserData = () => {
       const doc = new jsPDF("l", "mm", [397, 210]);
 
       doc.text(
-        `${balanceOrgName} qurilmaning kunlik ${
+        `${role == 'USER' ? name : balanceOrgName} ning kunlik ${
           valueTodayData == "level"
             ? "sath"
             : valueTodayData == "conductivity"
@@ -528,7 +529,7 @@ const UserData = () => {
 
       if (dailyData.length > 0) {
         doc.save(
-          `${balanceOrgName} ning kunlik ${
+          `${role == 'USER' ? name : balanceOrgName} ning kunlik ${
             valueTodayData == "level"
               ? "sath"
               : valueTodayData == "conductivity"
@@ -543,7 +544,7 @@ const UserData = () => {
       const doc = new jsPDF("l", "mm", [307, 210]);
 
       doc.text(
-        `${balanceOrgName} qurilmaning oylik ${
+        `${role == 'USER' ? name : balanceOrgName} ning oylik ${
           valueTodayData == "level"
             ? "sath"
             : valueTodayData == "conductivity"
@@ -567,7 +568,7 @@ const UserData = () => {
 
       if (monthlyData.length > 0) {
         doc.save(
-          `${balanceOrgName} ning oylik ${
+          `${role == 'USER' ? name : balanceOrgName} ning oylik ${
             valueTodayData == "level"
               ? "sath"
               : valueTodayData == "conductivity"
@@ -582,7 +583,7 @@ const UserData = () => {
       const doc = new jsPDF("l", "mm", [397, 210]);
 
       doc.text(
-        `${balanceOrgName} qurilmaning kecha kelgan ${
+        `${role == 'USER' ? name : balanceOrgName} ning kecha kelgan ${
           valueTodayData == "level"
             ? "sath"
             : valueTodayData == "conductivity"
@@ -606,7 +607,7 @@ const UserData = () => {
 
       if (yesterdayData.length > 0) {
         doc.save(
-          `${balanceOrgName} ning kecha kelgan ${
+          `${role == 'USER' ? name : balanceOrgName} ning kecha kelgan ${
             valueTodayData == "level"
               ? "sath"
               : valueTodayData == "conductivity"
@@ -621,7 +622,7 @@ const UserData = () => {
       const doc = new jsPDF("l", "mm", [397, 210]);
 
       doc.text(
-        `${balanceOrgName} ning ${searchBetweenStartDate} dan ${searchBetweenEndDate} gacha oraliqdagi ${
+        `${role == 'USER' ? name : balanceOrgName} ning ${searchBetweenStartDate} dan ${searchBetweenEndDate} gacha oraliqdagi ${
           valueTodayData == "level"
             ? "sath"
             : valueTodayData == "conductivity"
@@ -645,7 +646,7 @@ const UserData = () => {
 
       if (searchBetweenData.length > 0) {
         doc.save(
-          `${balanceOrgName} ning ${searchBetweenStartDate} dan ${searchBetweenEndDate} gacha oraliqdagi ${
+          `${role == 'USER' ? name : balanceOrgName} ning ${searchBetweenStartDate} dan ${searchBetweenEndDate} gacha oraliqdagi ${
             valueTodayData == "level"
               ? "sath"
               : valueTodayData == "conductivity"
@@ -679,7 +680,7 @@ const UserData = () => {
       if (todayData.length > 0) {
         XLSX.writeFile(
           data,
-          `${balanceOrgName} ning bugungi ${
+          `${role == 'USER' ? name : balanceOrgName} ning bugungi ${
             valueTodayData == "level"
               ? "sath"
               : valueTodayData == "conductivity"
@@ -698,7 +699,7 @@ const UserData = () => {
       if (dailyData.length > 0) {
         XLSX.writeFile(
           data,
-          `${balanceOrgName} ning kunlik ${
+          `${role == 'USER' ? name : balanceOrgName} ning kunlik ${
             valueTodayData == "level"
               ? "sath"
               : valueTodayData == "conductivity"
@@ -717,7 +718,7 @@ const UserData = () => {
       if (monthlyData.length > 0) {
         XLSX.writeFile(
           data,
-          `${balanceOrgName} ning oylik ${
+          `${role == 'USER' ? name : balanceOrgName} ning oylik ${
             valueTodayData == "level"
               ? "sath"
               : valueTodayData == "conductivity"
@@ -738,7 +739,7 @@ const UserData = () => {
       if (yesterdayData.length > 0) {
         XLSX.writeFile(
           data,
-          `${balanceOrgName} ning kecha kelgan ${
+          `${role == 'USER' ? name : balanceOrgName} ning kecha kelgan ${
             valueTodayData == "level"
               ? "sath"
               : valueTodayData == "conductivity"
@@ -759,7 +760,7 @@ const UserData = () => {
       if (searchBetweenData.length > 0) {
         XLSX.writeFile(
           data,
-          `${balanceOrgName} ning ${searchBetweenStartDate} dan ${searchBetweenEndDate} gacha oraliqdagi ${
+          `${role == 'USER' ? name : balanceOrgName} ning ${searchBetweenStartDate} dan ${searchBetweenEndDate} gacha oraliqdagi ${
             valueTodayData == "level"
               ? "sath"
               : valueTodayData == "conductivity"
