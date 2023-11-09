@@ -191,13 +191,13 @@ const UserLastDataNews = () => {
 
   const labels =
     whichData == "hour"
-      ? todayData.map((e) => e.date.split(" ")[1])
+      ? todayData.map((e) => e.date.split(" ")[1]).reverse()
       : whichData == "yesterday"
-      ? yesterdayData.map((e) => e.date.split(" ")[1])
+      ? yesterdayData.map((e) => e.date.split(" ")[1]).reverse()
       : whichData == "daily"
-      ? dailyData.map((e) => e.date.split("-")[2].slice(0, 2))
+      ? dailyData.map((e) => e.date.split("-")[2].slice(0, 2)).reverse()
       : whichData == "search-between"
-      ? searchBetweenData.map((e) => e.date.split("-")[2].slice(0, 2))
+      ? searchBetweenData.map((e) => e.date.split("-")[2].slice(0, 2)).reverse()
       : whichData == "monthly"
       ? monthData?.map((e) => {
           const foundNameMonth = valueYear.find(
@@ -205,7 +205,7 @@ const UserLastDataNews = () => {
           );
 
           return foundNameMonth;
-        })
+        }).reverse()
       : null;
 
   const data = {
@@ -215,15 +215,15 @@ const UserLastDataNews = () => {
         label: "Bugungi ma'lumotlar",
         data:
           whichData == "hour"
-            ? todayData.map((e) => e[valueStatistic])
+            ? todayData.map((e) => e[valueStatistic]).reverse()
             : whichData == "yesterday"
-            ? yesterdayData.map((e) => e[valueStatistic])
+            ? yesterdayData.map((e) => e[valueStatistic]).reverse()
             : whichData == "daily"
-            ? dailyData.map((e) => e[valueStatistic])
+            ? dailyData.map((e) => e[valueStatistic]).reverse()
             : whichData == "search-between"
-            ? searchBetweenData.map((e) => e[valueStatistic])
+            ? searchBetweenData.map((e) => e[valueStatistic]).reverse()
             : whichData == "monthly"
-            ? monthData.map((e) => e[valueStatistic])
+            ? monthData.map((e) => e[valueStatistic]).reverse()
             : null,
         fill: false,
         borderColor: "#0CC0CE",
@@ -233,23 +233,102 @@ const UserLastDataNews = () => {
     ],
   };
 
+  const scalesMinMaxLine = () => {
+    if(whichData == 'hour'){
+      if(todayData.length > 0){
+        const resultData = []
+        todayData.forEach(e => {
+          resultData.push(e[valueStatistic]);
+        })
+
+        return {
+          min: Math.min(...resultData),
+          max: Math.max(...resultData)
+        }
+      }else {
+        return {
+          min: 0,
+          max: 0
+        }
+      }
+    } else if(whichData == 'yesterday'){
+      if(yesterdayData.length > 0) {
+        const resultData = []
+        yesterdayData.forEach(e => {
+          resultData.push(e[valueStatistic]);
+        })
+
+        return {
+          min: Math.min(...resultData),
+          max: Math.max(...resultData)
+        }
+      }else {
+        return {
+          min: 0,
+          max: 0
+        }
+      }
+    } else if(whichData == 'daily'){
+      if(dailyData.length > 0) {
+        const resultData = []
+        dailyData.forEach(e => {
+          resultData.push(e[valueStatistic]);
+        })
+
+        return {
+          min: Math.min(...resultData),
+          max: Math.max(...resultData)
+        }
+      }else {
+        return {
+          min: 0,
+          max: 0
+        }
+      }
+    } else if(whichData == 'monthly'){
+      if(monthData.length > 0) {
+        const resultData = []
+        monthData.forEach(e => {
+          resultData.push(e[valueStatistic]);
+        })
+
+        return {
+          min: Math.min(...resultData),
+          max: Math.max(...resultData)
+        }
+      }else {
+        return {
+          min: 0,
+          max: 0
+        }
+      }
+    } else if(whichData == 'search-between'){
+      if(searchBetweenData.length > 0) {
+        const resultData = []
+        searchBetweenData.forEach(e => {
+          resultData.push(e[valueStatistic]);
+        })
+
+        return {
+          min: Math.min(...resultData),
+          max: Math.max(...resultData)
+        }
+      }else {
+        return {
+          min: 0,
+          max: 0
+        }
+      }
+    }
+  }
+
   const option = {
-    // scales: {
-    //   xAxes: [
-    //     {
-    //       gridLines: {
-    //         display: false,
-    //       },
-    //     },
-    //   ],
-    //   yAxes: [
-    //     {
-    //       gridLines: {
-    //         display: false,
-    //       },
-    //     },
-    //   ],
-    // },
+    scales: {
+      y: {
+        min: scalesMinMaxLine().min - 20,
+        max: scalesMinMaxLine().max + 20
+      }
+    },
     maintainAspectRatio: false,
     plugins: {
       tooltip: {
@@ -490,7 +569,7 @@ const UserLastDataNews = () => {
 
       XLSX.utils.book_append_sheet(workBook, workSheet, "MySheet1");
 
-      if (yesterdayData.length > 0) {
+      if (searchBetweenData.length > 0) {
         XLSX.writeFile(
           workBook,
           `${stationName} ning ma'lumotlari ${resultDate}.xlsx`

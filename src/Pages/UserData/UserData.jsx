@@ -27,18 +27,8 @@ import ReactPaginate from "react-paginate";
 import axios from "axios";
 
 const UserData = () => {
-  const dateSearch = new Date();
-  dateSearch.setDate(new Date().getDate() - 4);
   const [hourSearchBoolean, setHourSearchBoolean] = useState(false);
-  const [searchBetweenStartDate, setSearchBetweenStartDate] = useState(
-    dateSearch.toISOString().substring(0, 10)
-  );
-  const [searchBetweenEndDate, setSearchBetweenEndDate] = useState(
-    new Date().toISOString().substring(0, 10)
-  );
-  const [searchBetweenBoolean, setSearchBetweenBoolean] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
-  const [totalPagesSearchBetween, setTotalPagesSearchBetween] = useState(0);
   const [totalPagesHour, setTotalPagesHour] = useState(0);
   const [totalPagesYesterday, setTotalPagesYesterday] = useState(0);
   const [totalPagesDaily, setTotalPagesDaily] = useState(0);
@@ -46,8 +36,6 @@ const UserData = () => {
   const [activeMarker, setActiveMarker] = useState();
   const [searchDate, setSearchDate] = useState(false);
   const [statisticsStation, setStatisticsStation] = useState([]);
-  const [searchBetweenDataMain, setSearchBetweenDataMain] = useState([]);
-  const [searchBetweenData, setSearchBetweenData] = useState([]);
   const [lastDataMain, setLastDataMain] = useState([]);
   const [lastData, setLastData] = useState([]);
   const [lastDataLength, setLastDataLength] = useState(0);
@@ -60,9 +48,6 @@ const UserData = () => {
   const [dailydayDataMain, setDailyDataMain] = useState([]);
   const [dailyData, setDailyData] = useState([]);
   const [dailyDataStatistic, setDailyDataStatistic] = useState([]);
-  const [searchBetweenDataStatistic, setSearchBetweenDataStatistic] = useState(
-    []
-  );
   const [monthlydayDataMain, setMonthlyDataMain] = useState([]);
   const [monthlyData, setMonthlyData] = useState([]);
   const [monthlyDataStatistic, setMonthlyDataStatistic] = useState([]);
@@ -247,17 +232,6 @@ const UserData = () => {
       setMonthlyDataMain(requestMonthlyData.data.stations.data);
       setMonthlyData(requestMonthlyData.data.stations.data);
       setTotalPagesMonthly(requestMonthlyData.data.stations.totalPages);
-
-      // ! SEARCH BETWEEN
-      setSearchBetweenBoolean(true);
-      const requestSearchBetween = await customFetch.get(
-        `/yesterdayData/getAllDataByTwoDayBetween?page=1&perPage=10&startDay=${searchBetweenStartDate}&endDay=${searchBetweenEndDate}`
-      );
-
-      setSearchBetweenDataMain(requestSearchBetween.data.data);
-      setSearchBetweenData(requestSearchBetween.data.data);
-      setTotalPagesSearchBetween(requestSearchBetween.data.totalPages);
-      setSearchBetweenBoolean(false);
     };
 
     getStationFunc();
@@ -307,15 +281,13 @@ const UserData = () => {
 
   const labels =
     whichData == "hour" && !searchWithDaily
-      ? todayDataStatistic.todayData?.map((e) => e.date.split(" ")[1])
+      ? todayDataStatistic.todayData?.map((e) => e.date.split(" ")[1]).reverse()
       : whichData == "hour" && searchWithDaily
-      ? todayDataStatistic.allData?.map((e) => e.date.split(" ")[1])
+      ? todayDataStatistic.allData?.map((e) => e.date.split(" ")[1]).reverse()
       : whichData == "yesterday"
-      ? yesterdayDataStatistic.yesterdayData?.map((e) => e.date.split(" ")[1])
+      ? yesterdayDataStatistic.yesterdayData?.map((e) => e.date.split(" ")[1]).reverse()
       : whichData == "daily"
-      ? dailyDataStatistic.dailyData?.map((e) => e.date.split("-")[2])
-      : whichData == "search-between"
-      ? searchBetweenDataStatistic.allData?.map((e) => e.date.split(" ")[0])
+      ? dailyDataStatistic.dailyData?.map((e) => e.date.split("-")[2]).reverse()
       : whichData == "monthly"
       ? monthlyDataStatistic.monthlyData?.map((e) => {
           const foundNameMonth = valueYear.find(
@@ -323,39 +295,35 @@ const UserData = () => {
           );
 
           return foundNameMonth;
-        })
+        }).reverse()
       : null;
 
   const data = {
     labels: labels,
     datasets: [
       {
-        label: "Bugungi ma'lumotlar",
+        label: "Ma'lumotlar",
         data:
           whichData == "hour" && !searchWithDaily
             ? todayDataStatistic.todayData?.map((e) =>
                 Number(e[valueStatistic]).toFixed()
-              )
+              ).reverse()
             : whichData == "hour" && searchWithDaily
             ? todayDataStatistic.allData?.map((e) =>
                 Number(e[valueStatistic]).toFixed()
-              )
+              ).reverse()
             : whichData == "yesterday"
             ? yesterdayDataStatistic.yesterdayData?.map((e) =>
                 Number(e[valueStatistic]).toFixed()
-              )
+              ).reverse()
             : whichData == "daily"
             ? dailyDataStatistic.dailyData?.map((e) =>
                 Number(e[valueStatistic]).toFixed()
-              )
-            : whichData == "search-between"
-            ? searchBetweenDataStatistic.allData?.map((e) =>
-                Number(e[valueStatistic]).toFixed()
-              )
+              ).reverse()
             : whichData == "monthly"
             ? monthlyDataStatistic.monthlyData?.map((e) =>
                 Number(e[valueStatistic]).toFixed()
-              )
+              ).reverse()
             : null,
         fill: false,
         borderColor: "#EE8A9D",
@@ -365,14 +333,101 @@ const UserData = () => {
     ],
   };
 
+  const scalesMinMaxLine = () => {
+    if(whichData == "hour" && !searchWithDaily){
+      if(todayDataStatistic.todayData?.length > 0){
+        const resultData = []
+        todayDataStatistic.todayData.forEach(e => {
+          resultData.push(e[valueStatistic]);
+        })
+
+        return {
+          min: Math.min(...resultData),
+          max: Math.max(...resultData)
+        }
+      }else {
+        return {
+          min: 0,
+          max: 0
+        }
+      }
+    } else if(whichData == "hour" && searchWithDaily){
+      if(todayDataStatistic.allData?.length > 0) {
+        const resultData = []
+        todayDataStatistic.allData.forEach(e => {
+          resultData.push(e[valueStatistic]);
+        })
+
+        return {
+          min: Math.min(...resultData),
+          max: Math.max(...resultData)
+        }
+      }else {
+        return {
+          min: 0,
+          max: 0
+        }
+      }
+    } else if(whichData == 'yesterday'){
+      if(yesterdayDataStatistic.yesterdayData?.length > 0) {
+        const resultData = []
+        yesterdayDataStatistic.yesterdayData.forEach(e => {
+          resultData.push(e[valueStatistic]);
+        })
+
+        return {
+          min: Math.min(...resultData),
+          max: Math.max(...resultData)
+        }
+      }else {
+        return {
+          min: 0,
+          max: 0
+        }
+      }
+    } else if(whichData == 'daily'){
+      if(dailyDataStatistic.dailyData?.length > 0) {
+        const resultData = []
+        dailyDataStatistic.dailyData.forEach(e => {
+          resultData.push(e[valueStatistic]);
+        })
+
+        return {
+          min: Math.min(...resultData),
+          max: Math.max(...resultData)
+        }
+      }else {
+        return {
+          min: 0,
+          max: 0
+        }
+      }
+    } else if(whichData == 'monthly'){
+      if(monthlyDataStatistic.monthlyData?.length > 0) {
+        const resultData = []
+        monthlyDataStatistic.monthlyData.forEach(e => {
+          resultData.push(e[valueStatistic]);
+        })
+
+        return {
+          min: Math.min(...resultData),
+          max: Math.max(...resultData)
+        }
+      }else {
+        return {
+          min: 0,
+          max: 0
+        }
+      }
+    }
+  }
+
   const option = {
     scales: {
       y: {
-        grace: 6,
-        ticks: {
-          stepSize: 13,
-        },
-      },
+        min: scalesMinMaxLine().min - 40,
+        max: scalesMinMaxLine().max + 40
+      }
     },
     plugins: {
       tooltip: {
@@ -398,27 +453,31 @@ const UserData = () => {
       const search = todayDataMain.filter((e) =>
         e.name.toLowerCase().includes(inputValue)
       );
-      setTodayData(search);
+      if(search.length > 0){
+        setTodayData(search);
+      }
     } else if (whichData == "yesterday") {
       const search = yesterdayDataMain.filter((e) =>
         e.name.toLowerCase().includes(inputValue)
       );
-      setYesterdayData(search);
+      if(search.length > 0){
+        setYesterdayData(search);
+      }
     } else if (whichData == "daily") {
       const search = dailydayDataMain.filter((e) =>
-        e.name.toLowerCase().includes(inputValue)
+      e.name.toLowerCase().includes(inputValue)
       );
-      setDailyData(search);
+
+      if(search.length > 0){
+        setDailyData(search);
+      }
     } else if (whichData == "monthly") {
       const search = monthlydayDataMain.filter((e) =>
         e.name.toLowerCase().includes(inputValue)
       );
-      setMonthlyData(search);
-    } else if (whichData == "search-between") {
-      const search = searchBetweenDataMain.filter((e) =>
-        e.name.toLowerCase().includes(inputValue)
-      );
-      setSearchBetweenData(search);
+      if(search.length > 0){
+        setMonthlyData(search);
+      }
     }
   };
 
@@ -441,7 +500,6 @@ const UserData = () => {
       .get(
         `/dailyData/getAllStationsDataByMonth?page=1&perPage=10&month=${date}`
       )
-      .then((res) => res.json())
       .then((data) => {
         setDailyDataMain(data.data.data);
         setDailyData(data.data.data);
@@ -618,45 +676,6 @@ const UserData = () => {
           } ma'lumotlari ${resultDate}.pdf`
         );
       }
-    } else if (whichData == "search-between") {
-      const doc = new jsPDF("l", "mm", [397, 210]);
-
-      doc.text(
-        `${role == 'USER' ? name : balanceOrgName} ning ${searchBetweenStartDate} dan ${searchBetweenEndDate} gacha oraliqdagi ${
-          valueTodayData == "level"
-            ? "sath"
-            : valueTodayData == "conductivity"
-            ? "sho'rlanish"
-            : valueTodayData == "temp"
-            ? "temperatura"
-            : null
-        } ma'lumotlari ${resultDate}`,
-        20,
-        10
-      );
-
-      doc.autoTable({
-        html: "#table-style-search-id",
-        margin: { right: 5, left: 5 },
-        styles: { halign: "center" },
-        theme: "grid",
-        headStyles: { lineWidth: 0.3, lineColor: [0, 0, 0] },
-        bodyStyles: { lineColor: [0, 0, 0] },
-      });
-
-      if (searchBetweenData.length > 0) {
-        doc.save(
-          `${role == 'USER' ? name : balanceOrgName} ning ${searchBetweenStartDate} dan ${searchBetweenEndDate} gacha oraliqdagi ${
-            valueTodayData == "level"
-              ? "sath"
-              : valueTodayData == "conductivity"
-              ? "sho'rlanish"
-              : valueTodayData == "temp"
-              ? "temperatura"
-              : null
-          } ma'lumotlari ${resultDate}.pdf`
-        );
-      }
     }
   };
 
@@ -740,27 +759,6 @@ const UserData = () => {
         XLSX.writeFile(
           data,
           `${role == 'USER' ? name : balanceOrgName} ning kecha kelgan ${
-            valueTodayData == "level"
-              ? "sath"
-              : valueTodayData == "conductivity"
-              ? "sho'rlanish"
-              : valueTodayData == "temp"
-              ? "temperatura"
-              : null
-          } ma'lumotlari ${resultDate}.xlsx`
-        );
-      }
-    } else if (whichData == "search-between") {
-      const tableSearchBetween = document.getElementById(
-        "table-style-search-id"
-      );
-
-      const data = XLSX.utils.table_to_book(tableSearchBetween);
-
-      if (searchBetweenData.length > 0) {
-        XLSX.writeFile(
-          data,
-          `${role == 'USER' ? name : balanceOrgName} ning ${searchBetweenStartDate} dan ${searchBetweenEndDate} gacha oraliqdagi ${
             valueTodayData == "level"
               ? "sath"
               : valueTodayData == "conductivity"
@@ -921,8 +919,6 @@ const UserData = () => {
                       ? yesterdayDataStatistic.location?.split("-")[0] * 1
                       : whichData == "daily"
                       ? dailyDataStatistic.location?.split("-")[0] * 1
-                      : whichData == "search-between"
-                      ? searchBetweenDataStatistic.location?.split("-")[0] * 1
                       : whichData == "monthly"
                       ? monthlyDataStatistic.location?.split("-")[0] * 1
                       : 40.77408090036615,
@@ -933,8 +929,6 @@ const UserData = () => {
                       ? yesterdayDataStatistic.location?.split("-")[1] * 1
                       : whichData == "daily"
                       ? dailyDataStatistic.location?.split("-")[1] * 1
-                      : whichData == "search-between"
-                      ? searchBetweenDataStatistic.location?.split("-")[1] * 1
                       : whichData == "monthly"
                       ? monthlyDataStatistic.location?.split("-")[1] * 1
                       : 72.5355339,
@@ -950,8 +944,6 @@ const UserData = () => {
                         ? yesterdayDataStatistic.location?.split("-")[0] * 1
                         : whichData == "daily"
                         ? dailyDataStatistic.location?.split("-")[0] * 1
-                        : whichData == "search-between"
-                        ? searchBetweenDataStatistic.location?.split("-")[0] * 1
                         : whichData == "monthly"
                         ? monthlyDataStatistic.location?.split("-")[0] * 1
                         : 40.77408090036615,
@@ -962,8 +954,6 @@ const UserData = () => {
                         ? yesterdayDataStatistic.location?.split("-")[1] * 1
                         : whichData == "daily"
                         ? dailyDataStatistic.location?.split("-")[1] * 1
-                        : whichData == "search-between"
-                        ? searchBetweenDataStatistic.location?.split("-")[1] * 1
                         : whichData == "monthly"
                         ? monthlyDataStatistic.location?.split("-")[1] * 1
                         : 72.5355339,
@@ -975,8 +965,6 @@ const UserData = () => {
                       ? yesterdayDataStatistic.name
                       : whichData == "daily"
                       ? dailyDataStatistic.name
-                      : whichData == "search-between"
-                      ? searchBetweenDataStatistic.name
                       : whichData == "monthly"
                       ? monthlyDataStatistic.name
                       : null
@@ -1282,7 +1270,7 @@ const UserData = () => {
                           </div>
                         )
                       ) : whichData == "daily" ? (
-                        dailyData.length > 0 ? (
+                        dailyDataStatistic.dailyData.length > 0 ? (
                           <div>
                             <h3 className="fw-semibold text-success fs-6">
                               {dailyDataStatistic.name}
@@ -1357,105 +1345,6 @@ const UserData = () => {
                                   dailyDataStatistic?.dailyData[0]?.date.split(
                                     "-"
                                   )[2]
-                                }
-                              </span>
-                            </div>
-                          </div>
-                        ) : (
-                          <div>
-                            <h3 className="fw-semibold text-success fs-6 text-center">
-                              {dailyDataStatistic.name}
-                            </h3>
-                            <div className="d-flex align-items-center justify-content-center">
-                              <img
-                                src={circleRed}
-                                alt="circleBlue"
-                                width={18}
-                                height={18}
-                              />
-                              <p className="m-0 infowindow-desc-not-last-data fs-6 ms-1 me-1 ">
-                                Ma'lumot kelmagan...
-                              </p>
-                            </div>{" "}
-                          </div>
-                        )
-                      ) : whichData == "search-between" ? (
-                        searchBetweenData.length > 0 ? (
-                          <div>
-                            <h3 className="fw-semibold text-success fs-6">
-                              {searchBetweenDataStatistic.name}
-                            </h3>
-
-                            <div className="d-flex align-items-center mb-1">
-                              <img
-                                src={circleBlue}
-                                alt="circleBlue"
-                                width={12}
-                                height={12}
-                              />
-                              <p className="infowindow-desc m-0 ms-1 me-1">
-                                Sath:
-                              </p>{" "}
-                              <span className="infowindow-span">
-                                {Number(
-                                  searchBetweenDataStatistic?.allData[0]?.level
-                                ).toFixed(2)}{" "}
-                                sm
-                              </span>
-                            </div>
-
-                            <div className="d-flex align-items-center mb-1">
-                              <img
-                                src={circleBlue}
-                                alt="circleBlue"
-                                width={12}
-                                height={12}
-                              />
-                              <p className="m-0 infowindow-desc ms-1 me-1 ">
-                                Sho'rlanish:
-                              </p>{" "}
-                              <span className="infowindow-span">
-                                {Number(
-                                  searchBetweenDataStatistic?.allData[0]
-                                    ?.conductivity
-                                ).toFixed(2)}{" "}
-                                g/l
-                              </span>
-                            </div>
-
-                            <div className="d-flex align-items-center mb-1">
-                              <img
-                                src={circleBlue}
-                                alt="circleBlue"
-                                width={12}
-                                height={12}
-                              />
-                              <p className="m-0 infowindow-desc ms-1 me-1 ">
-                                Temperatura:
-                              </p>{" "}
-                              <span className="infowindow-span">
-                                {Number(
-                                  searchBetweenDataStatistic?.allData[0]?.temp
-                                ).toFixed(2)}{" "}
-                                °C
-                              </span>
-                            </div>
-
-                            <div className="d-flex align-items-center">
-                              <img
-                                src={circleBlue}
-                                alt="circleBlue"
-                                width={12}
-                                height={12}
-                              />
-                              <p className="m-0 infowindow-desc ms-1 me-1">
-                                Kun:
-                              </p>{" "}
-                              <span className="infowindow-span">
-                                {
-                                  searchBetweenDataStatistic?.allData[0]?.date.split(
-                                    " "
-                                  )[0]
                                 }
                               </span>
                             </div>
@@ -2004,7 +1893,10 @@ const UserData = () => {
                     className="tab-pane tab-pane-hour fade profile-users"
                     id="profile-users"
                   >
-                    <div className="containerr">
+                    {
+                      dailyData.length > 0
+                      ?
+                      <div className="containerr">
                       <div className="user-data-hour-wrapper">
                         <div className="d-flex justify-content-between align-items-center">
                           <input
@@ -2153,6 +2045,11 @@ const UserData = () => {
                         />
                       </div>
                     </div>
+                      :
+                      <div className="d-flex align-items-center justify-content-center hour-spinner-wrapper">
+                      <span className="loader"></span>
+                    </div>
+                    }
                   </div>
 
                   {/* MONTHLY */}
@@ -2160,7 +2057,10 @@ const UserData = () => {
                     className="tab-pane tab-pane-hour fade profile-overview"
                     id="profile-overview"
                   >
-                    <div className="containerr">
+                    {
+                      monthlyData.length > 0
+                      ?
+                      <div className="containerr">
                       <div className="user-data-hour-wrapper">
                         <div className="d-flex justify-content-between align-items-center">
                           <input
@@ -2287,8 +2187,14 @@ const UserData = () => {
                         />
                       </div>
                     </div>
+                      :
+                      <div className="d-flex align-items-center justify-content-center hour-spinner-wrapper">
+                      <span className="loader"></span>
+                    </div>
+                    }
                   </div>
 
+                  {/* LAST DATA */}
                   <div>
                     <div>
                       <div className="smartwell-search-user-data d-flex align-items-center flex-wrap">

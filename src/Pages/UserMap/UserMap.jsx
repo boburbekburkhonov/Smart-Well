@@ -249,10 +249,10 @@ const UserMap = () => {
                                           height={12}
                                         />
                                         <p className="m-0 infowindow-desc ms-1 me-1 ">
-                                          Daraja:
+                                        Sath :
                                         </p>{" "}
                                         <span className="infowindow-span">
-                                          {Number(e.lastData.level).toFixed(2)}
+                                          {Number(e.lastData.level).toFixed(2)} sm
                                         </span>
                                       </div>
 
@@ -264,12 +264,12 @@ const UserMap = () => {
                                           height={12}
                                         />
                                         <p className="infowindow-desc m-0 ms-1 me-1">
-                                          O'tkazuvchanlik:
+                                        Sho'rlanish:
                                         </p>{" "}
                                         <span className="infowindow-span">
                                           {Number(
                                             e.lastData.conductivity
-                                          ).toFixed(2)}
+                                          ).toFixed(2)} g/l
                                         </span>
                                       </div>
 
@@ -433,7 +433,7 @@ const UserMap = () => {
                                   </p>{" "}
                                   <span className="infowindow-span">
                                     {e.lastData.date.split("-")[0]}/
-                                    {e.date.split("-")[1]}/
+                                    {e.lastData.date.split("-")[1]}/
                                     {e.lastData.date.split("-")[2].slice(0, 2)}{" "}
                                     {
                                       e.lastData.date

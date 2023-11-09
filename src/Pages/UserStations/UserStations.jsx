@@ -565,7 +565,7 @@ const UserStations = () => {
                           <img src={circle} alt="name" width={20} height={20} />
                           <p className="m-0 ms-4">Status:</p>
                           <p className="m-0 ms-2 fw-semibold">
-                            {stationOne?.status}
+                            {stationOne?.status  == '1' ? "ishlayapti" : "ishlamayapti"}
                           </p>
                         </div>
 
@@ -634,6 +634,7 @@ const UserStations = () => {
                     </li>
                   </ul>
                   <div className="tab-content pt-4">
+                    {/* ALL STATION */}
                     <div
                       className="tab-pane fade show active profile-users table-scroll"
                       id="profile-users"
@@ -666,7 +667,7 @@ const UserStations = () => {
                       </form>
 
                       <div
-                        className="d-flex align-items-center justify-content-end cursor-pointer"
+                        className="d-flex align-items-center justify-content-end cursor-pointer ms-auto user-station-save"
                         onClick={() => exportDataToExcel()}
                       >
                         <p className="m-0 p-0 user-station-save-data-desc">
@@ -727,7 +728,7 @@ const UserStations = () => {
                                     {e.imel}
                                   </td>
                                   <td className="c-table__cell text-center">
-                                    {e.status}
+                                    {e.status  == '1' ? "ishlayapti" : "ishlamayapti"}
                                   </td>
                                   <td className="c-table__cell text-center">
                                     {e.temperture}
@@ -819,7 +820,7 @@ const UserStations = () => {
                       </form>
 
                       <div
-                        className="text-end d-flex align-items-center justify-content-end cursor-pointer"
+                        className="text-end d-flex align-items-center justify-content-end cursor-pointer ms-auto user-station-save"
                         onClick={() => exportDataToExcel()}
                       >
                         <p className="m-0 p-0 user-station-save-data-desc">
@@ -878,7 +879,7 @@ const UserStations = () => {
                                     {e.imel}
                                   </td>
                                   <td className="c-table__cell text-center">
-                                    {e.status}
+                                    {e.status  == '1' ? "ishlayapti" : "ishlamayapti"}
                                   </td>
                                   <td className="c-table__cell text-center">
                                     {e.temperture}
@@ -926,7 +927,7 @@ const UserStations = () => {
                       </h3>
 
                       <div
-                        className="text-end d-flex align-items-center justify-content-end cursor-pointer"
+                        className="text-end d-flex align-items-center justify-content-end cursor-pointer ms-auto user-station-save"
                         onClick={() => exportDataToExcel()}
                       >
                         <p className="m-0 p-0 user-station-save-data-desc">
@@ -983,7 +984,7 @@ const UserStations = () => {
                                     {e.imel}
                                   </td>
                                   <td className="c-table__cell text-center">
-                                    {e.status}
+                                    {e.status  == '1' ? "ishlayapti" : "ishlamayapti"}
                                   </td>
                                   <td className="c-table__cell text-center">
                                     {e.temperture}

@@ -153,7 +153,9 @@ const UserDashboard = (prop) => {
         .get(
           `/last-data/todayWorkStations?page=1&perPage=${stationStatistic?.totalTodayWorkStationsCount}`
         )
-        .then((data) => setViewStation(data.data.data.docs));
+        .then((data) => {
+          setViewStation(data.data.data.docs)
+        });
 
       // ! LIMIT
       customFetch
@@ -254,147 +256,72 @@ const UserDashboard = (prop) => {
     if (index == 0) {
       setTableTitle("Batareya quvvati 90% dan ko'p bo'lgan stansiyalar");
       // ! LIMIT
-      fetch(
-        `${api}/last-data/getGreaterAndLessByStations?great=90&page=1&perPage=10&less=100`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
-      )
-        .then((res) => res.json())
-        .then((data) => setViewStationByCharLimit(data.data.data));
+      customFetch
+        .get(
+        `/last-data/getGreaterAndLessByStations?great=90&page=1&perPage=10&less=100`)
+        .then((data) => setViewStationByCharLimit(data.data.data.data));
 
       // !----------------------------------------------------------------
 
-      fetch(`${api}/last-data/getGreaterAndLessByStations?great=90&less=100`, {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      })
-        .then((res) => res.json())
-        .then((data) => setViewStationByChar(data.data.data));
+      customFetch
+        .get(`/last-data/getGreaterAndLessByStations?great=90&less=100`)
+        .then((data) => setViewStationByChar(data.data.data.data));
     } else if (index == 1) {
       setTableTitle("Batareya quvvati 75% dan ko'p bo'lgan stansiyalar");
 
       // ! LIMIT
-      fetch(
-        `${api}/last-data/getGreaterAndLessByStations?great=75&page=1&perPage=10&less=90`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
-      )
-        .then((res) => res.json())
-        .then((data) => setViewStationByCharLimit(data.data.data));
+      customFetch
+        .get(
+        `/last-data/getGreaterAndLessByStations?great=75&page=1&perPage=10&less=90`)
+        .then((data) => setViewStationByCharLimit(data.data.data.data));
 
       // !----------------------------------------------------------------
 
-      fetch(`${api}/last-data/getGreaterAndLessByStations?great=75&less=90`, {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      })
-        .then((res) => res.json())
-        .then((data) => setViewStationByChar(data.data.data));
+      customFetch
+        .get(`/last-data/getGreaterAndLessByStations?great=75&less=90`)
+        .then((data) => setViewStationByChar(data.data.data.data));
     } else if (index == 2) {
       setTableTitle("Batareya quvvati 50% dan ko'p bo'lgan stansiyalar");
 
       // ! LIMIT
-      fetch(
-        `${api}/last-data/getGreaterAndLessByStations?great=50&page=1&perPage=10&less=75`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
-      )
-        .then((res) => res.json())
-        .then((data) => setViewStationByCharLimit(data.data.data));
+      customFetch
+        .get(
+        `/last-data/getGreaterAndLessByStations?great=50&page=1&perPage=10&less=75`)
+        .then((data) => setViewStationByCharLimit(data.data.data.data));
 
       // !----------------------------------------------------------------
 
-      fetch(`${api}/last-data/getGreaterAndLessByStations?great=50&less=75`, {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      })
-        .then((res) => res.json())
-        .then((data) => setViewStationByChar(data.data.data));
+      customFetch
+        .get(`/last-data/getGreaterAndLessByStations?great=50&less=75`)
+        .then((data) => setViewStationByChar(data.data.data.data));
     } else if (index == 3) {
       setTableTitle("Batareya quvvati 25% dan ko'p bo'lgan stansiyalar");
 
       // ! LIMIT
-      fetch(
-        `${api}/last-data/getGreaterAndLessByStations?great=25&page=1&perPage=10&less=50`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
-      )
-        .then((res) => res.json())
-        .then((data) => setViewStationByCharLimit(data.data.data));
+      customFetch
+        .get(
+        `/last-data/getGreaterAndLessByStations?great=25&page=1&perPage=10&less=50`)
+        .then((data) => setViewStationByCharLimit(data.data.data.data));
 
       // !----------------------------------------------------------------
 
-      fetch(`${api}/last-data/getGreaterAndLessByStations?great=25&less=50`, {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      })
-        .then((res) => res.json())
-        .then((data) => setViewStationByChar(data.data.data));
+      customFetch
+        .get(`/last-data/getGreaterAndLessByStations?great=25&less=50`)
+        .then((data) => setViewStationByChar(data.data.data.data));
     } else if (index == 4) {
       setTableTitle("Batareya quvvati 25% dan kam bo'lgan stansiyalar");
 
       // ! LIMIT
-      fetch(
-        `${api}/last-data/getGreaterAndLessByStations?great=0&page=1&perPage=10&less=25`,
-        {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization:
-              "Bearer " + window.localStorage.getItem("accessToken"),
-          },
-        }
-      )
-        .then((res) => res.json())
-        .then((data) => setViewStationByCharLimit(data.data.data));
+      customFetch
+        .get(
+        `/last-data/getGreaterAndLessByStations?great=0&page=1&perPage=10&less=25`)
+        .then((data) => setViewStationByCharLimit(data.data.data.data));
 
       // !----------------------------------------------------------------
 
-      fetch(`${api}/last-data/getGreaterAndLessByStations?great=0&less=25`, {
-        method: "GET",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-        },
-      })
-        .then((res) => res.json())
-        .then((data) => setViewStationByChar(data.data.data));
+      customFetch
+        .get(`/last-data/getGreaterAndLessByStations?great=0&less=25`)
+        .then((data) => setViewStationByChar(data.data.data.data));
     }
   };
 
