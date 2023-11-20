@@ -19,11 +19,12 @@ import AdminDashboard from "../AdminDashboard/AdminDashboard";
 import AdminMap from "../AdminMap/AdminMap";
 import AdminStation from "../AdminStation/AdminStation";
 import AdminNews from "../AdminNews/AdminNews";
-import AdminUser from "../AdminUser/AdminUser";
+import AdminLastData from "../AdminLastData/AdminLastData";
 
 const Admin = () => {
   const token = window.localStorage.getItem("accessToken");
   const location = useLocation();
+  const username = window.localStorage.getItem("username");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -88,25 +89,25 @@ const Admin = () => {
               <a
                 href="#"
                 className={
-                  location.pathname == "/admin/map"
+                  location.pathname == "/admin/lastdata"
                     ? "sidebar-active sidebar-style"
                     : "sidebar-style"
                 }
-                onClick={() => navigate("/admin/map")}
+                onClick={() => navigate("/admin/lastdata")}
               >
                 <img
                   className="bx bx-menu"
-                  src={location.pathname == "/admin/map" ? mapBlack : map}
+                  src={location.pathname == "/admin/lastdata" ? user : userWhite}
                   alt="menuBar"
                   width={26}
                   height={26}
                 />
-                <span className="link_name ms-3">Xarita</span>
+                <span className="link_name ms-3">Oxirgi ma'lumotlar</span>
               </a>
               <ul className="sub-menu blank">
                 <li>
                   <a className="link_name" href="#">
-                    Xarita
+                  Oxirgi ma'lumotlar
                   </a>
                 </li>
               </ul>
@@ -141,6 +142,35 @@ const Admin = () => {
                 </li>
               </ul>
             </li>
+
+            <li className="mt-3">
+              <a
+                href="#"
+                className={
+                  location.pathname == "/admin/map"
+                    ? "sidebar-active sidebar-style"
+                    : "sidebar-style"
+                }
+                onClick={() => navigate("/admin/map")}
+              >
+                <img
+                  className="bx bx-menu"
+                  src={location.pathname == "/admin/map" ? mapBlack : map}
+                  alt="menuBar"
+                  width={26}
+                  height={26}
+                />
+                <span className="link_name ms-3">Xarita</span>
+              </a>
+              <ul className="sub-menu blank">
+                <li>
+                  <a className="link_name" href="#">
+                    Xarita
+                  </a>
+                </li>
+              </ul>
+            </li>
+
             <li className="mt-3">
               <div className="icon-link">
                 <a
@@ -170,33 +200,6 @@ const Admin = () => {
                 <li>
                   <a className="link_name" href="#">
                     Stansiyalar
-                  </a>
-                </li>
-              </ul>
-            </li>
-            <li className="mt-3">
-              <a
-                href="#"
-                className={
-                  location.pathname == "/admin/users"
-                    ? "sidebar-active sidebar-style"
-                    : "sidebar-style"
-                }
-                onClick={() => navigate("/admin/users")}
-              >
-                <img
-                  className="bx bx-menu"
-                  src={location.pathname == "/admin/users" ? user : userWhite}
-                  alt="menuBar"
-                  width={26}
-                  height={26}
-                />
-                <span className="link_name ms-3">Userlar</span>
-              </a>
-              <ul className="sub-menu blank">
-                <li>
-                  <a className="link_name" href="#">
-                    Userlar
                   </a>
                 </li>
               </ul>
@@ -236,7 +239,7 @@ const Admin = () => {
                   width={30}
                   height={30}
                 />
-                <span className="mx-2">Nasos</span>
+                <span className="mx-2">{username}</span>
               </div>
             </div>
           </div>
@@ -246,10 +249,10 @@ const Admin = () => {
           <div className="container-fluid">
             <Routes>
               <Route path="/*" element={<AdminDashboard />} />
+              <Route path="/lastdata" element={<AdminLastData />} />
+              <Route path="/news" element={<AdminNews />} />
               <Route path="/map" element={<AdminMap />} />
               <Route path="/stations" element={<AdminStation />} />
-              <Route path="/news" element={<AdminNews />} />
-              <Route path="/users" element={<AdminUser />} />
             </Routes>
           </div>
         </section>

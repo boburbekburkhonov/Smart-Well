@@ -64,7 +64,7 @@ const Login = () => {
       window.localStorage.setItem("checkRemember", checkRemember);
       window.localStorage.setItem("accessToken", response.data.accessToken);
       window.localStorage.setItem("refreshToken", response.data.refreshToken);
-      if (response.data.user?.role == "SUPERADMIN") {
+      if (response.data.user?.role == "ADMIN") {
         window.location.href = "/admin";
       } else if (response.data.user?.role == "USER") {
         window.location.href = "/user";
