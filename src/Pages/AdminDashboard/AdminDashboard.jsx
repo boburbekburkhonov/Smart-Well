@@ -1178,17 +1178,10 @@ const AdminDashboard = () => {
 
                 <div className="d-flex align-items-center justify-content-between flex-wrap mb-3 pt-3">
                   <h1 className="dashboard-heading ms-2">
-                    Jami stasiya ma'lumotlari
+                    Jami stasiyalar
                   </h1>
 
-                  <div className="region-heading-statis-wrapper d-flex flex-wrap cursor" onClick={() => {
-                        // setBalansOrgId(undefined)
-                        // getStationStatisByBalansOrg()
-                        // setWhichStation("allStation");
-                        // setTableTitle("Umumiy stansiyalar soni");
-                        // setDataOrStation('data')
-                        // loaderFunc()
-                      }}>
+                  <div className="region-heading-statis-wrapper d-flex flex-wrap cursor">
                           <div className="d-flex align-items-center m-0">
                             <img src={active} alt="active" width={30} height={30} /> <span className="fs-6 ms-1">Active</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatistic.countWorkingStations} ta</span>
                           </div>
