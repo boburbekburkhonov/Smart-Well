@@ -146,7 +146,7 @@
 }
 
 .sort-dashboard-list-item {
-    max-width: 270px !important;
+    max-width: 330px !important;
     width: 100% !important;
 }
 
@@ -165,4 +165,8 @@
 
   .sort-dashboard-wrapper:active {
     opacity: 0.4;
+  }
+
+  .carousel-region-heading {
+    font-size: 18px;
   }

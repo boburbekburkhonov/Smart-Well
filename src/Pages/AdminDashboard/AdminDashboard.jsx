@@ -29,6 +29,7 @@ const AdminDashboard = () => {
   const role = window.localStorage.getItem("role");
   const [loader, setLoader] = useState(false);
   const [allBalansOrg, setAllBalansOrg] = useState([]);
+  const [allRegion, setAllRegion] = useState([]);
   const [balansOrgId, setBalansOrgId] = useState();
   const [dataOrStation, setDataOrStation] = useState("data");
   const [stationBattery, setStationBattery] = useState([]);
@@ -140,82 +141,166 @@ const AdminDashboard = () => {
     customFetch
     .get(`/balance-organizations/all-find`)
     .then((data) => setAllBalansOrg(data.data.balanceOrganizations))
+
+    // ! ALL REGION
+    customFetch
+    .get(`/regions/all`)
+    .then((data) => {
+      setAllRegion(data.data.regions)
+    })
   }, []);
 
   useEffect(() => {
-    if (whichStation == "allStation") {
-      customFetch
-        .get(
-          `last-data/allLastData?page=1&perPage=${stationStatistic?.totalStationsCount}`
-        )
-        .then((data) => {
-          setViewStation(data.data.data)
-        });
+    if(balansOrgId == undefined){
+      if (whichStation == "allStation") {
+        customFetch
+          .get(
+            `last-data/allLastData?page=1&perPage=${stationStatistic?.totalStationsCount}`
+          )
+          .then((data) => {
+            setViewStation(data.data.data)
+          });
 
-      // ! LIMIT
-      customFetch
-        .get(`/last-data/allLastData?page=1&perPage=8`)
-        .then((data) => {
-          setViewStationLimit(data.data.data)
-        });
-    } else if (whichStation == "todayStation") {
-      customFetch
-        .get(
-          `/last-data/todayWorkStations?page=1&perPage=${stationStatistic?.totalTodayWorkStationsCount}`
-        )
-        .then((data) => {
-          setViewStation(data.data.data.docs)
-        });
+        // ! LIMIT
+        customFetch
+          .get(`/last-data/allLastData?page=1&perPage=8`)
+          .then((data) => {
+            setViewStationLimit(data.data.data)
+          });
+      } else if (whichStation == "todayStation") {
+        customFetch
+          .get(
+            `/last-data/todayWorkStations?page=1&perPage=${stationStatistic?.totalTodayWorkStationsCount}`
+          )
+          .then((data) => {
+            setViewStation(data.data.data.docs)
+          });
 
-      // ! LIMIT
-      customFetch
-        .get(`/last-data/todayWorkStations?page=1&perPage=8`)
-        .then((data) => setViewStationLimit(data.data.data.docs));
-    } else if (whichStation == "withinThreeDayStation") {
-      customFetch
-        .get(
-          `/last-data/treeDaysWorkStations?page=1&perPage=${stationStatistic?.totalThreeDayWorkStationsCount}`
-        )
-        .then((data) => setViewStation(data.data.data.docs));
+        // ! LIMIT
+        customFetch
+          .get(`/last-data/todayWorkStations?page=1&perPage=8`)
+          .then((data) => setViewStationLimit(data.data.data.docs));
+      } else if (whichStation == "withinThreeDayStation") {
+        customFetch
+          .get(
+            `/last-data/treeDaysWorkStations?page=1&perPage=${stationStatistic?.totalThreeDayWorkStationsCount}`
+          )
+          .then((data) => setViewStation(data.data.data.docs));
 
-      // ! LIMIT
+        // ! LIMIT
 
-      customFetch
-        .get(`${api}/last-data/treeDaysWorkStations?page=1&perPage=8`)
-        .then((data) => setViewStationLimit(data.data.data.docs));
-    } else if (whichStation == "totalMonthWorkStation") {
-      customFetch
-        .get(
-          `/last-data/lastMonthWorkStations?page=1&perPage=${stationStatistic?.totalMonthWorkStationsCount}`
-        )
-        .then((data) => setViewStation(data.data.data.docs));
+        customFetch
+          .get(`${api}/last-data/treeDaysWorkStations?page=1&perPage=8`)
+          .then((data) => setViewStationLimit(data.data.data.docs));
+      } else if (whichStation == "totalMonthWorkStation") {
+        customFetch
+          .get(
+            `/last-data/lastMonthWorkStations?page=1&perPage=${stationStatistic?.totalMonthWorkStationsCount}`
+          )
+          .then((data) => setViewStation(data.data.data.docs));
 
-      // ! LIMIT
-      customFetch
-        .get(`/last-data/lastMonthWorkStations?page=1&perPage=8`)
-        .then((data) => setViewStationLimit(data.data.data.docs));
-    } else if (whichStation == "totalMoreWorkStations") {
-      customFetch
-        .get(
-          `/last-data/moreWorkStations?page=1&perPage=${stationStatistic?.totalMoreWorkStationsCount}`
-        )
-        .then((data) => setViewStation(data.data.data.docs));
+        // ! LIMIT
+        customFetch
+          .get(`/last-data/lastMonthWorkStations?page=1&perPage=8`)
+          .then((data) => setViewStationLimit(data.data.data.docs));
+      } else if (whichStation == "totalMoreWorkStations") {
+        customFetch
+          .get(
+            `/last-data/moreWorkStations?page=1&perPage=${stationStatistic?.totalMoreWorkStationsCount}`
+          )
+          .then((data) => setViewStation(data.data.data.docs));
 
-      // ! LIMIT
-      customFetch
-        .get(`/last-data/moreWorkStations?page=1&perPage=8`)
-        .then((data) => setViewStationLimit(data.data.data.docs));
-    } else if (whichStation == "notWorkStation") {
-      customFetch
-        .get(
-          `/last-data/getNotLastDataStations?page=1&perPage=${stationStatistic?.totalNotDataStationsCount}`
-        )
-        .then((data) => setViewStation(data.data.data.docs));
+        // ! LIMIT
+        customFetch
+          .get(`/last-data/moreWorkStations?page=1&perPage=8`)
+          .then((data) => setViewStationLimit(data.data.data.docs));
+      } else if (whichStation == "notWorkStation") {
+        customFetch
+          .get(
+            `/last-data/getNotLastDataStations?page=1&perPage=${stationStatistic?.totalNotDataStationsCount}`
+          )
+          .then((data) => setViewStation(data.data.data.docs));
 
-      // ! LIMIT
-      customFetch
-        .get(`${api}/last-data/getNotLastDataStations?page=1&perPage=8`)
-        .then((data) => setViewStationLimit(data.data.data.docs));
+        // ! LIMIT
+        customFetch
+          .get(`${api}/last-data/getNotLastDataStations?page=1&perPage=8`)
+          .then((data) => setViewStationLimit(data.data.data.docs));
+      }
+    }else {
+      if (whichStation == "allStation") {
+        customFetch
+          .get(
+            `last-data/allLastDataByOrganization?page=1&perPage=${stationStatistic?.totalStationsCount}&organization=${balansOrgId}`
+          )
+          .then((data) => {
+            setViewStation(data.data.data)
+          });
+
+        // ! LIMIT
+        customFetch
+          .get(`/last-data/allLastDataByOrganization?page=1&perPage=8&organization=${balansOrgId}`)
+          .then((data) => {
+            setViewStationLimit(data.data.data)
+          });
+      } else if (whichStation == "todayStation") {
+        customFetch
+          .get(
+            `/last-data/todayWorkStationsByOrganization?page=1&perPage=${stationStatistic?.totalTodayWorkStationsCount}&organization=${balansOrgId}`
+          )
+          .then((data) => {
+            setViewStation(data.data.data.docs)
+          });
+
+        // ! LIMIT
+        customFetch
+          .get(`/last-data/todayWorkStationsByOrganization?page=1&perPage=8&organization=${balansOrgId}`)
+          .then((data) => setViewStationLimit(data.data.data.docs));
+      } else if (whichStation == "withinThreeDayStation") {
+        customFetch
+          .get(
+            `/last-data/treeDaysWorkStationsByOrganization?page=1&perPage=${stationStatistic?.totalThreeDayWorkStationsCount}&organization=${balansOrgId}`
+          )
+          .then((data) => setViewStation(data.data.data.docs));
+
+        // ! LIMIT
+
+        customFetch
+          .get(`${api}/last-data/treeDaysWorkStationsByOrganization?page=1&perPage=8&organization=${balansOrgId}`)
+          .then((data) => setViewStationLimit(data.data.data.docs));
+      } else if (whichStation == "totalMonthWorkStation") {
+        customFetch
+          .get(
+            `/last-data/lastMonthWorkStationsByOrganization?page=1&perPage=${stationStatistic?.totalMonthWorkStationsCount}&organization=${balansOrgId}`
+          )
+          .then((data) => setViewStation(data.data.data.docs));
+
+        // ! LIMIT
+        customFetch
+          .get(`/last-data/lastMonthWorkStationsByOrganization?page=1&perPage=8&organization=${balansOrgId}`)
+          .then((data) => setViewStationLimit(data.data.data.docs));
+      } else if (whichStation == "totalMoreWorkStations") {
+        customFetch
+          .get(
+            `/last-data/moreWorkStationsByOrganization?page=1&perPage=${stationStatistic?.totalMoreWorkStationsCount}&organization=${balansOrgId}`
+          )
+          .then((data) => setViewStation(data.data.data.docs));
+
+        // ! LIMIT
+        customFetch
+          .get(`/last-data/moreWorkStationsByOrganization?page=1&perPage=8&organization=${balansOrgId}`)
+          .then((data) => setViewStationLimit(data.data.data.docs));
+      } else if (whichStation == "notWorkStation") {
+        customFetch
+          .get(
+            `/last-data/getNotLastDataStationsByOrganization?page=1&perPage=${stationStatistic?.totalNotDataStationsCount}&organization=${balansOrgId}`
+          )
+          .then((data) => setViewStation(data.data.data.docs));
+
+        // ! LIMIT
+        customFetch
+          .get(`${api}/last-data/getNotLastDataStationsByOrganization?page=1&perPage=8&organization=${balansOrgId}`)
+          .then((data) => setViewStationLimit(data.data.data.docs));
+      }
     }
   }, [stationStatistic, whichStation]);
 
@@ -263,75 +348,148 @@ const AdminDashboard = () => {
     setDataOrStation("station");
     const index = getElementsAtEvent(chartRef.current, event)[0]?.index;
 
-    if (index == 0) {
-      setTableTitle("Batareya quvvati 90% dan ko'p bo'lgan stansiyalar");
-      // ! LIMIT
-      customFetch
-        .get(
-        `/last-data/getGreaterAndLessByStations?great=89&page=1&perPage=10&less=101`)
-        .then((data) => setViewStationByCharLimit(data.data.data.data));
+    if(balansOrgId == undefined){
+      if (index == 0) {
+        setTableTitle("Batareya quvvati 90% dan ko'p bo'lgan stansiyalar");
+        // ! LIMIT
+        customFetch
+          .get(
+          `/last-data/getGreaterAndLessByStations?great=89&page=1&perPage=10&less=101`)
+          .then((data) => setViewStationByCharLimit(data.data.data.data));
 
-      // !----------------------------------------------------------------
+        // !----------------------------------------------------------------
 
-      customFetch
-        .get(`/last-data/getGreaterAndLessByStations?great=89&less=101`)
-        .then((data) => setViewStationByChar(data.data.data.data));
-    } else if (index == 1) {
-      setTableTitle("Batareya quvvati 75% dan ko'p bo'lgan stansiyalar");
+        customFetch
+          .get(`/last-data/getGreaterAndLessByStations?great=89&less=101`)
+          .then((data) => setViewStationByChar(data.data.data.data));
+      } else if (index == 1) {
+        setTableTitle("Batareya quvvati 75% dan ko'p bo'lgan stansiyalar");
 
-      // ! LIMIT
-      customFetch
-        .get(
-        `/last-data/getGreaterAndLessByStations?great=74&page=1&perPage=10&less=90`)
-        .then((data) => setViewStationByCharLimit(data.data.data.data));
+        // ! LIMIT
+        customFetch
+          .get(
+          `/last-data/getGreaterAndLessByStations?great=74&page=1&perPage=10&less=90`)
+          .then((data) => setViewStationByCharLimit(data.data.data.data));
 
-      // !----------------------------------------------------------------
+        // !----------------------------------------------------------------
 
-      customFetch
-        .get(`/last-data/getGreaterAndLessByStations?great=74&less=90`)
-        .then((data) => setViewStationByChar(data.data.data.data));
-    } else if (index == 2) {
-      setTableTitle("Batareya quvvati 50% dan ko'p bo'lgan stansiyalar");
+        customFetch
+          .get(`/last-data/getGreaterAndLessByStations?great=74&less=90`)
+          .then((data) => setViewStationByChar(data.data.data.data));
+      } else if (index == 2) {
+        setTableTitle("Batareya quvvati 50% dan ko'p bo'lgan stansiyalar");
 
-      // ! LIMIT
-      customFetch
-        .get(
-        `/last-data/getGreaterAndLessByStations?great=49&page=1&perPage=10&less=75`)
-        .then((data) => setViewStationByCharLimit(data.data.data.data));
+        // ! LIMIT
+        customFetch
+          .get(
+          `/last-data/getGreaterAndLessByStations?great=49&page=1&perPage=10&less=75`)
+          .then((data) => setViewStationByCharLimit(data.data.data.data));
 
-      // !----------------------------------------------------------------
+        // !----------------------------------------------------------------
 
-      customFetch
-        .get(`/last-data/getGreaterAndLessByStations?great=49&less=75`)
-        .then((data) => setViewStationByChar(data.data.data.data));
-    } else if (index == 3) {
-      setTableTitle("Batareya quvvati 25% dan ko'p bo'lgan stansiyalar");
+        customFetch
+          .get(`/last-data/getGreaterAndLessByStations?great=49&less=75`)
+          .then((data) => setViewStationByChar(data.data.data.data));
+      } else if (index == 3) {
+        setTableTitle("Batareya quvvati 25% dan ko'p bo'lgan stansiyalar");
 
-      // ! LIMIT
-      customFetch
-        .get(
-        `/last-data/getGreaterAndLessByStations?great=24&page=1&perPage=10&less=50`)
-        .then((data) => setViewStationByCharLimit(data.data.data.data));
+        // ! LIMIT
+        customFetch
+          .get(
+          `/last-data/getGreaterAndLessByStations?great=24&page=1&perPage=10&less=50`)
+          .then((data) => setViewStationByCharLimit(data.data.data.data));
 
-      // !----------------------------------------------------------------
+        // !----------------------------------------------------------------
 
-      customFetch
-        .get(`/last-data/getGreaterAndLessByStations?great=24&less=50`)
-        .then((data) => setViewStationByChar(data.data.data.data));
-    } else if (index == 4) {
-      setTableTitle("Batareya quvvati 25% dan kam bo'lgan stansiyalar");
+        customFetch
+          .get(`/last-data/getGreaterAndLessByStations?great=24&less=50`)
+          .then((data) => setViewStationByChar(data.data.data.data));
+      } else if (index == 4) {
+        setTableTitle("Batareya quvvati 25% dan kam bo'lgan stansiyalar");
 
-      // ! LIMIT
-      customFetch
-        .get(
-        `/last-data/getGreaterAndLessByStations?great=-1&page=1&perPage=10&less=25`)
-        .then((data) => setViewStationByCharLimit(data.data.data.data));
+        // ! LIMIT
+        customFetch
+          .get(
+          `/last-data/getGreaterAndLessByStations?great=-1&page=1&perPage=10&less=25`)
+          .then((data) => setViewStationByCharLimit(data.data.data.data));
 
-      // !----------------------------------------------------------------
+        // !----------------------------------------------------------------
 
-      customFetch
-        .get(`/last-data/getGreaterAndLessByStations?great=-1&less=25`)
-        .then((data) => setViewStationByChar(data.data.data.data));
+        customFetch
+          .get(`/last-data/getGreaterAndLessByStations?great=-1&less=25`)
+          .then((data) => setViewStationByChar(data.data.data.data));
+      }
+    }else {
+      if (index == 0) {
+        setTableTitle("Batareya quvvati 90% dan ko'p bo'lgan stansiyalar");
+        // ! LIMIT
+        customFetch
+          .get(
+          `/last-data/getGreaterAndLessByOrganization?great=89&page=1&perPage=10&less=101&organization=${balansOrgId}`)
+          .then((data) => setViewStationByCharLimit(data.data.data.data));
+
+        // !----------------------------------------------------------------
+
+        customFetch
+          .get(`/last-data/getGreaterAndLessByOrganization?great=89&less=101&organization=${balansOrgId}`)
+          .then((data) => setViewStationByChar(data.data.data.data));
+      } else if (index == 1) {
+        setTableTitle("Batareya quvvati 75% dan ko'p bo'lgan stansiyalar");
+
+        // ! LIMIT
+        customFetch
+          .get(
+          `/last-data/getGreaterAndLessByOrganization?great=74&page=1&perPage=10&less=90&organization=${balansOrgId}`)
+          .then((data) => setViewStationByCharLimit(data.data.data.data));
+
+        // !----------------------------------------------------------------
+
+        customFetch
+          .get(`/last-data/getGreaterAndLessByOrganization?great=74&less=90&organization=${balansOrgId}`)
+          .then((data) => setViewStationByChar(data.data.data.data));
+      } else if (index == 2) {
+        setTableTitle("Batareya quvvati 50% dan ko'p bo'lgan stansiyalar");
+
+        // ! LIMIT
+        customFetch
+          .get(
+          `/last-data/getGreaterAndLessByOrganization?great=49&page=1&perPage=10&less=75&organization=${balansOrgId}`)
+          .then((data) => setViewStationByCharLimit(data.data.data.data));
+
+        // !----------------------------------------------------------------
+
+        customFetch
+          .get(`/last-data/getGreaterAndLessByOrganization?great=49&less=75&organization=${balansOrgId}`)
+          .then((data) => setViewStationByChar(data.data.data.data));
+      } else if (index == 3) {
+        setTableTitle("Batareya quvvati 25% dan ko'p bo'lgan stansiyalar");
+
+        // ! LIMIT
+        customFetch
+          .get(
+          `/last-data/getGreaterAndLessByOrganization?great=24&page=1&perPage=10&less=50&organization=${balansOrgId}`)
+          .then((data) => setViewStationByCharLimit(data.data.data.data));
+
+        // !----------------------------------------------------------------
+
+        customFetch
+          .get(`/last-data/getGreaterAndLessByOrganization?great=24&less=50&organization=${balansOrgId}`)
+          .then((data) => setViewStationByChar(data.data.data.data));
+      } else if (index == 4) {
+        setTableTitle("Batareya quvvati 25% dan kam bo'lgan stansiyalar");
+
+        // ! LIMIT
+        customFetch
+          .get(
+          `/last-data/getGreaterAndLessByOrganization?great=-1&page=1&perPage=10&less=25&organization=${balansOrgId}`)
+          .then((data) => setViewStationByCharLimit(data.data.data.data));
+
+        // !----------------------------------------------------------------
+
+        customFetch
+          .get(`/last-data/getGreaterAndLessByOrganization?great=-1&less=25&organization=${balansOrgId}`)
+          .then((data) => setViewStationByChar(data.data.data.data));
+      }
     }
   };
 
@@ -525,12 +683,18 @@ const AdminDashboard = () => {
     return foundBalansOrg?.name
   }
 
+  const foundRegionName = id => {
+    const foundRegion = allRegion.find(i => i.id == id)
+
+    return foundRegion?.name
+  }
+
   const responsive = {
     0: { items: 1 },
-    820: { items: 2 },
-    1100: { items: 3 },
-    1400: { items: 5 },
-    2000: { items: 5 },
+    990: { items: 2 },
+    1360: { items: 3 },
+    1700: { items: 4 },
+    2000: { items: 4 },
   };
 
   const getStationStatisByBalansOrg = id => {
@@ -538,11 +702,11 @@ const AdminDashboard = () => {
     if(id == undefined){
       customFetch
       .get(`/last-data/getStatisticStations`)
-      .then((data) => settationStatistic(data.data.data));
+      .then((data) => setStationStatistic(data.data.data));
     }else {
       customFetch
       .get(`/last-data/getStatisticStationsByOrganization?organization=${id}`)
-      .then((data) => settationStatistic(data.data.data));
+      .then((data) => setStationStatistic(data.data.data));
     }
 
     // ! STATISTIC STATION BATTERY BY BALANS ORGANISATION
@@ -552,7 +716,7 @@ const AdminDashboard = () => {
       .then((data) => setStationBattery(data.data.data));
     }else {
       customFetch
-      .get(`/stations/getStatisticStationsByBatteryAndOrganization?organization=${id}`)
+      .get(`/stations/getStatisticStationsBatteryByOrganization?organization=${id}`)
       .then((data) => setStationBattery(data.data.data));
     }
   }
@@ -567,10 +731,16 @@ const AdminDashboard = () => {
       loaderFunc()
     }}>
        <div className="sort-dashboard-wrapper">
+       <h6 className="carousel-region-heading">
+       {
+         foundRegionName(e.region_id)
+       }
+       </h6>
+
        <h6>
        {
          foundBalansOrgName(e.balance_organization_id)
-       } {" "}
+       }
        </h6>
        <div className="d-flex flex-column justify-content-end">
          <div className="d-flex align-items-center m-0">
@@ -586,7 +756,7 @@ const AdminDashboard = () => {
      </div>
      </div>
   });
-  console.log(stationStatisticAll);
+
   return (
     <section className="p-0">
       {/* MODAL */}
@@ -679,6 +849,7 @@ const AdminDashboard = () => {
                     {viewStation?.map((e, i) => {
                       return whichStation == "allStation" ||
                         whichStation == "notWorkStation" ? (
+                          Array.isArray(e.lastData) == true ?
                         <tr key={i}>
                           <td className={`text-center fw-bold`}>{e?.name}</td>
                           <td className={`text-center fw-bold`}>
@@ -753,6 +924,82 @@ const AdminDashboard = () => {
                             {e?.isIntegration == true ? "Ha" : "Yo'q"}
                           </td>
                         </tr>
+                        :
+                        <tr key={i}>
+                          <td className={`text-center fw-bold`}>{e?.name}</td>
+                          <td className={`text-center fw-bold`}>
+                            {e?.battery}
+                          </td>
+                          <td className={`text-center fw-bold`}>
+                            {
+                              whichStation != 'notWorkStation'
+                              ?
+                              e.lastData?.level != undefined
+                              ? Number(e.lastData?.level).toFixed(2)
+                              : "-"
+                              : '-'
+                            }
+                          </td>
+                          <td className={`text-center fw-bold`}>
+                            {
+                              whichStation != 'notWorkStation'
+                              ?
+                              e.lastData?.conductivity != undefined
+                              ? Number(e.lastData?.conductivity).toFixed(2)
+                              : "-"
+                              :
+                              '-'
+                            }
+                          </td>
+                          <td className={`text-center fw-bold`}>
+                            {
+                              whichStation != 'notWorkStation'
+                              ?
+                              e.lastData?.temp != undefined
+                              ? Number(e.lastData?.temp).toFixed(2)
+                              : "-"
+                              : '-'
+                            }
+                          </td>
+                          {
+                            whichStation != 'notWorkStation'
+                            ?
+                            <td
+                            className={`text-center fw-bold ${
+                              checkStationWorkingOrNot(e.lastData?.date) == 0
+                                ? "color-green"
+                                : checkStationWorkingOrNot(e.lastData?.date) <=
+                                  3
+                                ? "color-azeu"
+                                : checkStationWorkingOrNot(e.lastData?.date) > 3
+                                ? "color-yellow"
+                                : checkStationWorkingOrNot(e.lastData?.date) ==
+                                  "after one month"
+                                ? "text-danger"
+                                : checkStationWorkingOrNot(e.lastData?.date) ==
+                                  "undefined"
+                                ? "text-danger"
+                                : "text-danger"
+                            }`}
+                          >
+                            {filteredStationDate(e.lastData?.date)}
+                          </td>
+                          :
+                          <td
+                            className='text-center fw-bold text-danger'
+                          >
+                            -
+                          </td>
+                          }
+                          <td
+                            className={`text-center fw-bold ${
+                              e?.isIntegration == false ? "text-danger" : null
+                            }`}
+                          >
+                            {e?.isIntegration == true ? "Ha" : "Yo'q"}
+                          </td>
+                        </tr>
+
                       ) : (
                         <tr key={i}>
                           <td className={`text-center fw-bold`}>
@@ -887,12 +1134,12 @@ const AdminDashboard = () => {
           {viewStation?.length > 0 ? (
             <div className="container-fluid p-0">
               <div className="user-dashboard-top-wrapper">
-              <div className="d-flex align-items-center mb-3 pt-3">
+              <div className="d-flex align-items-center mb-4 pt-3">
                     <div className="dashboard-statis-top w-100 d-flex align-items-center justify-content-between flex-wrap">
-                      {/* <h1 className="dashboard-heading ms-2 dashboard-heading-role">
-                      {regionName}ga tegishli balans tashkilotlar
-                      </h1> */}
-                      <div className="region-heading-statis-wrapper d-flex cursor" onClick={() => {
+                      <h1 className="dashboard-heading ms-2 dashboard-heading-role">
+                      Jami balans tashkilotlari
+                      </h1>
+                      <div className="region-heading-statis-wrapper d-flex flex-wrap cursor" onClick={() => {
                         setBalansOrgId(undefined)
                         getStationStatisByBalansOrg()
                         setWhichStation("allStation");
@@ -924,18 +1171,17 @@ const AdminDashboard = () => {
                       disableButtonsControls={true}
                       animationDuration="900"
                       autoPlayInterval={10000}
-                      paddingLeft={40}
                       mouseTracking
                       items={items}
                       />
                   </ol>
 
-                <div className="d-flex align-items-center justify-content-between mb-3 pt-3">
+                <div className="d-flex align-items-center justify-content-between flex-wrap mb-3 pt-3">
                   <h1 className="dashboard-heading ms-2">
                     Jami stasiya ma'lumotlari
                   </h1>
 
-                  <div className="region-heading-statis-wrapper d-flex cursor" onClick={() => {
+                  <div className="region-heading-statis-wrapper d-flex flex-wrap cursor" onClick={() => {
                         // setBalansOrgId(undefined)
                         // getStationStatisByBalansOrg()
                         // setWhichStation("allStation");
@@ -1226,6 +1472,7 @@ const AdminDashboard = () => {
                         <tbody>
                           {viewStationLimit?.map((e, i) => {
                             return (
+                              Array.isArray(e.lastData) == true ?
                               <tr key={i}>
                                 <td className="text-center fw-bold">
                                   {whichStation == "allStation" ||
@@ -1287,6 +1534,92 @@ const AdminDashboard = () => {
                                     }`}
                                   >
                                     {filteredStationDate(e.lastData[0]?.date)}
+                                  </td>
+                                ) : (
+                                  <td
+                                    className={`text-center fw-bold ${
+                                      whichStation == "todayStation"
+                                        ? "text-success"
+                                        : whichStation ==
+                                          "withinThreeDayStation"
+                                        ? "color-azeu"
+                                        : whichStation ==
+                                          "totalMonthWorkStation"
+                                        ? "color-yellow"
+                                        : whichStation ==
+                                          "totalMoreWorkStations"
+                                        ? "color-orange"
+                                        : whichStation == "notWorkStation"
+                                        ? "text-danger"
+                                        : null
+                                    }`}
+                                  >
+                                    {filteredStationDate(e?.date)}
+                                  </td>
+                                )}
+                              </tr>
+                              :
+                              <tr key={i}>
+                                <td className="text-center fw-bold">
+                                  {whichStation == "allStation" ||
+                                  whichStation == "notWorkStation"
+                                    ? e?.name
+                                    : e.stations?.name}
+                                </td>
+                                <td className="text-center fw-bold">
+                                  {whichStation == "allStation" &&
+                                  e.lastData?.level != undefined
+                                    ? Number(e.lastData?.level).toFixed(2)
+                                    : e.level != undefined
+                                    ? Number(e.level).toFixed(2)
+                                    : "-"}
+                                </td>
+                                <td className="text-center fw-bold">
+                                  {whichStation == "allStation" &&
+                                  e.lastData?.conductivity != undefined
+                                    ? Number(e.lastData?.conductivity).toFixed(
+                                        2
+                                      )
+                                    : e.conductivity != undefined
+                                    ? Number(e.conductivity).toFixed(2)
+                                    : "-"}
+                                </td>
+                                <td className="text-center fw-bold">
+                                  {whichStation == "allStation" &&
+                                  e.lastData?.temp != undefined
+                                    ? Number(e.lastData?.temp).toFixed(2)
+                                    : e.temp != undefined
+                                    ? Number(e.temp).toFixed(2)
+                                    : "-"}
+                                </td>
+                                {whichStation == "allStation" ||
+                                whichStation == "notWorkStation" ? (
+                                  <td
+                                    className={`text-center fw-bold ${
+                                      checkStationWorkingOrNot(
+                                        e.lastData?.date
+                                      ) == 0
+                                        ? "color-green"
+                                        : checkStationWorkingOrNot(
+                                            e.lastData?.date
+                                          ) <= 3
+                                        ? "color-azeu"
+                                        : checkStationWorkingOrNot(
+                                            e.lastData?.date
+                                          ) > 3
+                                        ? "color-yellow"
+                                        : checkStationWorkingOrNot(
+                                            e.lastData?.date
+                                          ) == "after one month"
+                                        ? "text-danger"
+                                        : checkStationWorkingOrNot(
+                                            e.lastData?.date
+                                          ) == "undefined"
+                                        ? "text-danger"
+                                        : "text-danger"
+                                    }`}
+                                  >
+                                    {filteredStationDate(e.lastData?.date)}
                                   </td>
                                 ) : (
                                   <td
