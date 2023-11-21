@@ -20,6 +20,7 @@ import AdminMap from "../AdminMap/AdminMap";
 import AdminStation from "../AdminStation/AdminStation";
 import AdminNews from "../AdminNews/AdminNews";
 import AdminLastData from "../AdminLastData/AdminLastData";
+import AdminLastDataNews from "../AdminLastDataNews/AdminLastDataNews";
 
 const Admin = () => {
   const token = window.localStorage.getItem("accessToken");
@@ -250,6 +251,10 @@ const Admin = () => {
             <Routes>
               <Route path="/*" element={<AdminDashboard />} />
               <Route path="/lastdata" element={<AdminLastData />} />
+              <Route
+                path="/lastdata/:news"
+                element={<AdminLastDataNews />}
+              />
               <Route path="/news" element={<AdminNews />} />
               <Route path="/map" element={<AdminMap />} />
               <Route path="/stations" element={<AdminStation />} />
