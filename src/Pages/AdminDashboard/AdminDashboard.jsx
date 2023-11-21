@@ -1181,7 +1181,7 @@ const AdminDashboard = () => {
                     Jami stansiyalar
                   </h1>
 
-                  <div className="region-heading-statis-wrapper d-flex flex-wrap cursor">
+                      <div className="region-heading-statis-wrapper d-flex flex-wrap cursor">
                           <div className="d-flex align-items-center m-0">
                             <img src={active} alt="active" width={30} height={30} /> <span className="fs-6 ms-1">Active</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatistic.countWorkingStations} ta</span>
                           </div>

@@ -17,17 +17,25 @@ import ReactPaginate from "react-paginate";
 import * as XLSX from "xlsx";
 import excel from "../../assets/images/excel.png";
 import axios from "axios";
+import all from "../../assets/images/all.png";
+import defective from "../../assets/images/defective.png";
+import active from "../../assets/images/active.png";
+import passive from "../../assets/images/passive.png";
+import AliceCarousel from "react-alice-carousel";
 
-const AdminLastData = (prop) => {
+const AdminLastData = () => {
   const [loader, setLoader] = useState(false);
+  const [allBalansOrg, setAllBalansOrg] = useState([]);
+  const [allRegion, setAllRegion] = useState([]);
   const [allStation, setAllStation] = useState([]);
+  const [stationStatisticAll, setStationStatisticAll] = useState([]);
+  const [balansOrgId, setBalansOrgId] = useState();
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
   const navigate = useNavigate();
-  const { balanceOrg } = prop;
   const name = window.localStorage.getItem("name");
   const role = window.localStorage.getItem("role");
-  const [stationStatistic, settationStatistic] = useState([]);
+  const [stationStatistic, setStationStatistic] = useState([]);
   const [whichStation, setWhichStation] = useState("allStation");
   const [tableTitle, setTableTitle] = useState("Umumiy stansiyalar soni");
   const [colorCard, setColorCard] = useState(
@@ -113,94 +121,138 @@ const AdminLastData = (prop) => {
         `/last-data/getStatisticStations`
       );
 
-      settationStatistic(requestStationStatistic.data.data);
+      setStationStatistic(requestStationStatistic.data.data);
     };
 
     userDashboardFunc();
+
+    // ! STATION STATISTIC
+    customFetch
+    .get(`/stations/getAllStationsStatisic`)
+    .then((data) => {
+      setStationStatisticAll(data.data.data)
+    });
+
+    // ! ALL BALANS ORG
+    customFetch
+    .get(`/balance-organizations/all-find`)
+    .then((data) => setAllBalansOrg(data.data.balanceOrganizations))
+
+    // ! ALL REGION
+    customFetch
+    .get(`/regions/all`)
+    .then((data) => {
+      setAllRegion(data.data.regions)
+    })
   }, []);
 
   useEffect(() => {
-    if (whichStation == "allStation") {
-      // ! LIMIT
-      customFetch
-        .get(`/last-data/allLastData?page=1&perPage=12`)
-        .then((data) => {
-          role == "USER"
-            ? `${setAllStation(data.data.data)} ${setTotalPages(
-                data.data.totalPages
-              )}`
-            : `${setAllStation(data.data.data)} ${setTotalPages(
-                data.data.totalPages
-              )}`;
-        });
-    } else if (whichStation == "todayStation") {
-      // ! LIMIT
-      customFetch
-        .get(`/last-data/todayWorkStations?page=1&perPage=12`)
-        .then((data) => {
-          role == "USER"
-            ? `${setAllStation(data.data.data.docs)} ${setTotalPages(
-                data.totalPages
-              )}`
-            : `${setAllStation(data.data.data.docs)} ${setTotalPages(
-                data.data.data.totalPages
-              )}`;
-        });
-    } else if (whichStation == "withinThreeDayStation") {
-      // ! LIMIT
-      customFetch
-        .get(`/last-data/treeDaysWorkStations?page=1&perPage=12`)
-        .then((data) => {
-          role == "USER"
-            ? `${setAllStation(data.data.data.docs)} ${setTotalPages(
-                data.totalPages
-              )}`
-            : `${setAllStation(data.data.data.docs)} ${setTotalPages(
-                data.data.data.totalPages
-              )}`;
-        });
-    } else if (whichStation == "totalMonthWorkStation") {
-      // ! LIMIT
-      customFetch
-        .get(`/last-data/lastMonthWorkStations?page=1&perPage=12`)
-        .then((data) => {
-          role == "USER"
-            ? `${setAllStation(data.data.data.docs)} ${setTotalPages(
-                data.totalPages
-              )}`
-            : `${setAllStation(data.data.data.docs)} ${setTotalPages(
-                data.data.data.totalPages
-              )}`;
-        });
-    } else if (whichStation == "totalMoreWorkStations") {
-      // ! LIMIT
-      customFetch
-        .get(`/last-data/moreWorkStations?page=1&perPage=12`)
-        .then((data) => {
-          role == "USER"
-            ? `${setAllStation(data.data.data.docs)} ${setTotalPages(
-                data.totalPages
-              )}`
-            : `${setAllStation(data.data.data.docs)} ${setTotalPages(
-                data.data.totalPages
-              )}`;
-        });
-    } else if (whichStation == "notWorkStation") {
-      // ! LIMIT
-      customFetch
-        .get(`${api}/last-data/getNotLastDataStations?page=1&perPage=12`)
-        .then((res) => res.json())
-        .then((data) => {
-          role == "USER"
-            ? `${setAllStation(data.data.data.docs)} ${setTotalPages(
-                data.data.totalPages
-              )}`
-            : `${setAllStation(data.data.data.docs)} ${setTotalPages(
-                data.data.dataz.totalPages
-              )}`;
-        });
+    if(balansOrgId == undefined){
+      if (whichStation == "allStation") {
+        // ! LIMIT
+        customFetch
+          .get(`/last-data/allLastData?page=1&perPage=12`)
+          .then((data) => {
+            setAllStation(data.data.data)
+            setTotalPages(
+              data.data.totalPages
+            )
+          });
+      } else if (whichStation == "todayStation") {
+        // ! LIMIT
+        customFetch
+          .get(`/last-data/todayWorkStations?page=1&perPage=12`)
+          .then((data) => {
+            setAllStation(data.data.data.docs)
+            setTotalPages(
+              data.data.data.totalPages
+            )
+          });
+      } else if (whichStation == "withinThreeDayStation") {
+        // ! LIMIT
+        customFetch
+          .get(`/last-data/treeDaysWorkStations?page=1&perPage=12`)
+          .then((data) => {
+            setAllStation(data.data.data.docs)
+            setTotalPages(
+              data.data.data.totalPages
+            )
+          });
+      } else if (whichStation == "totalMonthWorkStation") {
+        // ! LIMIT
+        customFetch
+          .get(`/last-data/lastMonthWorkStations?page=1&perPage=12`)
+          .then((data) => {
+            setAllStation(data.data.data.docs)
+            setTotalPages(
+              data.data.data.totalPages
+            )
+          });
+      } else if (whichStation == "totalMoreWorkStations") {
+        // ! LIMIT
+        customFetch
+          .get(`/last-data/moreWorkStations?page=1&perPage=12`)
+          .then((data) => {
+            setAllStation(data.data.data.docs)
+            setTotalPages(
+              data.data.data.totalPages
+            )
+          });
+      }
+    }else {
+      if (whichStation == "allStation") {
+        // ! LIMIT
+        customFetch
+          .get(`/last-data/allLastDataByOrganization?page=1&perPage=12&organization=${balansOrgId}`)
+          .then((data) => {
+            setAllStation(data.data.data)
+            setTotalPages(
+              data.data.totalPages
+            )
+          });
+      } else if (whichStation == "todayStation") {
+        // ! LIMIT
+        customFetch
+          .get(`/last-data/todayWorkStationsByOrganization?page=1&perPage=12&organization=${balansOrgId}`)
+          .then((data) => {
+            setAllStation(data.data.data.docs)
+            setTotalPages(
+              data.data.data.totalPages
+            )
+          });
+      } else if (whichStation == "withinThreeDayStation") {
+        // ! LIMIT
+        customFetch
+          .get(`/last-data/treeDaysWorkStationsByOrganization?page=1&perPage=12&organization=${balansOrgId}`)
+          .then((data) => {
+            setAllStation(data.data.data.docs)
+            setTotalPages(
+              data.data.data.totalPages
+            )
+          });
+      } else if (whichStation == "totalMonthWorkStation") {
+        // ! LIMIT
+        customFetch
+          .get(`/last-data/lastMonthWorkStationsByOrganization?page=1&perPage=12&organization=${balansOrgId}`)
+          .then((data) => {
+            setAllStation(data.data.data.docs)
+            setTotalPages(
+              data.data.data.totalPages
+            )
+          });
+      } else if (whichStation == "totalMoreWorkStations") {
+        // ! LIMIT
+        customFetch
+          .get(`/last-data/moreWorkStationsByOrganization?page=1&perPage=12&organization=${balansOrgId}`)
+          .then((data) => {
+            setAllStation(data.data.data.docs)
+            setTotalPages(
+              data.data.data.totalPages
+            )
+          });
+      }
     }
-  }, [whichStation]);
+  }, [stationStatistic, whichStation]);
 
   const handlePageChange = (selectedPage) => {
     if (whichStation == "allStation") {
@@ -278,10 +330,10 @@ const AdminLastData = (prop) => {
 
   const checkStationWorkingOrNot = (value) => {
     const presentDate = new Date();
-    let startDate = new Date(value?.date);
+    let startDate = new Date(Array.isArray(value) ? value[0]?.date : value?.date);
     startDate.setHours(startDate.getHours() - 5);
 
-    if (value?.level == undefined) {
+    if (Array.isArray(value) ? value[0]?.level : value?.level == undefined) {
       return 404;
     } else if (
       startDate.getFullYear() == presentDate.getFullYear() &&
@@ -599,6 +651,74 @@ const AdminLastData = (prop) => {
     }, 700);
   };
 
+  const foundBalansOrgName = id => {
+    const foundBalansOrg = allBalansOrg.find(i => i.id == id)
+
+    return foundBalansOrg?.name
+  }
+
+  const foundRegionName = id => {
+    const foundRegion = allRegion.find(i => i.id == id)
+
+    return foundRegion?.name
+  }
+
+  const responsive = {
+    0: { items: 1 },
+    990: { items: 2 },
+    1360: { items: 3 },
+    1700: { items: 4 },
+    2000: { items: 4 },
+  };
+
+  const getStationStatisByBalansOrg = id => {
+    // ! STATISTIC STATION BY BALANS ORGANISATION
+    if(id == undefined){
+      customFetch
+      .get(`/last-data/getStatisticStations`)
+      .then((data) => setStationStatistic(data.data.data));
+    }else {
+      customFetch
+      .get(`/last-data/getStatisticStationsByOrganization?organization=${id}`)
+      .then((data) => setStationStatistic(data.data.data));
+    }
+  }
+
+  const items = stationStatisticAll?.gruopRegion?.map((e, i) => {
+    return  <div className="sort-dashboard-list-item ms-3" onClick={(s) => {
+      setBalansOrgId(e.balance_organization_id)
+      getStationStatisByBalansOrg(e.balance_organization_id)
+      setWhichStation('allStation')
+      setTableTitle("Umumiy stansiyalar soni");
+      loaderFunc()
+    }}>
+       <div className="sort-dashboard-wrapper sort-dashboard-wrapper-last-data">
+       <h6 className="carousel-region-heading">
+       {
+         foundRegionName(e.region_id)
+       }
+       </h6>
+
+       <h6>
+       {
+         foundBalansOrgName(e.balance_organization_id)
+       }
+       </h6>
+       <div className="d-flex flex-column justify-content-end">
+         <div className="d-flex align-items-center m-0">
+           <img src={all} alt="active" width={35} height={35} /> <span className="fs-6 ms-1">Jami</span> :<span className="fs-6 ms-1 fw-semibold">{e.countStations} ta</span>
+         </div>
+         <div className="d-flex align-items-center m-0">
+           <img src={active} alt="active" width={30} height={30} /> <span className="fs-6 ms-1">Active</span>: <span className="fs-6 ms-1 fw-semibold">{e.countWorkStations} ta</span>
+         </div>
+         <div className="d-flex align-items-center m-0">
+           <img src={passive} alt="active" width={35} height={35} /> <span className="fs-6 ms-1">Passive</span>: <span className="fs-6 ms-1 fw-semibold">{e.countNotWorkStations} ta</span>
+         </div>
+       </div>
+     </div>
+     </div>
+  });
+
   return (
     <section className="py-3">
       <div className="container-fluid">
@@ -610,12 +730,65 @@ const AdminLastData = (prop) => {
                   className="tab-pane container-fluid fade show active profile-users user-last-data-table-wrapper"
                   id="profile-users"
                 >
-                  <div className="user-last-data-top-wrapper pt-5">
-                    <h1 className="mb-3 user-lastdata-heading">
-                      {balanceOrg?.length == 0
-                        ? `${name} ga biriktirilgan qurilmalar`
-                        : `${balanceOrgName} ga biriktirilgan qurilmalar`}
-                    </h1>
+                  <div className="user-last-data-top-wrapper pt-3">
+                  <div className="d-flex align-items-center mb-4 pt-3">
+                    <div className="dashboard-statis-top w-100 d-flex align-items-center justify-content-between flex-wrap">
+                      <h1 className="dashboard-heading ms-2 dashboard-heading-role">
+                      Jami balans tashkilotlari
+                      </h1>
+                      <div className="region-heading-statis-wrapper region-heading-statis-wrapper-last-data d-flex flex-wrap cursor" onClick={() => {
+                        setBalansOrgId(undefined)
+                        getStationStatisByBalansOrg()
+                        setWhichStation("allStation");
+                        setTableTitle("Umumiy stansiyalar soni");
+                        loaderFunc()
+                      }}>
+                          <div className="d-flex align-items-center m-0">
+                            <img src={all} alt="active" width={30} height={30} /> <span className="fs-6 ms-1">Jami</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countStations} ta</span>
+                          </div>
+                          <div className="d-flex align-items-center m-0">
+                            <img src={active} className="ms-3" alt="active" width={30} height={30} /> <span className="fs-6 ms-1">Active</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countWorkingStations} ta</span>
+                          </div>
+                          <div className="d-flex align-items-center m-0">
+                            <img src={passive} className="ms-3" alt="active" width={35} height={35} /> <span className="fs-6 ms-1">Passive</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countNotWorkingStations} ta</span>
+                          </div>
+                          <div className="d-flex align-items-center m-0">
+                            <img className="ms-3" src={defective} alt="active" width={35} height={35} /> <span className="fs-6 ms-1">Defective</span> :<span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countDefectiveStations} ta</span>
+                          </div>
+                      </div>
+                    </div>
+                </div>
+                  <ol className="list-unstyled sort-dashboard-list m-0 mb-4 d-flex align-items-center justify-content-center">
+                    <AliceCarousel
+                      autoPlay={true}
+                      // infinite={true}
+                      autoPlayStrategy="all"
+                      responsive={responsive}
+                      disableButtonsControls={true}
+                      animationDuration="900"
+                      autoPlayInterval={10000}
+                      mouseTracking
+                      items={items}
+                      />
+                  </ol>
+
+                    <div className="d-flex align-items-center justify-content-between flex-wrap mb-3 pt-3">
+                      <h1 className="mb-3 user-lastdata-heading">
+                        Jami stansiyalar
+                      </h1>
+
+                      <div className="region-heading-statis-wrapper region-heading-statis-wrapper-last-data d-flex flex-wrap cursor">
+                          <div className="d-flex align-items-center m-0">
+                            <img src={active} alt="active" width={30} height={30} /> <span className="fs-6 ms-1">Active</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatistic.countWorkingStations} ta</span>
+                          </div>
+                          <div className="d-flex align-items-center m-0">
+                            <img src={passive} className="ms-3" alt="active" width={35} height={35} /> <span className="fs-6 ms-1">Passive</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatistic.countNotWorkingStations} ta</span>
+                          </div>
+                          <div className="d-flex align-items-center m-0">
+                            <img className="ms-3" src={defective} alt="active" width={35} height={35} /> <span className="fs-6 ms-1">Defective</span> :<span className="fs-6 ms-1 fw-semibold">{stationStatistic.countDefectiveStations} ta</span>
+                          </div>
+                      </div>
+                    </div>
 
                     <ul className="dashboard-list list-unstyled m-0 d-flex flex-wrap align-items-center justify-content-between mt-4">
                       {stationStatistic?.totalStationsCount > 0 ? (
@@ -946,7 +1119,7 @@ const AdminLastData = (prop) => {
                                     </p>
                                     <span className="fw-bold text-end w-100 user-lastdata-level-desc">
                                       {whichStation == "allStation"
-                                        ? Number(e.lastData?.level).toFixed()
+                                        ? Array.isArray(e.lastData) ? Number(e.lastData[0]?.level).toFixed() : Number(e.lastData?.level).toFixed()
                                         : Number(e?.level).toFixed()}{" "}
                                       sm
                                     </span>
@@ -957,7 +1130,9 @@ const AdminLastData = (prop) => {
                                     </p>
                                     <span className="fw-bold text-end w-100 user-lastdata-level-desc">
                                       {whichStation == "allStation"
-                                        ? Number(
+                                        ? Array.isArray(e.lastData) ? Number(
+                                            e.lastData[0]?.conductivity
+                                          ).toFixed() : Number(
                                             e.lastData?.conductivity
                                           ).toFixed()
                                         : Number(
@@ -972,7 +1147,7 @@ const AdminLastData = (prop) => {
                                     </p>
                                     <span className="fw-bold text-end w-100 user-lastdata-level-desc">
                                       {whichStation == "allStation"
-                                        ? Number(e.lastData?.temp).toFixed()
+                                        ? Array.isArray(e.lastData) ? Number(e.lastData[0]?.temp).toFixed() : Number(e.lastData?.temp).toFixed()
                                         : Number(e?.temp).toFixed()}{" "}
                                       °C
                                     </span>
@@ -983,7 +1158,7 @@ const AdminLastData = (prop) => {
                                   <p className="m-0">
                                     {returnFixdDate(
                                       whichStation == "allStation"
-                                        ? e?.lastData?.date
+                                        ? Array.isArray(e.lastData) ? e?.lastData[0]?.date : e?.lastData?.date
                                         : e.date
                                     )}
                                   </p>
