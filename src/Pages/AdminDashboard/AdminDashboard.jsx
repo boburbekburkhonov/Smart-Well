@@ -1178,7 +1178,7 @@ const AdminDashboard = () => {
 
                 <div className="d-flex align-items-center justify-content-between flex-wrap mb-3 pt-3">
                   <h1 className="dashboard-heading ms-2">
-                    Jami stasiyalar
+                    Jami stansiyalar
                   </h1>
 
                   <div className="region-heading-statis-wrapper d-flex flex-wrap cursor">
