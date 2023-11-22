@@ -4,7 +4,6 @@ import excel from "../../assets/images/excel.png";
 import statistic from "../../assets/images/stats.png";
 import pdf from "../../assets/images/pdf.jpg";
 import location from "../../assets/images/location-google.png";
-import './AdminLastDataNews.css'
 import {
   GoogleMap,
   InfoWindowF,
@@ -23,11 +22,13 @@ import "moment/dist/locale/uz-latn";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import axios from "axios";
+import './AdminLastDataNews.css'
+
 
 moment.locale("uz-latn");
 
 const AdminLastDataNews = () => {
-    const { news } = useParams();
+  const { news } = useParams();
   const [loader, setLoader] = useState(false);
   const [searchBetweenData, setSearchBetweenData] = useState([]);
   const [todayData, setTodayData] = useState([]);
@@ -349,6 +350,7 @@ const AdminLastDataNews = () => {
     },
   };
 
+  // ! SAVE DATA THROUGH PDF
   const exportNewsByPdf = () => {
     const doc = new jsPDF();
 
@@ -440,7 +442,7 @@ const AdminLastDataNews = () => {
     }
   };
 
-  // ! SAVE DATA
+  // ! SAVE DATA THROUGH EXCEL
   const exportDataToExcel = () => {
     let sath = "sath (sm)";
     let shurlanish = "shurlanish (g/l)";
@@ -1289,7 +1291,7 @@ const AdminLastDataNews = () => {
                             ) : (
                             <div className="user-last-data-alert-wrapper d-flex align-items-center justify-content-center">
                                 <div
-                                className="alert alert-danger text-center fw-bold fs-5 w-100 user-last-data-alert"
+                                className="alert alert-info text-center fw-bold fs-5 w-100 user-last-data-alert"
                                 role="alert"
                                 >
                                 Ma'lumot hozircha kelmagan...
@@ -1384,7 +1386,7 @@ const AdminLastDataNews = () => {
                             ) : (
                             <div className="user-last-data-alert-wrapper d-flex align-items-center justify-content-center">
                                 <div
-                                className="alert alert-danger text-center fw-bold fs-5 w-100 user-last-data-alert"
+                                className="alert alert-info  text-center fw-bold fs-5 w-100 user-last-data-alert"
                                 role="alert"
                                 >
                                 Ma'lumot hozircha kelmagan...
@@ -1471,7 +1473,7 @@ const AdminLastDataNews = () => {
                             ) : (
                             <div className="user-last-data-alert-wrapper d-flex align-items-center justify-content-center">
                                 <div
-                                className="alert alert-danger text-center fw-bold fs-5 w-100 user-last-data-alert"
+                                className="alert alert-info text-center fw-bold fs-5 w-100 user-last-data-alert"
                                 role="alert"
                                 >
                                 Ma'lumot hozircha kelmagan...
@@ -1562,7 +1564,7 @@ const AdminLastDataNews = () => {
                             ) : (
                             <div className="user-last-data-alert-wrapper d-flex align-items-center justify-content-center">
                                 <div
-                                className="alert alert-danger text-center fw-bold fs-5 w-100 user-last-data-alert"
+                                className="alert alert-info text-center fw-bold fs-5 w-100 user-last-data-alert"
                                 role="alert"
                                 >
                                 Ma'lumot hozircha kelmagan...
@@ -1700,7 +1702,7 @@ const AdminLastDataNews = () => {
                             ) : (
                             <div className="user-last-data-alert-wrapper d-flex align-items-center justify-content-center">
                                 <div
-                                className="alert alert-danger text-center fw-bold fs-5 w-100 user-last-data-alert"
+                                className="alert alert-info text-center fw-bold fs-5 w-100 user-last-data-alert"
                                 role="alert"
                                 >
                                 Ma'lumot hozircha kelmagan...
