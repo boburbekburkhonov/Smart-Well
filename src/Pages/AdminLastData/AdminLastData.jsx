@@ -126,7 +126,7 @@ const AdminLastData = () => {
 
     userDashboardFunc();
 
-    // ! STATION STATISTIC
+    // ! STATION STATISTIC ALL
     customFetch
     .get(`/stations/getAllStationsStatisic`)
     .then((data) => {

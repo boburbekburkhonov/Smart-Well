@@ -7,12 +7,22 @@ import { Helmet, HelmetProvider } from "react-helmet-async";
 import moment from "moment";
 import { api } from "../Api/Api";
 import excel from "../../assets/images/excel.png";
+import all from "../../assets/images/all.png";
+import defective from "../../assets/images/defective.png";
+import active from "../../assets/images/active.png";
+import passive from "../../assets/images/passive.png";
 import * as XLSX from "xlsx";
 import axios from "axios";
+import AliceCarousel from "react-alice-carousel";
+import 'react-alice-carousel/lib/alice-carousel.css';
 import "./AdminStation.css";
 
 const AdminStation = () => {
   const [count, setCount] = useState(0);
+  const [allBalansOrg, setAllBalansOrg] = useState([]);
+  const [tableTitle, setTableTitle] = useState("Jami stansiyalar");
+  const [tableTitleForStatus, setTableTitleForStatus] = useState("Jami ishlamayotganlar stansiyalar ro'yhati");
+  const [allRegion, setAllRegion] = useState([]);
   const [allStation, setAllStation] = useState([]);
   const [allStationForBattery, setAllStationForBattery] = useState([]);
   const [notWorkingStation, setNotWorkingStation] = useState([]);
@@ -21,9 +31,14 @@ const AdminStation = () => {
   const [totalPagesForBattery, setTotalPagesForBattery] = useState(0);
   const [totalPagesForStatus, setTotalPagesForStatus] = useState(0);
   const [stationOne, setStationOne] = useState({});
+  const [stationBattery, setStationBattery] = useState([]);
+  const [stationStatistic, setStationStatistic] = useState([]);
+  const [stationStatisticAll, setStationStatisticAll] = useState([]);
   const [stationRegionName, setStationRegionName] = useState();
   const [stationDistrictName, setStationDistrictName] = useState([]);
   const [stationBalansOrgName, setStationBalansOrgName] = useState([]);
+  const [balansOrgId, setBalansOrgId] = useState();
+  const [balansOrgIdForStatus, setBalansOrgIdForStatus] = useState();
   const [sensorType, setSensorType] = useState([]);
   const [whichData, setWhichData] = useState("allStation");
   const [minimumValue, setMinimumValue] = useState("");
@@ -116,14 +131,14 @@ const AdminStation = () => {
     };
 
     fetchData();
-  }, [count]);
 
-  useEffect(() => {
+    // ! STATION SENSOR TYPE
     customFetch.get(`/sensorType/getAll`).then((data) => {
       if (data.data.statusCode == 200) {
         setSensorType(data.data.data);
       }
     });
+
     // ! NOT WORKING STATIONS
     customFetch
       .get(`/stations/all/statusOff?&page=1&perPage=10`)
@@ -131,14 +146,48 @@ const AdminStation = () => {
         setNotWorkingStation(data.data.data.data);
         setTotalPagesForStatus(data.data.data.metadata.lastPage);
       });
+
+    // ! STATION STATISTIC
+    customFetch
+    .get(`/last-data/getStatisticStations`)
+    .then((data) => {
+      setStationStatistic(data.data.data)
+    });
+
+    // ! STATION STATISTIC ALL
+    customFetch
+    .get(`/stations/getAllStationsStatisic`)
+    .then((data) => {
+      setStationStatisticAll(data.data.data)
+    });
+
+      // ! ALL BALANS ORG
+    customFetch
+    .get(`/balance-organizations/all-find`)
+    .then((data) => setAllBalansOrg(data.data.balanceOrganizations))
+
+    // ! ALL REGION
+    customFetch
+    .get(`/regions/all`)
+    .then((data) => {
+      setAllRegion(data.data.regions)
+    })
   }, []);
 
   const handlePageChange = (selectedPage) => {
-    customFetch
-      .get(`/stations/all?page=${selectedPage.selected + 1}&perPage=10`)
-      .then((data) => {
-        setAllStation(data.data.data.data);
+    if(balansOrgId == undefined){
+      customFetch
+        .get(`/stations/all?page=${selectedPage.selected + 1}&perPage=10`)
+        .then((data) => {
+          setAllStation(data.data.data.data);
       });
+    }else {
+      customFetch
+        .get(`/stations/all/balanceOrganization?balanceOrganizationNumber=${balansOrgId}&page=${selectedPage.selected + 1}&perPage=10`)
+        .then((data) => {
+          setAllStation(data.data.data.data);
+      });
+    }
   };
 
   const handlePageChangeForBattery = (selectedPage) => {
@@ -165,13 +214,24 @@ const AdminStation = () => {
   };
 
   const handlePageChangeForStatus = (selectedPage) => {
-    customFetch
+    if(balansOrgIdForStatus == undefined){
+      customFetch
       .get(
         `/stations/all/statusOff?&page=${selectedPage.selected + 1}&perPage=10`
       )
       .then((data) => {
         setNotWorkingStation(data.data.data.data);
       });
+    }else {
+
+      customFetch
+      .get(
+        `/stations/searchStatusFalseByBalance?balanceOrganizationNumber=${balansOrgIdForStatus}&page=${selectedPage.selected + 1}&perPage=10`
+      )
+      .then((data) => {
+        setNotWorkingStation(data.data.data.data);
+      });
+    }
   };
 
   const getStationWithImei = async (imei) => {
@@ -246,30 +306,55 @@ const AdminStation = () => {
     }`;
 
     if (whichData == "allStation") {
-      const requestAllStation = await customFetch.get(
-        `${api}/stations/all?page=1&perPage=${totalPages * 10}`
-      );
-
       const resultExcelData = [];
 
-      requestAllStation.data.data.data.forEach((e) => {
-        resultExcelData.push({
-          Nomi: e.name,
-          Imei: e.imel,
-          Lokatsiya: e.location,
-          Qurilma_Telefon_Raqami: e.devicePhoneNum,
-          User_Telefon_Raqami: e.userPhoneNum,
-          Programma_Versiyasi: e.programVersion,
-          Status: e.status == 1 ? "ishlayapti" : "ishlamayapti",
-          Integratsiya: e?.isIntegration == true ? "Qilingan" : "Qilinmagan",
-          Signal: e.signal,
-          Temperture: e.temperture,
-          Battereya: `${e.battery}%`,
-          Datani_yuborish_vaqti: e.sendDataTime,
-          Infoni_yuborish_vaqti: e.sendInfoTime,
-          Sana: e.date,
+      if(balansOrgId == undefined){
+        const requestAllStation = await customFetch.get(
+          `${api}/stations/all?page=1&perPage=${totalPages * 10}`
+        );
+
+        requestAllStation.data.data.data.forEach((e) => {
+          resultExcelData.push({
+            Nomi: e.name,
+            Imei: e.imel,
+            Lokatsiya: e.location,
+            Qurilma_Telefon_Raqami: e.devicePhoneNum,
+            User_Telefon_Raqami: e.userPhoneNum,
+            Programma_Versiyasi: e.programVersion,
+            Status: e.status == 1 ? "ishlayapti" : "ishlamayapti",
+            Integratsiya: e?.isIntegration == true ? "Qilingan" : "Qilinmagan",
+            Signal: e.signal,
+            Temperture: e.temperture,
+            Battereya: `${e.battery}%`,
+            Datani_yuborish_vaqti: e.sendDataTime,
+            Infoni_yuborish_vaqti: e.sendInfoTime,
+            Sana: e.date,
+          });
         });
-      });
+      }else {
+        const requestAllStation = await customFetch.get(
+          `${api}/stations/all/balanceOrganization?balanceOrganizationNumber=${balansOrgId}&page=1&perPage=${totalPages * 10}`
+        );
+
+        requestAllStation.data.data.data.forEach((e) => {
+          resultExcelData.push({
+            Nomi: e.name,
+            Imei: e.imel,
+            Lokatsiya: e.location,
+            Qurilma_Telefon_Raqami: e.devicePhoneNum,
+            User_Telefon_Raqami: e.userPhoneNum,
+            Programma_Versiyasi: e.programVersion,
+            Status: e.status == 1 ? "ishlayapti" : "ishlamayapti",
+            Integratsiya: e?.isIntegration == true ? "Qilingan" : "Qilinmagan",
+            Signal: e.signal,
+            Temperture: e.temperture,
+            Battereya: `${e.battery}%`,
+            Datani_yuborish_vaqti: e.sendDataTime,
+            Infoni_yuborish_vaqti: e.sendInfoTime,
+            Sana: e.date,
+          });
+        });
+      }
 
       const workBook = XLSX.utils.book_new();
       const workSheet = XLSX.utils.json_to_sheet(resultExcelData);
@@ -279,7 +364,7 @@ const AdminStation = () => {
       if (allStation.length > 0) {
         XLSX.writeFile(
           workBook,
-          `Jami umumiy stansiyalari ${resultDate}.xlsx`
+          `${tableTitle} ${resultDate}.xlsx`
         );
       }
     } else if (whichData == "StationForBattery") {
@@ -324,30 +409,55 @@ const AdminStation = () => {
         );
       }
     } else if (whichData == "StationForStatus") {
-      const requestAllStationForStatus = await customFetch.get(
-        `/stations/all/statusOff?&page=1&perPage=${totalPagesForStatus * 10}`
-      );
-
       const resultExcelData = [];
 
-      requestAllStationForStatus.data.data.data.forEach((e) => {
-        resultExcelData.push({
-          Nomi: e.name,
-          Imei: e.imel,
-          Lokatsiya: e.location,
-          Qurilma_Telefon_Raqami: e.devicePhoneNum,
-          User_Telefon_Raqami: e.userPhoneNum,
-          Programma_Versiyasi: e.programVersion,
-          Status: e.status == 1 ? "ishlayapti" : "ishlamayapti",
-          Integratsiya: e?.isIntegration == true ? "Qilingan" : "Qilinmagan",
-          Signal: e.signal,
-          Temperture: e.temperture,
-          Battereya: `${e.battery}%`,
-          Datani_yuborish_vaqti: e.sendDataTime,
-          Infoni_yuborish_vaqti: e.sendInfoTime,
-          Sana: e.date,
+      if(balansOrgIdForStatus == undefined){
+        const requestAllStationForStatus = await customFetch.get(
+          `/stations/all/statusOff?&page=1&perPage=${totalPagesForStatus * 10}`
+        );
+
+        requestAllStationForStatus.data.data.data.forEach((e) => {
+          resultExcelData.push({
+            Nomi: e.name,
+            Imei: e.imel,
+            Lokatsiya: e.location,
+            Qurilma_Telefon_Raqami: e.devicePhoneNum,
+            User_Telefon_Raqami: e.userPhoneNum,
+            Programma_Versiyasi: e.programVersion,
+            Status: e.status == 1 ? "ishlayapti" : "ishlamayapti",
+            Integratsiya: e?.isIntegration == true ? "Qilingan" : "Qilinmagan",
+            Signal: e.signal,
+            Temperture: e.temperture,
+            Battereya: `${e.battery}%`,
+            Datani_yuborish_vaqti: e.sendDataTime,
+            Infoni_yuborish_vaqti: e.sendInfoTime,
+            Sana: e.date,
+          });
         });
-      });
+      }else {
+        const requestAllStationForStatus = await customFetch.get(
+          `/stations/searchStatusFalseByBalance?balanceOrganizationNumber=${balansOrgIdForStatus}&page=1&perPage=${totalPagesForStatus * 10}`
+        );
+
+        requestAllStationForStatus.data.data.data.forEach((e) => {
+          resultExcelData.push({
+            Nomi: e.name,
+            Imei: e.imel,
+            Lokatsiya: e.location,
+            Qurilma_Telefon_Raqami: e.devicePhoneNum,
+            User_Telefon_Raqami: e.userPhoneNum,
+            Programma_Versiyasi: e.programVersion,
+            Status: e.status == 1 ? "ishlayapti" : "ishlamayapti",
+            Integratsiya: e?.isIntegration == true ? "Qilingan" : "Qilinmagan",
+            Signal: e.signal,
+            Temperture: e.temperture,
+            Battereya: `${e.battery}%`,
+            Datani_yuborish_vaqti: e.sendDataTime,
+            Infoni_yuborish_vaqti: e.sendInfoTime,
+            Sana: e.date,
+          });
+        });
+      }
 
       const workBook = XLSX.utils.book_new();
       const workSheet = XLSX.utils.json_to_sheet(resultExcelData);
@@ -357,11 +467,157 @@ const AdminStation = () => {
       if (notWorkingStation.length > 0) {
         XLSX.writeFile(
           workBook,
-          `Jami ishlamagan stansiyalari ${resultDate}.xlsx`
+          `${tableTitleForStatus} ${resultDate}.xlsx`
         );
       }
     }
   };
+
+  const foundBalansOrgName = id => {
+    const foundBalansOrg = allBalansOrg.find(i => i.id == id)
+
+    return foundBalansOrg?.name
+  }
+
+  const foundRegionName = id => {
+    const foundRegion = allRegion.find(i => i.id == id)
+
+    return foundRegion?.name
+  }
+
+  const responsive = {
+    0: { items: 1 },
+    990: { items: 2 },
+    1360: { items: 3 },
+    1700: { items: 4 },
+    2000: { items: 4 },
+  };
+
+  // ! STATION STATIC
+  const getStationStatisByBalansOrg = id => {
+    // ! STATISTIC STATION BY BALANS ORGANISATION
+    if(id == undefined){
+      // todo:  ALL STATIONS STATISTIC
+      customFetch
+      .get(`/last-data/getStatisticStations`)
+      .then((data) => setStationStatistic(data.data.data));
+
+      // todo:  ALL STATIONS
+      customFetch
+      .get(`/stations/all?page=1&perPage=10`)
+      .then((data) => {
+        setAllStation(data.data.data.data);
+        setTotalPages(data.data.data.metadata.lastPage);
+      });
+    }else {
+      // todo:  ALL STATIONS STATISTIC BY BALANS ORG
+      customFetch
+      .get(`/last-data/getStatisticStationsByOrganization?organization=${id}`)
+      .then((data) => setStationStatistic(data.data.data));
+
+      // todo: ALL STATIONS BY BALANS ORG
+      customFetch
+      .get(`/stations/all/balanceOrganization?balanceOrganizationNumber=${id}&page=1&perPage=10`)
+      .then((data) => {
+        setAllStation(data.data.data.data);
+        setTotalPages(data.data.data.metadata.lastPage);
+      });
+    }
+  }
+
+  // ! STATION STATIC FOR STATUS
+  const getStationStatisByBalansOrgForStatus = id => {
+    // ! STATISTIC STATION BY BALANS ORGANISATION
+    if(id == undefined){
+      // todo:  ALL STATIONS STATIC
+      customFetch
+      .get(`/last-data/getStatisticStations`)
+      .then((data) => setStationStatistic(data.data.data));
+
+      // todo:  ALL STATIONS
+      customFetch
+      .get(`/stations/all/statusOff?&page=1&perPage=10`)
+      .then((data) => {
+        setNotWorkingStation(data.data.data.data);
+        setTotalPagesForStatus(data.data.data.metadata.lastPage);
+      });
+    }else {
+      // todo:  ALL STATIONS STATIC BY BALANS ORG
+      customFetch
+      .get(`/last-data/getStatisticStationsByOrganization?organization=${id}`)
+      .then((data) => setStationStatistic(data.data.data));
+
+      // todo: ALL STATIONS BY BALANS ORG
+      customFetch
+      .get(`/stations/searchStatusFalseByBalance?balanceOrganizationNumber=${id}&page=1&perPage=10`)
+      .then((data) => {
+        setNotWorkingStation(data.data.data.data);
+        setTotalPagesForStatus(data.data.data.metadata.lastPage);
+      });
+    }
+  }
+
+  // ! ITEMS FOR STATION LIST
+  const itemsForAllStation = stationStatisticAll?.gruopRegion?.map((e, i) => {
+    return  <div className="sort-dashboard-list-item ms-3" onClick={(s) => {
+      setBalansOrgId(e.balance_organization_id)
+      getStationStatisByBalansOrg(e.balance_organization_id)
+      setTableTitle(`${foundBalansOrgName(e.balance_organization_id)} ga tegishli stansiyalar`);
+    }}>
+       <div className="sort-dashboard-wrapper sort-dashboard-wrapper-last-data">
+       <h6 className="carousel-region-heading">
+       {
+         foundRegionName(e.region_id)
+       }
+       </h6>
+
+       <h6>
+       {
+         foundBalansOrgName(e.balance_organization_id)
+       }
+       </h6>
+       <div className="d-flex flex-column justify-content-end">
+         <div className="d-flex align-items-center m-0">
+           <img src={all} alt="active" width={35} height={35} /> <span className="fs-6 ms-1">Jami</span> :<span className="fs-6 ms-1 fw-semibold">{e.countStations} ta</span>
+         </div>
+         <div className="d-flex align-items-center m-0">
+           <img src={active} alt="active" width={30} height={30} /> <span className="fs-6 ms-1">Active</span>: <span className="fs-6 ms-1 fw-semibold">{e.countWorkStations} ta</span>
+         </div>
+         <div className="d-flex align-items-center m-0">
+           <img src={passive} alt="active" width={35} height={35} /> <span className="fs-6 ms-1">Passive</span>: <span className="fs-6 ms-1 fw-semibold">{e.countNotWorkStations} ta</span>
+         </div>
+       </div>
+     </div>
+     </div>
+  });
+
+  // ! ITEMS FOR STATION STATUS
+  const itemsForAllStationStatus = stationStatisticAll?.gruopRegion?.map((e, i) => {
+    return  <div className="sort-dashboard-list-item ms-3" onClick={(s) => {
+      setBalansOrgIdForStatus(e.balance_organization_id)
+      getStationStatisByBalansOrgForStatus(e.balance_organization_id)
+      setTableTitleForStatus(`${foundBalansOrgName(e.balance_organization_id)} ga tegishli ishlamayotganlar stansiyalar`);
+    }}>
+       <div className="sort-dashboard-wrapper sort-dashboard-wrapper-last-data">
+       <h6 className="carousel-region-heading">
+       {
+         foundRegionName(e.region_id)
+       }
+       </h6>
+
+       <h6>
+       {
+         foundBalansOrgName(e.balance_organization_id)
+       }
+       </h6>
+       <div className="d-flex flex-column justify-content-end">
+         <div className="d-flex align-items-center m-0">
+           <img src={passive} alt="active" width={35} height={35} /> <span className="fs-6 ms-1">Passive</span>: <span className="fs-6 ms-1 fw-semibold">{e.countNotWorkStations} ta</span>
+         </div>
+       </div>
+     </div>
+     </div>
+  });
 
   return (
     <HelmetProvider>
@@ -623,6 +879,42 @@ const AdminStation = () => {
                       className="tab-pane fade show active profile-users table-scroll"
                       id="profile-users"
                     >
+                      <div className="dashboard-statis-top w-100 d-flex align-items-center justify-content-between flex-wrap">
+                        <h1 className="dashboard-heading ms-2 dashboard-heading-role">
+                        Jami balans tashkilotlari
+                        </h1>
+                        <div className="region-heading-statis-wrapper region-heading-statis-wrapper-last-data d-flex flex-wrap cursor" onClick={() => {
+                          setBalansOrgId(undefined)
+                          getStationStatisByBalansOrg()
+                          setTableTitle("Jami stansiyalar");
+                        }}>
+                            <div className="d-flex align-items-center m-0">
+                              <img src={all} alt="active" width={30} height={30} /> <span className="fs-6 ms-1">Jami</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countStations} ta</span>
+                            </div>
+                            <div className="d-flex align-items-center m-0">
+                              <img src={active} className="ms-3" alt="active" width={30} height={30} /> <span className="fs-6 ms-1">Active</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countWorkingStations} ta</span>
+                            </div>
+                            <div className="d-flex align-items-center m-0">
+                              <img src={passive} className="ms-3" alt="active" width={35} height={35} /> <span className="fs-6 ms-1">Passive</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countNotWorkingStations} ta</span>
+                            </div>
+                            <div className="d-flex align-items-center m-0">
+                              <img className="ms-3" src={defective} alt="active" width={35} height={35} /> <span className="fs-6 ms-1">No soz</span> :<span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countDefectiveStations} ta</span>
+                            </div>
+                        </div>
+                    </div>
+                  <ol className="list-unstyled sort-dashboard-list m-0 my-4 d-flex align-items-center justify-content-center">
+                    <AliceCarousel
+                      autoPlay={true}
+                      // infinite={true}
+                      autoPlayStrategy="all"
+                      responsive={responsive}
+                      disableButtonsControls={true}
+                      animationDuration="900"
+                      autoPlayInterval={10000}
+                      mouseTracking
+                      items={itemsForAllStation}
+                      />
+                  </ol>
                       <h3 className="stations-search-heading">Qidirish</h3>
                       <form
                         onSubmit={searchNameOrImei}
@@ -639,6 +931,24 @@ const AdminStation = () => {
                           Qidirish
                         </button>
                       </form>
+
+                      <div className="d-flex align-items-center justify-content-between flex-wrap my-3 pt-3">
+                        <h1 className="mb-3 user-lastdata-heading">
+                          {tableTitle}
+                        </h1>
+
+                        <div className="region-heading-statis-wrapper region-heading-statis-wrapper-last-data d-flex flex-wrap cursor">
+                            <div className="d-flex align-items-center m-0">
+                              <img src={active} alt="active" width={30} height={30} /> <span className="fs-6 ms-1">Active</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatistic.countWorkingStations} ta</span>
+                            </div>
+                            <div className="d-flex align-items-center m-0">
+                              <img src={passive} className="ms-3" alt="active" width={35} height={35} /> <span className="fs-6 ms-1">Passive</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatistic.countNotWorkingStations} ta</span>
+                            </div>
+                            <div className="d-flex align-items-center m-0">
+                              <img className="ms-3" src={defective} alt="active" width={35} height={35} /> <span className="fs-6 ms-1">No soz</span> :<span className="fs-6 ms-1 fw-semibold">{stationStatistic.countDefectiveStations} ta</span>
+                            </div>
+                        </div>
+                    </div>
 
                       <div
                         className="d-flex align-items-center justify-content-end cursor-pointer ms-auto user-station-save"
@@ -734,6 +1044,154 @@ const AdminStation = () => {
                       <ReactPaginate
                         pageCount={totalPages}
                         onPageChange={handlePageChange}
+                        forcePage={currentPage}
+                        previousLabel={"<<"}
+                        nextLabel={">>"}
+                        activeClassName={"pagination__link--active"}
+                      />
+                    </div>
+
+                    {/* STATUS */}
+                    <div
+                      className="tab-pane fade profile-search table-scroll"
+                      id="profile-search"
+                    >
+                      <div className="dashboard-statis-top w-100 d-flex align-items-center justify-content-between flex-wrap">
+                        <h1 className="dashboard-heading ms-2 dashboard-heading-role">
+                        Jami balans tashkilotlari
+                        </h1>
+                        <div className="region-heading-statis-wrapper region-heading-statis-wrapper-last-data d-flex flex-wrap cursor" onClick={() => {
+                          setBalansOrgIdForStatus(undefined)
+                          getStationStatisByBalansOrgForStatus()
+                          setTableTitleForStatus("Jami ishlamayotganlar stansiyalar ro'yhati");
+                        }}>
+                            <div className="d-flex align-items-center m-0">
+                              <img src={passive} className="ms-3" alt="active" width={35} height={35} /> <span className="fs-6 ms-1">Passive</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countNotWorkingStations} ta</span>
+                            </div>
+                            <div className="d-flex align-items-center m-0">
+                              <img className="ms-3" src={defective} alt="active" width={35} height={35} /> <span className="fs-6 ms-1">No soz</span> :<span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countDefectiveStations} ta</span>
+                            </div>
+                        </div>
+                      </div>
+                      <ol className="list-unstyled sort-dashboard-list m-0 my-4 d-flex align-items-center justify-content-center">
+                        <AliceCarousel
+                          autoPlay={true}
+                          // infinite={true}
+                          autoPlayStrategy="all"
+                          responsive={responsive}
+                          disableButtonsControls={true}
+                          animationDuration="900"
+                          autoPlayInterval={10000}
+                          mouseTracking
+                          items={itemsForAllStationStatus}
+                          />
+                      </ol>
+
+                      <div className="d-flex align-items-center justify-content-between flex-wrap my-3 pt-3">
+                        <h3 className="mb-3 user-lastdata-heading">
+                        {tableTitleForStatus}
+                        </h3>
+
+                        <div className="region-heading-statis-wrapper region-heading-statis-wrapper-last-data d-flex flex-wrap cursor">
+                            <div className="d-flex align-items-center m-0">
+                              <img src={passive} className="ms-3" alt="active" width={35} height={35} /> <span className="fs-6 ms-1">Passive</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatistic.countNotWorkingStations} ta</span>
+                            </div>
+                            <div className="d-flex align-items-center m-0">
+                              <img className="ms-3" src={defective} alt="active" width={35} height={35} /> <span className="fs-6 ms-1">No soz</span> :<span className="fs-6 ms-1 fw-semibold">{stationStatistic.countDefectiveStations} ta</span>
+                            </div>
+                        </div>
+                    </div>
+
+                      <div
+                        className="text-end d-flex align-items-center justify-content-end cursor-pointer ms-auto user-station-save"
+                        onClick={() => exportDataToExcel()}
+                      >
+                        <p className="m-0 p-0 user-station-save-data-desc">
+                          Ma'lumotni saqlash
+                        </p>
+                        <button className="ms-4 border border-0">
+                          <img src={excel} alt="excel" width={26} height={30} />
+                        </button>
+                      </div>
+                      {notWorkingStation?.length == 0 ? (
+                        <h3 className="alert alert-dark text-center mt-5">
+                          Hozircha bunday stansiya yo'q...
+                        </h3>
+                      ) : (
+                        <table className="c-table my-4 w-100">
+                          <thead className="c-table__header">
+                            <tr>
+                              <th className="c-table__col-label text-center">
+                                Nomi
+                              </th>
+                              <th className="c-table__col-label text-center">
+                                Imei
+                              </th>
+                              <th className="c-table__col-label text-center">
+                                Status
+                              </th>
+                              <th className="c-table__col-label text-center">
+                                Temperatura
+                              </th>
+                              <th className="c-table__col-label text-center">
+                                Batareya
+                              </th>
+                              <th className="c-table__col-label text-center">
+                                Signal
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="c-table__body">
+                            {notWorkingStation?.map((e, i) => {
+                              return (
+                                <tr
+                                  className="fs-6 column-admin-station"
+                                  key={i}
+                                  data-bs-toggle="modal"
+                                  data-bs-target="#exampleModal"
+                                  onClick={() => {
+                                    getStationWithImei(e.imel);
+                                  }}
+                                >
+                                  <td className="c-table__cell text-center">
+                                    {e.name}
+                                  </td>
+                                  <td className="c-table__cell text-center">
+                                    {e.imel}
+                                  </td>
+                                  <td className="c-table__cell text-center">
+                                    {e.status  == '1' ? "ishlayapti" : "ishlamayapti"}
+                                  </td>
+                                  <td className="c-table__cell text-center">
+                                    {e.temperture}
+                                  </td>
+                                  <td
+                                    className={
+                                      "c-table__cell text-center " +
+                                      (e.battery > 77
+                                        ? "text-success"
+                                        : e.battery <= 77 && e.battery >= 50
+                                        ? "text-warning"
+                                        : e.battery < 50
+                                        ? "text-danger"
+                                        : "")
+                                    }
+                                  >
+                                    {e.battery}%
+                                  </td>
+                                  <td className="c-table__cell text-center">
+                                    {e.signal}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      )}
+
+                      <ReactPaginate
+                        pageCount={totalPagesForStatus}
+                        onPageChange={handlePageChangeForStatus}
                         forcePage={currentPage}
                         previousLabel={"<<"}
                         nextLabel={">>"}
@@ -884,112 +1342,6 @@ const AdminStation = () => {
                       <ReactPaginate
                         pageCount={totalPagesForBattery}
                         onPageChange={handlePageChangeForBattery}
-                        forcePage={currentPage}
-                        previousLabel={"<<"}
-                        nextLabel={">>"}
-                        activeClassName={"pagination__link--active"}
-                      />
-                    </div>
-
-                    {/* STATUS */}
-                    <div
-                      className="tab-pane fade profile-search table-scroll"
-                      id="profile-search"
-                    >
-                      <h3 className="stations-search-heading">
-                        Ishlamayotganlar stansiyalar ro'yhati
-                      </h3>
-
-                      <div
-                        className="text-end d-flex align-items-center justify-content-end cursor-pointer ms-auto user-station-save"
-                        onClick={() => exportDataToExcel()}
-                      >
-                        <p className="m-0 p-0 user-station-save-data-desc">
-                          Ma'lumotni saqlash
-                        </p>
-                        <button className="ms-4 border border-0">
-                          <img src={excel} alt="excel" width={26} height={30} />
-                        </button>
-                      </div>
-                      {notWorkingStation?.length == 0 ? (
-                        <h3 className="alert alert-dark text-center mt-5">
-                          Hozircha bunday stansiya yo'q...
-                        </h3>
-                      ) : (
-                        <table className="c-table my-4 w-100">
-                          <thead className="c-table__header">
-                            <tr>
-                              <th className="c-table__col-label text-center">
-                                Nomi
-                              </th>
-                              <th className="c-table__col-label text-center">
-                                Imei
-                              </th>
-                              <th className="c-table__col-label text-center">
-                                Status
-                              </th>
-                              <th className="c-table__col-label text-center">
-                                Temperatura
-                              </th>
-                              <th className="c-table__col-label text-center">
-                                Batareya
-                              </th>
-                              <th className="c-table__col-label text-center">
-                                Signal
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody className="c-table__body">
-                            {notWorkingStation?.map((e, i) => {
-                              return (
-                                <tr
-                                  className="fs-6 column-admin-station"
-                                  key={i}
-                                  data-bs-toggle="modal"
-                                  data-bs-target="#exampleModal"
-                                  onClick={() => {
-                                    getStationWithImei(e.imel);
-                                  }}
-                                >
-                                  <td className="c-table__cell text-center">
-                                    {e.name}
-                                  </td>
-                                  <td className="c-table__cell text-center">
-                                    {e.imel}
-                                  </td>
-                                  <td className="c-table__cell text-center">
-                                    {e.status  == '1' ? "ishlayapti" : "ishlamayapti"}
-                                  </td>
-                                  <td className="c-table__cell text-center">
-                                    {e.temperture}
-                                  </td>
-                                  <td
-                                    className={
-                                      "c-table__cell text-center " +
-                                      (e.battery > 77
-                                        ? "text-success"
-                                        : e.battery <= 77 && e.battery >= 50
-                                        ? "text-warning"
-                                        : e.battery < 50
-                                        ? "text-danger"
-                                        : "")
-                                    }
-                                  >
-                                    {e.battery}%
-                                  </td>
-                                  <td className="c-table__cell text-center">
-                                    {e.signal}
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      )}
-
-                      <ReactPaginate
-                        pageCount={totalPagesForStatus}
-                        onPageChange={handlePageChangeForStatus}
                         forcePage={currentPage}
                         previousLabel={"<<"}
                         nextLabel={">>"}

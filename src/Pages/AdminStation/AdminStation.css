@@ -150,9 +150,13 @@
 .stations-search-heading {
   margin: 0;
   margin-bottom: 10px;
-  font-size: 21px;
-  color: #0CC0CE;
+  font-size: 21px !important;
+  color: #0CC0CE !important;
   font-weight: 600;
+}
+
+.user-lastdata-heading {
+  font-size: 24px !important;
 }
 
 .user-station-search-battery-label {
