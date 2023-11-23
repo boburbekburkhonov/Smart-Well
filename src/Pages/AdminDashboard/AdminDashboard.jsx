@@ -1137,7 +1137,7 @@ const AdminDashboard = () => {
               <div className="d-flex align-items-center mb-4 pt-3">
                     <div className="dashboard-statis-top w-100 d-flex align-items-center justify-content-between flex-wrap">
                       <h1 className="dashboard-heading ms-2 dashboard-heading-role">
-                      Jami balans tashkilotlari
+                        Jami balans tashkilotlari
                       </h1>
                       <div className="region-heading-statis-wrapper d-flex flex-wrap cursor" onClick={() => {
                         setBalansOrgId(undefined)
