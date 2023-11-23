@@ -17,6 +17,23 @@
   border-radius: 10px;
 }
 
+.c-table__header tr {
+  background: #0CC0CE;
+  color: #ffffff;
+}
+
+.c-table__body tr {
+  background: #F6F6F6;
+}
+
+.c-table__body tr:nth-child(even) {
+  background-color: rgb(255, 255, 255);
+}
+
+.c-table__body tr:hover {
+  background: #E2E1EC;
+}
+
 .profile-search-station > ul > li {
   margin: 0 15px;
   background: #0CC0CE !important;
@@ -109,7 +126,7 @@
   background: #e8ebef;
   padding: 10px 20px;
   border-radius: 10px;
-  max-width: 800px;
+  max-width: 500px !important;
 }
 
 .search-region-wrapper {
@@ -151,4 +168,8 @@
 .user-station-save {
   max-width: 220px;
    width: 100%;
+}
+
+.c-table__label {
+  display: none;
 }

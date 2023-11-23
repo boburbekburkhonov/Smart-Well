@@ -1157,7 +1157,7 @@ const AdminDashboard = () => {
                             <img src={passive} className="ms-3" alt="active" width={35} height={35} /> <span className="fs-6 ms-1">Passive</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countNotWorkingStations} ta</span>
                           </div>
                           <div className="d-flex align-items-center m-0">
-                            <img className="ms-3" src={defective} alt="active" width={35} height={35} /> <span className="fs-6 ms-1">Defective</span> :<span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countDefectiveStations} ta</span>
+                            <img className="ms-3" src={defective} alt="active" width={35} height={35} /> <span className="fs-6 ms-1">No soz</span> :<span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countDefectiveStations} ta</span>
                           </div>
                       </div>
                     </div>
@@ -1189,7 +1189,7 @@ const AdminDashboard = () => {
                             <img src={passive} className="ms-3" alt="active" width={35} height={35} /> <span className="fs-6 ms-1">Passive</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatistic.countNotWorkingStations} ta</span>
                           </div>
                           <div className="d-flex align-items-center m-0">
-                            <img className="ms-3" src={defective} alt="active" width={35} height={35} /> <span className="fs-6 ms-1">Defective</span> :<span className="fs-6 ms-1 fw-semibold">{stationStatistic.countDefectiveStations} ta</span>
+                            <img className="ms-3" src={defective} alt="active" width={35} height={35} /> <span className="fs-6 ms-1">No soz</span> :<span className="fs-6 ms-1 fw-semibold">{stationStatistic.countDefectiveStations} ta</span>
                           </div>
                       </div>
                 </div>
