@@ -268,14 +268,25 @@ const AdminStation = () => {
 
     const { nameOrImeiInput } = e.target;
 
-    customFetch
+    if(nameOrImeiInput.value.length == 0){
+      customFetch
+        .get(`/stations/all?page=1&perPage=10`)
+        .then((data) => {
+          if (data.data.data.data.length > 0) {
+            setAllStation(data.data.data.data);
+            setTotalPages(data.data.data.metadata.lastPage);
+          }
+      });
+    }else {
+      customFetch
         .get(`/stations/searchByNameOrImel?search=${nameOrImeiInput.value}&page=1&perPage=10`)
         .then((data) => {
           if (data.data.data.data.length > 0) {
             setTotalPages(0);
             setAllStation(data.data.data.data);
           }
-    });
+      });
+    }
   };
 
   const searchByBattery = (e) => {

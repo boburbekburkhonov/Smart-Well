@@ -116,9 +116,7 @@ const UserStations = () => {
     };
 
     fetchData();
-  }, [count]);
 
-  useEffect(() => {
     customFetch.get(`/sensorType/getAll`).then((data) => {
       if (data.data.statusCode == 200) {
         setSensorType(data.data.data);
@@ -206,30 +204,24 @@ const UserStations = () => {
   const searchNameOrImei = (e) => {
     e.preventDefault();
 
-    const { nameOrImeiInput, nameOrImeiSelect } = e.target;
-
-    if (nameOrImeiSelect.value == "name") {
+    const { nameOrImeiInput } = e.target;
+    if(nameOrImeiInput.value.length == 0){
       customFetch
-        .get(`/stations/searchByName?name=${nameOrImeiInput.value}`)
-        .then((data) => {
-          if (data.data.data.data.length > 0) {
-            setTotalPages(0);
-            setAllStation(data.data.data.data);
-          }
-        });
-    } else if (nameOrImeiSelect.value == "imei") {
+      .get(`/stations/all?page=1&perPage=10`)
+      .then((data) => {
+        if (data.data.data.data.length > 0) {
+          setAllStation(data.data.data.data);
+          setTotalPages(data.data.data.metadata.lastPage);
+        }
+      });
+    }else {
       customFetch
-        .get(`/stations/searchImel?imel=${nameOrImeiInput.value}`)
-        .then((data) => {
-          if (data.data.data.data.length > 0) {
-            setTotalPages(0);
-            setAllStation(data.data.data.data);
-          }
-        });
-    } else if (nameOrImeiSelect.value == "all") {
-      customFetch.get(`/stations/all?page=1&perPage=10`).then((data) => {
-        setTotalPages(data.data.data.metadata.lastPage);
-        setAllStation(data.data.data.data);
+      .get(`/stations/searchByNameOrImel?search=${nameOrImeiInput.value}&page=1&perPage=10`)
+      .then((data) => {
+        if (data.data.data.data.length > 0) {
+          setTotalPages(0);
+          setAllStation(data.data.data.data);
+        }
       });
     }
   };
@@ -615,10 +607,10 @@ const UserStations = () => {
                       <button
                         className="nav-link"
                         data-bs-toggle="tab"
-                        data-bs-target="#profile-overview"
-                        onClick={() => setWhichData("StationForBattery")}
+                        data-bs-target="#profile-search"
+                        onClick={() => setWhichData("StationForStatus")}
                       >
-                        Batareya bo'yicha qidirish
+                        Ishlamayotganlar stansiyalar
                       </button>
                     </li>
 
@@ -626,10 +618,10 @@ const UserStations = () => {
                       <button
                         className="nav-link"
                         data-bs-toggle="tab"
-                        data-bs-target="#profile-search"
-                        onClick={() => setWhichData("StationForStatus")}
+                        data-bs-target="#profile-overview"
+                        onClick={() => setWhichData("StationForBattery")}
                       >
-                        Ishlamayotganlar stansiyalar
+                        Batareya bo'yicha qidirish
                       </button>
                     </li>
                   </ul>
@@ -650,17 +642,6 @@ const UserStations = () => {
                           className="form-control w-50"
                           placeholder="Qidiruv..."
                         />
-
-                        <select
-                          className="form-select w-25"
-                          name="nameOrImeiSelect"
-                          required
-                        >
-                          <option value="name">Nomi</option>
-                          <option value="imei">Imei</option>
-                          <option value="all">All</option>
-                        </select>
-
                         <button className="btn btn-primary bg-btn">
                           Qidirish
                         </button>
@@ -686,7 +667,7 @@ const UserStations = () => {
                           Hozircha bunday stansiya yo'q...
                         </h3>
                       ) : (
-                        <table className="c-table mt-4">
+                        <table className="c-table my-4 w-100">
                           <thead className="c-table__header">
                             <tr>
                               <th className="c-table__col-label text-center">
@@ -767,156 +748,6 @@ const UserStations = () => {
                       />
                     </div>
 
-                    {/* BATTERY */}
-                    <div
-                      className="tab-pane fade profile-overview table-scroll"
-                      id="profile-overview"
-                    >
-                      <h3 className="stations-search-heading">
-                        Batareya quvvati oralig'ini kiriting
-                      </h3>
-                      <form
-                        onSubmit={searchByBattery}
-                        className="search-name-wrapper d-flex align-items-center justify-content-between"
-                      >
-                        <div className="w-25">
-                          <label
-                            className="user-station-search-battery-label"
-                            htmlFor="nameOrImeiInputMin"
-                          >
-                            Minimum
-                          </label>
-                          <input
-                            id="nameOrImeiInputMin"
-                            name="nameOrImeiInputMin"
-                            type="text"
-                            className="form-control"
-                            placeholder="0"
-                            required
-                            onChange={(e) => setMinimumValue(e.target.value)}
-                          />
-                        </div>
-
-                        <div className="w-25">
-                          <label
-                            className="user-station-search-battery-label"
-                            htmlFor="nameOrImeiInputMax"
-                          >
-                            Maximum
-                          </label>
-                          <input
-                            id="nameOrImeiInputMax"
-                            name="nameOrImeiInputMax"
-                            type="text"
-                            className="form-control"
-                            placeholder="100"
-                            required
-                            onChange={(e) => setMaximumValue(e.target.value)}
-                          />
-                        </div>
-                        <button className="btn btn-primary bg-btn">
-                          Qidirish
-                        </button>
-                      </form>
-
-                      <div
-                        className="text-end d-flex align-items-center justify-content-end cursor-pointer ms-auto user-station-save"
-                        onClick={() => exportDataToExcel()}
-                      >
-                        <p className="m-0 p-0 user-station-save-data-desc">
-                          Ma'lumotni saqlash
-                        </p>
-
-                        <button className="ms-3 border border-0">
-                          <img src={excel} alt="excel" width={26} height={30} />
-                        </button>
-                      </div>
-
-                      {allStationForBattery?.length == 0 ? (
-                        <h3 className="alert alert-dark text-center mt-5">
-                          Hozircha bunday stansiya yo'q...
-                        </h3>
-                      ) : (
-                        <table className="c-table mt-4">
-                          <thead className="c-table__header">
-                            <tr>
-                              <th className="c-table__col-label text-center">
-                                Nomi
-                              </th>
-                              <th className="c-table__col-label text-center">
-                                Imei
-                              </th>
-                              <th className="c-table__col-label text-center">
-                                Status
-                              </th>
-                              <th className="c-table__col-label text-center">
-                                Temperatura
-                              </th>
-                              <th className="c-table__col-label text-center">
-                                Batareya
-                              </th>
-                              <th className="c-table__col-label text-center">
-                                Signal
-                              </th>
-                            </tr>
-                          </thead>
-                          <tbody className="c-table__body">
-                            {allStationForBattery?.map((e, i) => {
-                              return (
-                                <tr
-                                  className="fs-6 column-admin-station"
-                                  key={i}
-                                  data-bs-toggle="modal"
-                                  data-bs-target="#exampleModal"
-                                  onClick={() => {
-                                    getStationWithImei(e.imel);
-                                  }}
-                                >
-                                  <td className="c-table__cell text-center">
-                                    {e.name}
-                                  </td>
-                                  <td className="c-table__cell text-center">
-                                    {e.imel}
-                                  </td>
-                                  <td className="c-table__cell text-center">
-                                    {e.status  == '1' ? "ishlayapti" : "ishlamayapti"}
-                                  </td>
-                                  <td className="c-table__cell text-center">
-                                    {e.temperture}
-                                  </td>
-                                  <td
-                                    className={
-                                      "c-table__cell text-center " +
-                                      (e.battery > 77
-                                        ? "text-success"
-                                        : e.battery <= 77 && e.battery >= 50
-                                        ? "text-warning"
-                                        : e.battery < 50
-                                        ? "text-danger"
-                                        : "")
-                                    }
-                                  >
-                                    {e.battery}%
-                                  </td>
-                                  <td className="c-table__cell text-center">
-                                    {e.signal}
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      )}
-                      <ReactPaginate
-                        pageCount={totalPagesForBattery}
-                        onPageChange={handlePageChangeForBattery}
-                        forcePage={currentPage}
-                        previousLabel={"<<"}
-                        nextLabel={">>"}
-                        activeClassName={"pagination__link--active"}
-                      />
-                    </div>
-
                     {/* STATUS */}
                     <div
                       className="tab-pane fade profile-search table-scroll"
@@ -942,7 +773,7 @@ const UserStations = () => {
                           Hozircha bunday stansiya yo'q...
                         </h3>
                       ) : (
-                        <table className="c-table mt-4">
+                        <table className="c-table my-4 w-100">
                           <thead className="c-table__header">
                             <tr>
                               <th className="c-table__col-label text-center">
@@ -1016,6 +847,156 @@ const UserStations = () => {
                       <ReactPaginate
                         pageCount={totalPagesForStatus}
                         onPageChange={handlePageChangeForStatus}
+                        forcePage={currentPage}
+                        previousLabel={"<<"}
+                        nextLabel={">>"}
+                        activeClassName={"pagination__link--active"}
+                      />
+                    </div>
+
+                    {/* BATTERY */}
+                    <div
+                      className="tab-pane fade profile-overview table-scroll"
+                      id="profile-overview"
+                    >
+                      <h3 className="stations-search-heading">
+                        Batareya quvvati oralig'ini kiriting
+                      </h3>
+                      <form
+                        onSubmit={searchByBattery}
+                        className="search-name-wrapper d-flex align-items-center justify-content-between"
+                      >
+                        <div className="w-25">
+                          <label
+                            className="user-station-search-battery-label"
+                            htmlFor="nameOrImeiInputMin"
+                          >
+                            Minimum
+                          </label>
+                          <input
+                            id="nameOrImeiInputMin"
+                            name="nameOrImeiInputMin"
+                            type="text"
+                            className="form-control"
+                            placeholder="0"
+                            required
+                            onChange={(e) => setMinimumValue(e.target.value)}
+                          />
+                        </div>
+
+                        <div className="w-25">
+                          <label
+                            className="user-station-search-battery-label"
+                            htmlFor="nameOrImeiInputMax"
+                          >
+                            Maximum
+                          </label>
+                          <input
+                            id="nameOrImeiInputMax"
+                            name="nameOrImeiInputMax"
+                            type="text"
+                            className="form-control"
+                            placeholder="100"
+                            required
+                            onChange={(e) => setMaximumValue(e.target.value)}
+                          />
+                        </div>
+                        <button className="btn btn-primary bg-btn">
+                          Qidirish
+                        </button>
+                      </form>
+
+                      <div
+                        className="text-end d-flex align-items-center justify-content-end cursor-pointer ms-auto user-station-save"
+                        onClick={() => exportDataToExcel()}
+                      >
+                        <p className="m-0 p-0 user-station-save-data-desc">
+                          Ma'lumotni saqlash
+                        </p>
+
+                        <button className="ms-3 border border-0">
+                          <img src={excel} alt="excel" width={26} height={30} />
+                        </button>
+                      </div>
+
+                      {allStationForBattery?.length == 0 ? (
+                        <h3 className="alert alert-dark text-center mt-5">
+                          Hozircha bunday stansiya yo'q...
+                        </h3>
+                      ) : (
+                        <table className="c-table my-4 w-100">
+                          <thead className="c-table__header">
+                            <tr>
+                              <th className="c-table__col-label text-center">
+                                Nomi
+                              </th>
+                              <th className="c-table__col-label text-center">
+                                Imei
+                              </th>
+                              <th className="c-table__col-label text-center">
+                                Status
+                              </th>
+                              <th className="c-table__col-label text-center">
+                                Temperatura
+                              </th>
+                              <th className="c-table__col-label text-center">
+                                Batareya
+                              </th>
+                              <th className="c-table__col-label text-center">
+                                Signal
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="c-table__body">
+                            {allStationForBattery?.map((e, i) => {
+                              return (
+                                <tr
+                                  className="fs-6 column-admin-station"
+                                  key={i}
+                                  data-bs-toggle="modal"
+                                  data-bs-target="#exampleModal"
+                                  onClick={() => {
+                                    getStationWithImei(e.imel);
+                                  }}
+                                >
+                                  <td className="c-table__cell text-center">
+                                    {e.name}
+                                  </td>
+                                  <td className="c-table__cell text-center">
+                                    {e.imel}
+                                  </td>
+                                  <td className="c-table__cell text-center">
+                                    {e.status  == '1' ? "ishlayapti" : "ishlamayapti"}
+                                  </td>
+                                  <td className="c-table__cell text-center">
+                                    {e.temperture}
+                                  </td>
+                                  <td
+                                    className={
+                                      "c-table__cell text-center " +
+                                      (e.battery > 77
+                                        ? "text-success"
+                                        : e.battery <= 77 && e.battery >= 50
+                                        ? "text-warning"
+                                        : e.battery < 50
+                                        ? "text-danger"
+                                        : "")
+                                    }
+                                  >
+                                    {e.battery}%
+                                  </td>
+                                  <td className="c-table__cell text-center">
+                                    {e.signal}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      )}
+                      <ReactPaginate
+                        pageCount={totalPagesForBattery}
+                        onPageChange={handlePageChangeForBattery}
                         forcePage={currentPage}
                         previousLabel={"<<"}
                         nextLabel={">>"}
