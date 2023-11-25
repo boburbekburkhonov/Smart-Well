@@ -1289,7 +1289,7 @@ const UserLastDataNews = () => {
                     ) : (
                       <div className="user-last-data-alert-wrapper d-flex align-items-center justify-content-center">
                         <div
-                          className="alert alert-danger text-center fw-bold fs-5 w-100 user-last-data-alert"
+                          className="alert alert-info text-center fw-bold fs-5 w-100 user-last-data-alert"
                           role="alert"
                         >
                           Ma'lumot hozircha kelmagan...
@@ -1384,7 +1384,7 @@ const UserLastDataNews = () => {
                     ) : (
                       <div className="user-last-data-alert-wrapper d-flex align-items-center justify-content-center">
                         <div
-                          className="alert alert-danger text-center fw-bold fs-5 w-100 user-last-data-alert"
+                          className="alert alert-info text-center fw-bold fs-5 w-100 user-last-data-alert"
                           role="alert"
                         >
                           Ma'lumot hozircha kelmagan...
@@ -1471,7 +1471,7 @@ const UserLastDataNews = () => {
                     ) : (
                       <div className="user-last-data-alert-wrapper d-flex align-items-center justify-content-center">
                         <div
-                          className="alert alert-danger text-center fw-bold fs-5 w-100 user-last-data-alert"
+                          className="alert alert-info text-center fw-bold fs-5 w-100 user-last-data-alert"
                           role="alert"
                         >
                           Ma'lumot hozircha kelmagan...
@@ -1562,7 +1562,7 @@ const UserLastDataNews = () => {
                     ) : (
                       <div className="user-last-data-alert-wrapper d-flex align-items-center justify-content-center">
                         <div
-                          className="alert alert-danger text-center fw-bold fs-5 w-100 user-last-data-alert"
+                          className="alert alert-info text-center fw-bold fs-5 w-100 user-last-data-alert"
                           role="alert"
                         >
                           Ma'lumot hozircha kelmagan...
@@ -1700,7 +1700,7 @@ const UserLastDataNews = () => {
                     ) : (
                       <div className="user-last-data-alert-wrapper d-flex align-items-center justify-content-center">
                         <div
-                          className="alert alert-danger text-center fw-bold fs-5 w-100 user-last-data-alert"
+                          className="alert alert-info text-center fw-bold fs-5 w-100 user-last-data-alert"
                           role="alert"
                         >
                           Ma'lumot hozircha kelmagan...
