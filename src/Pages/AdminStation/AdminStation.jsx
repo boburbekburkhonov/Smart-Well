@@ -8,6 +8,8 @@ import moment from "moment";
 import { api } from "../Api/Api";
 import excel from "../../assets/images/excel.png";
 import all from "../../assets/images/all.png";
+import warning from "../../assets/images/warning.png";
+import warningMessage from "../../assets/images/warning-message.png";
 import defective from "../../assets/images/defective.png";
 import active from "../../assets/images/active.png";
 import passive from "../../assets/images/passive.png";
@@ -268,24 +270,46 @@ const AdminStation = () => {
 
     const { nameOrImeiInput } = e.target;
 
-    if(nameOrImeiInput.value.length == 0){
-      customFetch
-        .get(`/stations/all?page=1&perPage=10`)
-        .then((data) => {
-          if (data.data.data.data.length > 0) {
-            setAllStation(data.data.data.data);
-            setTotalPages(data.data.data.metadata.lastPage);
-          }
-      });
+    if(balansOrgId == undefined){
+      if(nameOrImeiInput.value.length == 0){
+        customFetch
+          .get(`/stations/all?page=1&perPage=10`)
+          .then((data) => {
+            if (data.data.data.data.length > 0) {
+              setAllStation(data.data.data.data);
+              setTotalPages(data.data.data.metadata.lastPage);
+            }
+        });
+      }else {
+        customFetch
+          .get(`/stations/searchByNameOrImel?search=${nameOrImeiInput.value}&page=1&perPage=10`)
+          .then((data) => {
+            if (data.data.data.data.length > 0) {
+              setTotalPages(0);
+              setAllStation(data.data.data.data);
+            }
+        });
+      }
     }else {
-      customFetch
-        .get(`/stations/searchByNameOrImel?search=${nameOrImeiInput.value}&page=1&perPage=10`)
-        .then((data) => {
-          if (data.data.data.data.length > 0) {
-            setTotalPages(0);
-            setAllStation(data.data.data.data);
-          }
-      });
+      if(nameOrImeiInput.value.length == 0){
+        customFetch
+          .get(`/stations/all/balanceOrganization?balanceOrganizationNumber=${balansOrgId}&page=1&perPage=10`)
+          .then((data) => {
+            if (data.data.data.data.length > 0) {
+              setAllStation(data.data.data.data);
+              setTotalPages(data.data.data.metadata.lastPage);
+            }
+        });
+      }else {
+        customFetch
+          .get(`/stations/searchByOrganizationAndNameOrImel?search=${nameOrImeiInput.value}&page=1&perPage=10&organization=${balansOrgId}`)
+          .then((data) => {
+            if (data.data.data.data.length > 0) {
+              setTotalPages(0);
+              setAllStation(data.data.data.data);
+            }
+        });
+      }
     }
   };
 
@@ -633,6 +657,41 @@ const AdminStation = () => {
   return (
     <HelmetProvider>
       <section>
+      {/* MODAL DEFECT */}
+      <div className="modal fade" id="exampleModalToggle" aria-hidden="true" aria-labelledby="exampleModalToggleLabel" tabIndex="-1">
+        <div className="modal-dialog modal-warning modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header modal-header-warning">
+              <div className="m-auto">
+                <img  src={warning} width={100} height={100} alt="warning" />
+              </div>
+            </div>
+            <div className="modal-body">
+              <h4 className="heading-modal-warning text-center">
+                Qurilmaning no sozligining sabablari!
+              </h4>
+              <ul className="m-0 p-0 ps-3">
+                <li className="d-flex align-items-center mt-4">
+                  <img src={warningMessage} width={25} height={25} alt="warningMessage" />
+                  <p className="m-0 ms-2">
+                    Qurilmaning sozlamalari noto'g'ri qilingan bo'lishi mumkin
+                  </p>
+                </li>
+                <li className="d-flex align-items-center mt-3">
+                  <img src={warningMessage} width={25} height={25} alt="warningMessage" />
+                  <p className="m-0 ms-2">
+                  Qurilmaga suv kirgan bo'lishi mumkin
+                  </p>
+                </li>
+              </ul>
+            </div>
+            <div className="modal-footer modal-footer-warning">
+              <button className="btn btn-warning text-light w-25" data-bs-target="#exampleModalToggle2" data-bs-toggle="modal">Ok</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
         {allStation.length > 0 ? (
           <div className="container-fluid">
             <div>
@@ -1017,7 +1076,14 @@ const AdminStation = () => {
                                   }}
                                 >
                                   <td className="c-table__cell text-center">
-                                    {e.name}
+                                    <span>
+                                      {e.name}
+                                    </span>
+                                    {
+                                      e.status == 1 && e.defective == true ?
+                                      <img className="cursor-pointer" data-bs-target="#exampleModalToggle" data-bs-toggle="modal" src={warning} alt="warning" width={35} height={35} />
+                                      : null
+                                    }
                                   </td>
                                   <td className="c-table__cell text-center">
                                   {e.imel}
@@ -1165,7 +1231,14 @@ const AdminStation = () => {
                                   }}
                                 >
                                   <td className="c-table__cell text-center">
-                                    {e.name}
+                                    <span>
+                                      {e.name}
+                                    </span>
+                                    {
+                                      e.status == 1 && e.defective == true ?
+                                      <img className="cursor-pointer" data-bs-target="#exampleModalToggle" data-bs-toggle="modal" src={warning} alt="warning" width={35} height={35} />
+                                      : null
+                                    }
                                   </td>
                                   <td className="c-table__cell text-center">
                                     {e.imel}
@@ -1317,6 +1390,11 @@ const AdminStation = () => {
                                 >
                                   <td className="c-table__cell text-center">
                                     {e.name}
+                                    {
+                                      e.status == 1 && e.defective == true ?
+                                      <img className="cursor-pointer" data-bs-target="#exampleModalToggle" data-bs-toggle="modal" src={warning} alt="warning" width={35} height={35} />
+                                      : null
+                                    }
                                   </td>
                                   <td className="c-table__cell text-center">
                                     {e.imel}
