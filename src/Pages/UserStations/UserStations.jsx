@@ -8,12 +8,19 @@ import { Helmet, HelmetProvider } from "react-helmet-async";
 import moment from "moment";
 import { api } from "../Api/Api";
 import excel from "../../assets/images/excel.png";
+import all from "../../assets/images/all.png";
+import defective from "../../assets/images/defective.png";
+import active from "../../assets/images/active.png";
+import passive from "../../assets/images/passive.png";
+import warning from "../../assets/images/warning.png";
+import warningMessage from "../../assets/images/warning-message.png";
 import * as XLSX from "xlsx";
 import axios from "axios";
 
 const UserStations = () => {
   const [count, setCount] = useState(0);
   const [allStation, setAllStation] = useState([]);
+  const [stationStatisticAll, setStationStatisticAll] = useState([]);
   const [allStationForBattery, setAllStationForBattery] = useState([]);
   const [notWorkingStation, setNotWorkingStation] = useState([]);
   const [currentPage, setCurrentPage] = useState(0);
@@ -129,6 +136,17 @@ const UserStations = () => {
         setNotWorkingStation(data.data.data.data);
         setTotalPagesForStatus(data.data.data.metadata.lastPage);
       });
+
+    // ! STATION STATISTIC
+    customFetch
+    .get(`/stations/getAllStationsStatisic`)
+    .then((data) => {
+      data.data.data.gruopRegion.forEach(i => {
+        if(i.balance_organization_id == localStorage.getItem('name')){
+          setStationStatisticAll(i)
+        }
+      })
+    });
   }, []);
 
   const handlePageChange = (selectedPage) => {
@@ -589,6 +607,41 @@ const UserStations = () => {
                 </div>
               </div>
 
+              {/* MODAL DEFECT */}
+              <div className="modal fade" id="exampleModalToggle" aria-hidden="true" aria-labelledby="exampleModalToggleLabel" tabIndex="-1">
+                <div className="modal-dialog modal-warning modal-dialog-centered">
+                  <div className="modal-content">
+                    <div className="modal-header modal-header-warning">
+                      <div className="m-auto">
+                        <img  src={warning} width={100} height={100} alt="warning" />
+                      </div>
+                    </div>
+                    <div className="modal-body">
+                      <h4 className="heading-modal-warning text-center">
+                        Qurilmaning no sozligining sabablari!
+                      </h4>
+                      <ul className="m-0 p-0 ps-3">
+                        <li className="d-flex align-items-center mt-4">
+                          <img src={warningMessage} width={25} height={25} alt="warningMessage" />
+                          <p className="m-0 ms-2">
+                            Qurilmaning sozlamalari noto'g'ri qilingan bo'lishi mumkin
+                          </p>
+                        </li>
+                        <li className="d-flex align-items-center mt-3">
+                          <img src={warningMessage} width={25} height={25} alt="warningMessage" />
+                          <p className="m-0 ms-2">
+                          Qurilmaga suv kirgan bo'lishi mumkin
+                          </p>
+                        </li>
+                      </ul>
+                    </div>
+                    <div className="modal-footer modal-footer-warning">
+                      <button className="btn btn-warning text-light w-25" data-bs-target="#exampleModalToggle2" data-bs-toggle="modal">Ok</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="card">
                 <div className="card-body pt-3">
                   <ul className="nav nav-tabs nav-tabs-bordered">
@@ -631,21 +684,39 @@ const UserStations = () => {
                       className="tab-pane fade show active profile-users table-scroll"
                       id="profile-users"
                     >
-                      <h3 className="stations-search-heading">Qidirish</h3>
-                      <form
-                        onSubmit={searchNameOrImei}
-                        className="search-name-wrapper d-flex align-items-center justify-content-between"
-                      >
-                        <input
-                          name="nameOrImeiInput"
-                          type="text"
-                          className="form-control w-50"
-                          placeholder="Qidiruv..."
-                        />
-                        <button className="btn btn-primary bg-btn">
-                          Qidirish
-                        </button>
-                      </form>
+                      <div className="d-flex align-items-center justify-content-between flex-wrap">
+                        <div>
+                          <h3 className="stations-search-heading">Qidirish</h3>
+                          <form
+                            onSubmit={searchNameOrImei}
+                            className="search-name-wrapper d-flex align-items-center justify-content-between"
+                          >
+                            <input
+                              name="nameOrImeiInput"
+                              type="text"
+                              className="form-control w-50"
+                              placeholder="Qidiruv..."
+                            />
+                            <button className="btn btn-primary bg-btn">
+                              Qidirish
+                            </button>
+                          </form>
+                        </div>
+                        <div className="region-heading-statis-wrapper region-heading-statis-wrapper-org-station region-heading-statis-wrapper-last-data d-flex flex-wrap cursor ms-auto">
+                          <div className="d-flex align-items-center m-0">
+                            <img src={all} alt="active" width={30} height={30} /> <span className="fs-6 ms-1">Jami</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countStations} ta</span>
+                          </div>
+                          <div className="d-flex align-items-center m-0">
+                            <img src={active} className="ms-3" alt="active" width={30} height={30} /> <span className="fs-6 ms-1">Active</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countWorkStations} ta</span>
+                          </div>
+                          <div className="d-flex align-items-center m-0">
+                            <img src={passive} className="ms-3" alt="active" width={35} height={35} /> <span className="fs-6 ms-1">Passive</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countNotWorkStations} ta</span>
+                          </div>
+                          <div className="d-flex align-items-center m-0">
+                            <img className="ms-3" src={defective} alt="active" width={35} height={35} /> <span className="fs-6 ms-1">No soz</span> :<span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countDefectiveStations} ta</span>
+                          </div>
+                        </div>
+                      </div>
 
                       <div
                         className="d-flex align-items-center justify-content-end cursor-pointer ms-auto user-station-save"
@@ -703,7 +774,14 @@ const UserStations = () => {
                                   }}
                                 >
                                   <td className="c-table__cell text-center">
-                                    {e.name}
+                                    <span>
+                                      {e.name}
+                                    </span>
+                                    {
+                                      e.status == 1 && e.defective == true ?
+                                      <img className="cursor-pointer" data-bs-target="#exampleModalToggle" data-bs-toggle="modal" src={warning} alt="warning" width={30} height={30} />
+                                      : null
+                                    }
                                   </td>
                                   <td className="c-table__cell text-center">
                                     {e.imel}
@@ -753,10 +831,19 @@ const UserStations = () => {
                       className="tab-pane fade profile-search table-scroll"
                       id="profile-search"
                     >
-                      <h3 className="stations-search-heading">
-                        Ishlamayotganlar stansiyalar ro'yhati
-                      </h3>
-
+                      <div className="d-flex align-items-center justify-content-between flex-wrap mb-4">
+                        <h3 className="stations-search-heading m-0">
+                          Ishlamayotganlar stansiyalar ro'yhati
+                        </h3>
+                        <div className="region-heading-statis-wrapper region-heading-statis-wrapper-last-data d-flex flex-wrap cursor ms-auto">
+                              <div className="d-flex align-items-center m-0">
+                                <img src={passive} className="ms-3" alt="active" width={35} height={35} /> <span className="fs-6 ms-1">Passive</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countNotWorkStations} ta</span>
+                              </div>
+                              <div className="d-flex align-items-center m-0">
+                                <img className="ms-3" src={defective} alt="active" width={35} height={35} /> <span className="fs-6 ms-1">No soz</span> :<span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countDefectiveStations} ta</span>
+                              </div>
+                        </div>
+                      </div>
                       <div
                         className="text-end d-flex align-items-center justify-content-end cursor-pointer ms-auto user-station-save"
                         onClick={() => exportDataToExcel()}
@@ -809,7 +896,14 @@ const UserStations = () => {
                                   }}
                                 >
                                   <td className="c-table__cell text-center">
-                                    {e.name}
+                                    <span>
+                                      {e.name}
+                                    </span>
+                                    {
+                                      e.status == 1 && e.defective == true ?
+                                      <img className="cursor-pointer" data-bs-target="#exampleModalToggle" data-bs-toggle="modal" src={warning} alt="warning" width={30} height={30} />
+                                      : null
+                                    }
                                   </td>
                                   <td className="c-table__cell text-center">
                                     {e.imel}
@@ -859,52 +953,71 @@ const UserStations = () => {
                       className="tab-pane fade profile-overview table-scroll"
                       id="profile-overview"
                     >
-                      <h3 className="stations-search-heading">
-                        Batareya quvvati oralig'ini kiriting
-                      </h3>
-                      <form
-                        onSubmit={searchByBattery}
-                        className="search-name-wrapper d-flex align-items-center justify-content-between"
-                      >
-                        <div className="w-25">
-                          <label
-                            className="user-station-search-battery-label"
-                            htmlFor="nameOrImeiInputMin"
+                      <div className="d-flex align-items-center justify-content-between">
+                        <div>
+                          <h3 className="stations-search-heading">
+                            Batareya quvvati oralig'ini kiriting
+                          </h3>
+                          <form
+                            onSubmit={searchByBattery}
+                            className="search-name-wrapper d-flex align-items-center justify-content-between"
                           >
-                            Minimum
-                          </label>
-                          <input
-                            id="nameOrImeiInputMin"
-                            name="nameOrImeiInputMin"
-                            type="text"
-                            className="form-control"
-                            placeholder="0"
-                            required
-                            onChange={(e) => setMinimumValue(e.target.value)}
-                          />
+                            <div className="w-25">
+                              <label
+                                className="user-station-search-battery-label"
+                                htmlFor="nameOrImeiInputMin"
+                              >
+                                Minimum
+                              </label>
+                              <input
+                                id="nameOrImeiInputMin"
+                                name="nameOrImeiInputMin"
+                                type="text"
+                                className="form-control"
+                                placeholder="0"
+                                required
+                                onChange={(e) => setMinimumValue(e.target.value)}
+                              />
+                            </div>
+
+                            <div className="w-25">
+                              <label
+                                className="user-station-search-battery-label"
+                                htmlFor="nameOrImeiInputMax"
+                              >
+                                Maximum
+                              </label>
+                              <input
+                                id="nameOrImeiInputMax"
+                                name="nameOrImeiInputMax"
+                                type="text"
+                                className="form-control"
+                                placeholder="100"
+                                required
+                                onChange={(e) => setMaximumValue(e.target.value)}
+                              />
+                            </div>
+                            <button className="btn btn-primary bg-btn">
+                              Qidirish
+                            </button>
+                          </form>
                         </div>
 
-                        <div className="w-25">
-                          <label
-                            className="user-station-search-battery-label"
-                            htmlFor="nameOrImeiInputMax"
-                          >
-                            Maximum
-                          </label>
-                          <input
-                            id="nameOrImeiInputMax"
-                            name="nameOrImeiInputMax"
-                            type="text"
-                            className="form-control"
-                            placeholder="100"
-                            required
-                            onChange={(e) => setMaximumValue(e.target.value)}
-                          />
+                        <div className="region-heading-statis-wrapper region-heading-statis-wrapper-org-station region-heading-statis-wrapper-last-data d-flex flex-wrap cursor ms-auto">
+                          <div className="d-flex align-items-center m-0">
+                            <img src={all} alt="active" width={30} height={30} /> <span className="fs-6 ms-1">Jami</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countStations} ta</span>
+                          </div>
+                          <div className="d-flex align-items-center m-0">
+                            <img src={active} className="ms-3" alt="active" width={30} height={30} /> <span className="fs-6 ms-1">Active</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countWorkStations} ta</span>
+                          </div>
+                          <div className="d-flex align-items-center m-0">
+                            <img src={passive} className="ms-3" alt="active" width={35} height={35} /> <span className="fs-6 ms-1">Passive</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countNotWorkStations} ta</span>
+                          </div>
+                          <div className="d-flex align-items-center m-0">
+                            <img className="ms-3" src={defective} alt="active" width={35} height={35} /> <span className="fs-6 ms-1">No soz</span> :<span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countDefectiveStations} ta</span>
+                          </div>
                         </div>
-                        <button className="btn btn-primary bg-btn">
-                          Qidirish
-                        </button>
-                      </form>
+                      </div>
 
                       <div
                         className="text-end d-flex align-items-center justify-content-end cursor-pointer ms-auto user-station-save"
@@ -960,7 +1073,14 @@ const UserStations = () => {
                                   }}
                                 >
                                   <td className="c-table__cell text-center">
+                                    <span>
                                     {e.name}
+                                    </span>
+                                    {
+                                      e.status == 1 && e.defective == true ?
+                                      <img className="cursor-pointer" data-bs-target="#exampleModalToggle" data-bs-toggle="modal" src={warning} alt="warning" width={30} height={30} />
+                                      : null
+                                    }
                                   </td>
                                   <td className="c-table__cell text-center">
                                     {e.imel}
