@@ -22,6 +22,8 @@ import defective from "../../assets/images/defective.png";
 import active from "../../assets/images/active.png";
 import passive from "../../assets/images/passive.png";
 import AliceCarousel from "react-alice-carousel";
+import warning from "../../assets/images/warning.png";
+import warningMessage from "../../assets/images/warning-message.png";
 
 const AdminLastData = () => {
   const [loader, setLoader] = useState(false);
@@ -894,8 +896,53 @@ const AdminLastData = () => {
      </div>
   });
 
+  const fixedStationName = name => {
+    const fixedName = name.split('_')
+    if(fixedName.length >= 2){
+      return `${fixedName[0]} ${fixedName[1]}`
+    }else {
+      return fixedName
+    }
+  }
+
+  console.log(allStation);
   return (
     <section className="py-3">
+      {/* MODAL DEFECT */}
+      <div className="modal fade" id="exampleModalToggle" aria-hidden="true" aria-labelledby="exampleModalToggleLabel" tabIndex="-1">
+        <div className="modal-dialog modal-warning modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header modal-header-warning">
+              <div className="m-auto">
+                <img  src={warning} width={100} height={100} alt="warning" />
+              </div>
+            </div>
+            <div className="modal-body">
+              <h4 className="heading-modal-warning text-center">
+                Qurilmaning no sozligining sabablari!
+              </h4>
+              <ul className="m-0 p-0 ps-3">
+                <li className="d-flex align-items-center mt-4">
+                  <img src={warningMessage} width={25} height={25} alt="warningMessage" />
+                  <p className="m-0 ms-2">
+                    Qurilmaning sozlamalari noto'g'ri qilingan bo'lishi mumkin
+                  </p>
+                </li>
+                <li className="d-flex align-items-center mt-3">
+                  <img src={warningMessage} width={25} height={25} alt="warningMessage" />
+                  <p className="m-0 ms-2">
+                  Qurilmaga suv kirgan bo'lishi mumkin
+                  </p>
+                </li>
+              </ul>
+            </div>
+            <div className="modal-footer modal-footer-warning">
+              <button className="btn btn-warning text-light w-25" data-bs-target="#exampleModalToggle2" data-bs-toggle="modal">Ok</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="container-fluid">
         <div className="card">
           {allStation.length > 0 ? (
@@ -1173,34 +1220,32 @@ const AdminLastData = () => {
                       {allStation?.map((e, i) => {
                         return (
                           <li className="user-last-data-list-item mt-4" key={i}>
-                            <a
-                              onClick={() => {
-                                navigate(
-                                  `/admin/lastdata/${
-                                    whichStation == "allStation"
-                                      ? e._id
-                                      : e.stationsId
-                                  }`
-                                );
-                                localStorage.setItem(
-                                  "stationName",
-                                  whichStation == "allStation"
-                                    ? e.name
-                                    : e.stations?.name
-                                );
-                                localStorage.setItem(
-                                  "location",
-                                  whichStation == "allStation"
-                                    ? e.location
-                                    : e.stations?.location
-                                );
-                              }}
-                            >
+                            <a>
                               <div className="user-last-data-list-item-top d-flex align-items-center justify-content-between">
                                 <h3 className="fs-5 m-0">
                                   {whichStation == "allStation"
-                                    ? e.name
-                                    : e.stations?.name}
+                                    ?
+                                    <>
+                                      <span>
+                                        {fixedStationName(e.name)}
+                                      </span>
+                                      {
+                                        e.status == 1 && e.defective == true ?
+                                        <img className="cursor-pointer" data-bs-target="#exampleModalToggle" data-bs-toggle="modal" src={warning} alt="warning" width={35} height={35} />
+                                        : null
+                                      }
+                                    </>
+                                    :
+                                    <>
+                                    <span>
+                                      {fixedStationName(e.stations?.name)}
+                                    </span>
+                                    {
+                                      e.stations?.status == 1 && e.stations?.defective == true ?
+                                      <img className="cursor-pointer" data-bs-target="#exampleModalToggle" data-bs-toggle="modal" src={warning} alt="warning" width={35} height={35} />
+                                      : null
+                                    }
+                                    </>}
                                 </h3>
                                 <div className="d-flex align-items-center justify-content-between">
                                   <p
@@ -1286,7 +1331,29 @@ const AdminLastData = () => {
                                 <span className={colorCard}></span>
                               )}
 
-                              <span className="">
+                              <span
+                                onClick={() => {
+                                  navigate(
+                                    `/admin/lastdata/${
+                                      whichStation == "allStation"
+                                        ? e._id
+                                        : e.stationsId
+                                    }`
+                                  );
+                                  localStorage.setItem(
+                                    "stationName",
+                                    whichStation == "allStation"
+                                      ? e.name
+                                      : e.stations?.name
+                                  );
+                                  localStorage.setItem(
+                                    "location",
+                                    whichStation == "allStation"
+                                      ? e.location
+                                      : e.stations?.location
+                                  );
+                                }}
+                              >
                                 <div className="text-end mt-2">
                                   <div className="d-flex align-items-center">
                                     <p className="m-0 user-lastdata-level-desc">
