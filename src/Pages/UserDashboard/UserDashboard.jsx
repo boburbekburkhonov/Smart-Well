@@ -8,6 +8,12 @@ import circleGreenBlue from "../../assets/images/circle-green-blue.png";
 import circleOrange from "../../assets/images/circle-orange.png";
 import circleRed from "../../assets/images/circle-red.png";
 import circleYellow from "../../assets/images/circle-yellow.png";
+import all from "../../assets/images/all.png";
+import defective from "../../assets/images/defective.png";
+import warning from "../../assets/images/warning.png";
+import warningMessage from "../../assets/images/warning-message.png";
+import active from "../../assets/images/active.png";
+import passive from "../../assets/images/passive.png";
 import fullScreen from "../../assets/images/fullscreen.png";
 import { useEffect } from "react";
 import { api } from "../Api/Api";
@@ -26,6 +32,7 @@ const UserDashboard = (prop) => {
   const [dataOrStation, setDataOrStation] = useState("data");
   const [stationBattery, setStationBattery] = useState([]);
   const [stationStatistic, settationStatistic] = useState([]);
+  const [stationStatisticAll, setStationStatisticAll] = useState([]);
   const [viewStation, setViewStation] = useState([]);
   const [viewStationLimit, setViewStationLimit] = useState([]);
   const [viewStationByChar, setViewStationByChar] = useState([]);
@@ -123,9 +130,21 @@ const UserDashboard = (prop) => {
 
     userDashboardFunc();
 
+    // ! STATION STATISTIC BATTERY
     customFetch
       .get(`/stations/getStatisticStationsByBattery`)
       .then((data) => setStationBattery(data.data.data));
+
+    // ! STATION STATISTIC
+    customFetch
+    .get(`/stations/getAllStationsStatisic`)
+    .then((data) => {
+      data.data.data.gruopRegion.forEach(i => {
+        if(i.balance_organization_id == localStorage.getItem('name')){
+          setStationStatisticAll(i)
+        }
+      })
+    });
   }, []);
 
   useEffect(() => {
@@ -602,7 +621,16 @@ const UserDashboard = (prop) => {
                       return whichStation == "allStation" ||
                         whichStation == "notWorkStation" ? (
                         <tr key={i}>
-                          <td className={`text-center fw-bold`}>{e?.name}</td>
+                          <td className={`text-center fw-bold`}>
+                            <span>
+                              {e?.name}
+                            </span>
+                            {
+                              e?.status == 1 && e?.defective == true ?
+                              <img className="cursor-pointer" data-bs-target="#exampleModalToggle" data-bs-toggle="modal" src={warning} alt="warning" width={35} height={35} />
+                              : null
+                            }
+                          </td>
                           <td className={`text-center fw-bold`}>
                             {e?.battery}
                           </td>
@@ -652,7 +680,14 @@ const UserDashboard = (prop) => {
                       ) : (
                         <tr key={i}>
                           <td className={`text-center fw-bold`}>
+                            <span>
                             {e?.stations?.name}
+                            </span>
+                            {
+                              e.stations?.status == 1 && e.stations?.defective == true ?
+                              <img className="cursor-pointer" data-bs-target="#exampleModalToggle" data-bs-toggle="modal" src={warning} alt="warning" width={35} height={35} />
+                              : null
+                            }
                           </td>
                           <td className={`text-center fw-bold`}>
                             {e?.stations?.battery}
@@ -753,7 +788,16 @@ const UserDashboard = (prop) => {
                     {viewStationByChar?.map((e, i) => {
                       return (
                         <tr key={i}>
-                          <td className="text-center fw-bold">{e?.name}</td>
+                          <td className="text-center fw-bold">
+                            <span>
+                              {e?.name}
+                            </span>
+                            {
+                              e?.status == 1 && e?.defective == true ?
+                              <img className="cursor-pointer" data-bs-target="#exampleModalToggle" data-bs-toggle="modal" src={warning} alt="warning" width={35} height={35} />
+                              : null
+                            }
+                          </td>
                           <td className="text-center fw-bold">{e.imel}</td>
                           <td className="text-center fw-bold">{e.battery}</td>
                           <td className="text-center fw-bold">{e.signal}</td>
@@ -778,17 +822,68 @@ const UserDashboard = (prop) => {
           </div>
         </div>
       </div>
+
+      {/* MODAL DEFECT */}
+      <div className="modal fade" id="exampleModalToggle" aria-hidden="true" aria-labelledby="exampleModalToggleLabel" tabIndex="-1">
+        <div className="modal-dialog modal-warning modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header modal-header-warning">
+              <div className="m-auto">
+                <img  src={warning} width={100} height={100} alt="warning" />
+              </div>
+            </div>
+            <div className="modal-body">
+              <h4 className="heading-modal-warning text-center">
+                Qurilmaning no sozligining sabablari!
+              </h4>
+              <ul className="m-0 p-0 ps-3">
+                <li className="d-flex align-items-center mt-4">
+                  <img src={warningMessage} width={25} height={25} alt="warningMessage" />
+                  <p className="m-0 ms-2">
+                    Qurilmaning sozlamalari noto'g'ri qilingan bo'lishi mumkin
+                  </p>
+                </li>
+                <li className="d-flex align-items-center mt-3">
+                  <img src={warningMessage} width={25} height={25} alt="warningMessage" />
+                  <p className="m-0 ms-2">
+                  Qurilmaga suv kirgan bo'lishi mumkin
+                  </p>
+                </li>
+              </ul>
+            </div>
+            <div className="modal-footer modal-footer-warning">
+              <button className="btn btn-warning text-light w-25" data-bs-target="#exampleModalToggle2" data-bs-toggle="modal">Ok</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="container-fluid p-0">
         <section className="section-dashboard">
           {viewStation?.length > 0 ? (
             <div className="container-fluid p-0">
               <div className="user-dashboard-top-wrapper">
-                <div className="d-flex align-items-center mb-3 pt-3">
+                <div className="d-flex align-items-center justify-content-between mb-3 pt-3">
                   <h1 className="dashboard-heading ms-2">
                     {balanceOrg.length == 0
                       ? `${name} ga biriktirilgan qurilmalar`
                       : `${balanceOrgName} ga biriktirilgan qurilmalar`}
                   </h1>
+
+                  <div className="region-heading-statis-wrapper d-flex flex-wrap cursor">
+                          <div className="d-flex align-items-center m-0">
+                            <img src={all} alt="active" width={30} height={30} /> <span className="fs-6 ms-1">Jami</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countStations} ta</span>
+                          </div>
+                          <div className="d-flex align-items-center m-0">
+                            <img src={active} className="ms-3" alt="active" width={30} height={30} /> <span className="fs-6 ms-1">Active</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countWorkingStations} ta</span>
+                          </div>
+                          <div className="d-flex align-items-center m-0">
+                            <img src={passive} className="ms-3" alt="active" width={35} height={35} /> <span className="fs-6 ms-1">Passive</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countNotWorkingStations} ta</span>
+                          </div>
+                          <div className="d-flex align-items-center m-0">
+                            <img className="ms-3" src={defective} alt="active" width={35} height={35} /> <span className="fs-6 ms-1">No soz</span> :<span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countDefectiveStations} ta</span>
+                          </div>
+                      </div>
                 </div>
 
                 <ul className="dashboard-list list-unstyled m-0 d-flex flex-wrap align-items-center justify-content-between">
@@ -1066,8 +1161,29 @@ const UserDashboard = (prop) => {
                                 <td className="text-center fw-bold">
                                   {whichStation == "allStation" ||
                                   whichStation == "notWorkStation"
-                                    ? e?.name
-                                    : e.stations?.name}
+                                    ?
+                                    <>
+                                      <span>
+                                        {e?.name}
+                                      </span>
+                                      {
+                                        e.status == 1 && e.defective == true ?
+                                        <img className="cursor-pointer" data-bs-target="#exampleModalToggle" data-bs-toggle="modal" src={warning} alt="warning" width={35} height={35} />
+                                        : null
+                                      }
+                                    </>
+                                    :
+                                    <>
+                                      <span>
+                                        {e.stations?.name}
+                                      </span>
+                                      {
+                                        e.stations?.status == 1 && e.stations?.defective == true ?
+                                        <img className="cursor-pointer" data-bs-target="#exampleModalToggle" data-bs-toggle="modal" src={warning} alt="warning" width={35} height={35} />
+                                        : null
+                                      }
+                                    </>
+                                    }
                                 </td>
                                 <td className="text-center fw-bold">
                                   {whichStation == "allStation" &&
@@ -1192,7 +1308,14 @@ const UserDashboard = (prop) => {
                             return (
                               <tr key={i}>
                                 <td className="text-center fw-bold">
-                                  {e?.name}
+                                  <span>
+                                   {e?.name}
+                                  </span>
+                                  {
+                                    e?.status == 1 && e?.defective == true ?
+                                    <img className="cursor-pointer" data-bs-target="#exampleModalToggle" data-bs-toggle="modal" src={warning} alt="warning" width={35} height={35} />
+                                    : null
+                                  }
                                 </td>
                                 <td className="text-center fw-bold">
                                   {e.battery}

@@ -32,11 +32,11 @@ const AdminDashboard = () => {
   const [loader, setLoader] = useState(false);
   const [allBalansOrg, setAllBalansOrg] = useState([]);
   const [allRegion, setAllRegion] = useState([]);
+  const [stationStatisticAll, setStationStatisticAll] = useState([]);
   const [balansOrgId, setBalansOrgId] = useState();
   const [dataOrStation, setDataOrStation] = useState("data");
   const [stationBattery, setStationBattery] = useState([]);
   const [stationStatistic, setStationStatistic] = useState([]);
-  const [stationStatisticAll, setStationStatisticAll] = useState([]);
   const [viewStation, setViewStation] = useState([]);
   const [viewStationLimit, setViewStationLimit] = useState([]);
   const [viewStationByChar, setViewStationByChar] = useState([]);
