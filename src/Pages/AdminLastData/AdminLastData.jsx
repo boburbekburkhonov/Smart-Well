@@ -905,7 +905,6 @@ const AdminLastData = () => {
     }
   }
 
-  console.log(allStation);
   return (
     <section className="py-3">
       {/* MODAL DEFECT */}
