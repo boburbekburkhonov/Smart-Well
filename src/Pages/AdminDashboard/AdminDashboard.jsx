@@ -17,6 +17,8 @@ import { useEffect } from "react";
 import { api } from "../Api/Api";
 import { useState } from "react";
 import excel from "../../assets/images/excel.png";
+import warning from "../../assets/images/warning.png";
+import warningMessage from "../../assets/images/warning-message.png";
 import * as XLSX from "xlsx";
 import axios from "axios";
 import AliceCarousel from "react-alice-carousel";
@@ -41,6 +43,7 @@ const AdminDashboard = () => {
   const [viewStationByCharLimit, setViewStationByCharLimit] = useState([]);
   const [whichStation, setWhichStation] = useState("allStation");
   const [tableTitle, setTableTitle] = useState("Umumiy stansiyalar soni");
+  const [tableTitleStation, setTableTitleStation] = useState("Jami stansiyalar");
   const chartRef = useRef();
 
   // ! CUSTOM FETCH
@@ -556,27 +559,51 @@ const AdminDashboard = () => {
               : "Qilinmagan",
           [sath]:
             whichStation == "allStation" || whichStation == "notWorkStation"
-              ? e.lastData[0]?.level == undefined
+              ? Array.isArray(e.lastData) && e.lastData[0]?.level == undefined
                 ? "-"
-                : Number(e.lastData[0]?.level).toFixed(2)
+                : Array.isArray(e.lastData) && e.lastData[0]?.level != undefined
+                ? Number(e.lastData[0]?.level).toFixed(2)
+                : Array.isArray(e.lastData) == false && e.lastData?.level == undefined
+                ? "-"
+                : Array.isArray(e.lastData) == false && e.lastData?.level != undefined
+                ? Number(e.lastData?.level).toFixed(2)
+                : null
               : Number(e.level).toFixed(2),
           [shurlanish]:
             whichStation == "allStation" || whichStation == "notWorkStation"
-              ? e.lastData[0]?.conductivity == undefined
+              ? Array.isArray(e.lastData) && e.lastData[0]?.conductivity == undefined
                 ? "-"
-                : Number(e.lastData[0]?.conductivity).toFixed(2)
+                : Array.isArray(e.lastData) && e.lastData[0]?.conductivity != undefined
+                ? Number(e.lastData[0]?.conductivity).toFixed(2)
+                : Array.isArray(e.lastData) == false && e.lastData?.conductivity == undefined
+                ? "-"
+                : Array.isArray(e.lastData) == false && e.lastData?.conductivity != undefined
+                ? Number(e.lastData?.conductivity).toFixed(2)
+                : null
               : Number(e.conductivity).toFixed(2),
           [temperatura]:
             whichStation == "allStation" || whichStation == "notWorkStation"
-              ? e.lastData[0]?.temp == undefined
+              ? Array.isArray(e.lastData) && e.lastData[0]?.temp == undefined
                 ? "-"
-                : Number(e.lastData[0]?.temp).toFixed(2)
+                : Array.isArray(e.lastData) && e.lastData[0]?.temp != undefined
+                ? Number(e.lastData[0]?.temp).toFixed(2)
+                : Array.isArray(e.lastData) == false && e.lastData?.temp == undefined
+                ? '-'
+                : Array.isArray(e.lastData) == false && e.lastData?.temp != undefined
+                ? Number(e.lastData?.temp).toFixed(2)
+                : null
               : Number(e.temp).toFixed(2),
           sana:
             whichStation == "allStation" || whichStation == "notWorkStation"
-              ? e.lastData[0]?.date == undefined
+              ? Array.isArray(e.lastData) && e.lastData[0]?.date == undefined
                 ? "-"
-                : e.lastData[0]?.date
+                : Array.isArray(e.lastData) && e.lastData[0]?.date != undefined
+                ? e.lastData[0]?.date
+                : Array.isArray(e.lastData) == false && e.lastData?.date == undefined
+                ? '-'
+                : Array.isArray(e.lastData) == false && e.lastData?.date != undefined
+                ? e.lastData?.date
+                : null
               : e.date,
         });
       });
@@ -589,7 +616,7 @@ const AdminDashboard = () => {
       if (viewStation.length > 0) {
         XLSX.writeFile(
           workBook,
-          `Jami ${tableTitle} ${resultDate}.xlsx`
+          `${tableTitleStation} ${tableTitle} ${resultDate}.xlsx`
         );
       }
     } else if (dataOrStation == "station") {
@@ -622,7 +649,7 @@ const AdminDashboard = () => {
       if (viewStationByChar.length > 0) {
         XLSX.writeFile(
           workBook,
-          `Jami ${tableTitle} ${resultDate}.xlsx`
+          `${tableTitleStation} ${tableTitle} ${resultDate}.xlsx`
         );
       }
     }
@@ -698,6 +725,7 @@ const AdminDashboard = () => {
   };
 
   const getStationStatisByBalansOrg = id => {
+    setTableTitleStation(`${foundBalansOrgName(id)}ga tegishli stansiyalar`)
     // ! STATISTIC STATION BY BALANS ORGANISATION
     if(id == undefined){
       customFetch
@@ -851,7 +879,16 @@ const AdminDashboard = () => {
                         whichStation == "notWorkStation" ? (
                           Array.isArray(e.lastData) == true ?
                         <tr key={i}>
-                          <td className={`text-center fw-bold`}>{e?.name}</td>
+                          <td className={`text-center fw-bold`}>
+                            <span>
+                              {e?.name}
+                            </span>
+                            {
+                              e.status == 1 && e.defective == true ?
+                              <img className="cursor-pointer" data-bs-target="#exampleModalToggle" data-bs-toggle="modal" src={warning} alt="warning" width={35} height={35} />
+                              : null
+                            }
+                          </td>
                           <td className={`text-center fw-bold`}>
                             {e?.battery}
                           </td>
@@ -890,25 +927,25 @@ const AdminDashboard = () => {
                             whichStation != 'notWorkStation'
                             ?
                             <td
-                            className={`text-center fw-bold ${
-                              checkStationWorkingOrNot(e.lastData[0]?.date) == 0
-                                ? "color-green"
-                                : checkStationWorkingOrNot(e.lastData[0]?.date) <=
-                                  3
-                                ? "color-azeu"
-                                : checkStationWorkingOrNot(e.lastData[0]?.date) > 3
-                                ? "color-yellow"
-                                : checkStationWorkingOrNot(e.lastData[0]?.date) ==
-                                  "after one month"
-                                ? "text-danger"
-                                : checkStationWorkingOrNot(e.lastData[0]?.date) ==
-                                  "undefined"
-                                ? "text-danger"
-                                : "text-danger"
-                            }`}
-                          >
-                            {filteredStationDate(e.lastData[0]?.date)}
-                          </td>
+                              className={`text-center fw-bold ${
+                                checkStationWorkingOrNot(e.lastData[0]?.date) == 0
+                                  ? "color-green"
+                                  : checkStationWorkingOrNot(e.lastData[0]?.date) <=
+                                    3
+                                  ? "color-azeu"
+                                  : checkStationWorkingOrNot(e.lastData[0]?.date) > 3
+                                  ? "color-yellow"
+                                  : checkStationWorkingOrNot(e.lastData[0]?.date) ==
+                                    "after one month"
+                                  ? "text-danger"
+                                  : checkStationWorkingOrNot(e.lastData[0]?.date) ==
+                                    "undefined"
+                                  ? "text-danger"
+                                  : "text-danger"
+                              }`}
+                            >
+                              {filteredStationDate(e.lastData[0]?.date)}
+                            </td>
                           :
                           <td
                             className='text-center fw-bold text-danger'
@@ -926,7 +963,16 @@ const AdminDashboard = () => {
                         </tr>
                         :
                         <tr key={i}>
-                          <td className={`text-center fw-bold`}>{e?.name}</td>
+                          <td className={`text-center fw-bold`}>
+                            <span>
+                              {e?.name}
+                            </span>
+                            {
+                              e.status == 1 && e.defective == true ?
+                              <img className="cursor-pointer" data-bs-target="#exampleModalToggle" data-bs-toggle="modal" src={warning} alt="warning" width={35} height={35} />
+                              : null
+                            }
+                          </td>
                           <td className={`text-center fw-bold`}>
                             {e?.battery}
                           </td>
@@ -1003,7 +1049,15 @@ const AdminDashboard = () => {
                       ) : (
                         <tr key={i}>
                           <td className={`text-center fw-bold`}>
+                            <span>
                             {e?.stations?.name}
+                            </span>
+
+                            {
+                              e?.stations?.status == 1 && e?.stations?.defective == true ?
+                              <img className="cursor-pointer" data-bs-target="#exampleModalToggle" data-bs-toggle="modal" src={warning} alt="warning" width={35} height={35} />
+                              : null
+                            }
                           </td>
                           <td className={`text-center fw-bold`}>
                             {e?.stations?.battery}
@@ -1104,7 +1158,16 @@ const AdminDashboard = () => {
                     {viewStationByChar?.map((e, i) => {
                       return (
                         <tr key={i}>
-                          <td className="text-center fw-bold">{e?.name}</td>
+                          <td className="text-center fw-bold">
+                            <span>
+                             {e?.name}
+                            </span>
+                            {
+                              e.status == 1 && e.defective == true ?
+                              <img className="cursor-pointer" data-bs-target="#exampleModalToggle" data-bs-toggle="modal" src={warning} alt="warning" width={35} height={35} />
+                              : null
+                            }
+                          </td>
                           <td className="text-center fw-bold">{e.imel}</td>
                           <td className="text-center fw-bold">{e.battery}</td>
                           <td className="text-center fw-bold">{e.signal}</td>
@@ -1129,9 +1192,45 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* MODAL DEFECT */}
+      <div className="modal fade" id="exampleModalToggle" aria-hidden="true" aria-labelledby="exampleModalToggleLabel" tabIndex="-1">
+        <div className="modal-dialog modal-warning modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header modal-header-warning">
+              <div className="m-auto">
+                <img  src={warning} width={100} height={100} alt="warning" />
+              </div>
+            </div>
+            <div className="modal-body">
+              <h4 className="heading-modal-warning text-center">
+                Qurilmaning no sozligining sabablari!
+              </h4>
+              <ul className="m-0 p-0 ps-3">
+                <li className="d-flex align-items-center mt-4">
+                  <img src={warningMessage} width={25} height={25} alt="warningMessage" />
+                  <p className="m-0 ms-2">
+                    Qurilmaning sozlamalari noto'g'ri qilingan bo'lishi mumkin
+                  </p>
+                </li>
+                <li className="d-flex align-items-center mt-3">
+                  <img src={warningMessage} width={25} height={25} alt="warningMessage" />
+                  <p className="m-0 ms-2">
+                  Qurilmaga suv kirgan bo'lishi mumkin
+                  </p>
+                </li>
+              </ul>
+            </div>
+            <div className="modal-footer modal-footer-warning">
+              <button className="btn btn-warning text-light w-25" data-bs-target="#exampleModalToggle2" data-bs-toggle="modal">Ok</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="container-fluid p-0">
         <section className="section-dashboard">
-          {viewStation?.length > 0 ? ( 
+          {viewStation?.length > 0 ? (
             <div className="container-fluid p-0">
               <div className="user-dashboard-top-wrapper">
               <div className="d-flex align-items-center mb-4 pt-3">
@@ -1144,6 +1243,7 @@ const AdminDashboard = () => {
                         getStationStatisByBalansOrg()
                         setWhichStation("allStation");
                         setTableTitle("Umumiy stansiyalar soni");
+                        setTableTitleStation("Jami stansiyalar");
                         setDataOrStation('data')
                         loaderFunc()
                       }}>
@@ -1178,7 +1278,7 @@ const AdminDashboard = () => {
 
                 <div className="d-flex align-items-center justify-content-between flex-wrap mb-3 pt-3">
                   <h1 className="dashboard-heading ms-2">
-                    Jami stansiyalar
+                    {tableTitleStation}
                   </h1>
 
                       <div className="region-heading-statis-wrapper d-flex flex-wrap cursor">
@@ -1468,10 +1568,34 @@ const AdminDashboard = () => {
                               Array.isArray(e.lastData) == true ?
                               <tr key={i}>
                                 <td className="text-center fw-bold">
+                                  <span>
                                   {whichStation == "allStation" ||
                                   whichStation == "notWorkStation"
-                                    ? e?.name
-                                    : e.stations?.name}
+                                    ?
+                                    <>
+                                      <span>
+                                        {e?.name}
+                                      </span>
+                                      {
+                                        e.status == 1 && e.defective == true ?
+                                        <img className="cursor-pointer" data-bs-target="#exampleModalToggle" data-bs-toggle="modal" src={warning} alt="warning" width={35} height={35} />
+                                        : null
+                                      }
+                                    </>
+                                    :
+                                    <>
+                                      <span>
+                                        {e.stations?.name}
+                                      </span>
+                                      {
+                                        e.stations?.status == 1 && e.stations?.defective == true ?
+                                        <img className="cursor-pointer" data-bs-target="#exampleModalToggle" data-bs-toggle="modal" src={warning} alt="warning" width={35} height={35} />
+                                        : null
+                                      }
+                                    </>
+                                    }
+                                  </span>
+
                                 </td>
                                 <td className="text-center fw-bold">
                                   {whichStation == "allStation" &&
@@ -1556,8 +1680,30 @@ const AdminDashboard = () => {
                                 <td className="text-center fw-bold">
                                   {whichStation == "allStation" ||
                                   whichStation == "notWorkStation"
-                                    ? e?.name
-                                    : e.stations?.name}
+                                    ?
+                                    <>
+                                      <span>
+                                        {e?.name}
+                                      </span>
+                                      {
+                                        e.status == 1 && e.defective == true ?
+                                        <img className="cursor-pointer" data-bs-target="#exampleModalToggle" data-bs-toggle="modal" src={warning} alt="warning" width={35} height={35} />
+                                        : null
+                                      }
+                                    </>
+                                    :
+                                    <>
+                                      <span>
+                                        {e.stations?.name}
+                                      </span>
+                                      {
+                                        e.stations?.status == 1 && e.stations?.defective == true ?
+                                        <img className="cursor-pointer" data-bs-target="#exampleModalToggle" data-bs-toggle="modal" src={warning} alt="warning" width={35} height={35} />
+                                        : null
+                                      }
+                                    </>
+
+                                    }
                                 </td>
                                 <td className="text-center fw-bold">
                                   {whichStation == "allStation" &&
@@ -1682,7 +1828,14 @@ const AdminDashboard = () => {
                             return (
                               <tr key={i}>
                                 <td className="text-center fw-bold">
-                                  {e?.name}
+                                  <span>
+                                    {e?.name}
+                                  </span>
+                                  {
+                                    e.status == 1 && e.defective == true ?
+                                    <img className="cursor-pointer" data-bs-target="#exampleModalToggle" data-bs-toggle="modal" src={warning} alt="warning" width={35} height={35} />
+                                    : null
+                                  }
                                 </td>
                                 <td className="text-center fw-bold">
                                   {e.battery}
