@@ -9,6 +9,12 @@ import circleGreen from "../../assets/images/circle.png";
 import circleGreenBlue from "../../assets/images/circle-green-blue.png";
 import circleOrange from "../../assets/images/circle-orange.png";
 import circleYellow from "../../assets/images/circle-yellow.png";
+import all from "../../assets/images/all.png";
+import defective from "../../assets/images/defective.png";
+import active from "../../assets/images/active.png";
+import passive from "../../assets/images/passive.png";
+import warning from "../../assets/images/warning.png";
+import warningMessage from "../../assets/images/warning-message.png";
 import "./UserLastData.css";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
@@ -28,6 +34,7 @@ const UserLastData = (prop) => {
   const name = window.localStorage.getItem("name");
   const role = window.localStorage.getItem("role");
   const [stationStatistic, settationStatistic] = useState([]);
+  const [stationStatisticAll, setStationStatisticAll] = useState([]);
   const [whichStation, setWhichStation] = useState("allStation");
   const [tableTitle, setTableTitle] = useState("Umumiy stansiyalar soni");
   const [colorCard, setColorCard] = useState(
@@ -117,6 +124,17 @@ const UserLastData = (prop) => {
     };
 
     userDashboardFunc();
+
+    // ! STATION STATISTIC
+    customFetch
+    .get(`/stations/getAllStationsStatisic`)
+    .then((data) => {
+      data.data.data.gruopRegion.forEach(i => {
+        if(i.balance_organization_id == localStorage.getItem('name')){
+          setStationStatisticAll(i)
+        }
+      })
+    });
   }, []);
 
   useEffect(() => {
@@ -601,6 +619,41 @@ const UserLastData = (prop) => {
 
   return (
     <section className="home-section py-3">
+      {/* MODAL DEFECT */}
+      <div className="modal fade" id="exampleModalToggle" aria-hidden="true" aria-labelledby="exampleModalToggleLabel" tabIndex="-1">
+        <div className="modal-dialog modal-warning modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header modal-header-warning">
+              <div className="m-auto">
+                <img  src={warning} width={100} height={100} alt="warning" />
+              </div>
+            </div>
+            <div className="modal-body">
+              <h4 className="heading-modal-warning text-center">
+                Qurilmaning no sozligining sabablari!
+              </h4>
+              <ul className="m-0 p-0 ps-3">
+                <li className="d-flex align-items-center mt-4">
+                  <img src={warningMessage} width={25} height={25} alt="warningMessage" />
+                  <p className="m-0 ms-2">
+                    Qurilmaning sozlamalari noto'g'ri qilingan bo'lishi mumkin
+                  </p>
+                </li>
+                <li className="d-flex align-items-center mt-3">
+                  <img src={warningMessage} width={25} height={25} alt="warningMessage" />
+                  <p className="m-0 ms-2">
+                  Qurilmaga suv kirgan bo'lishi mumkin
+                  </p>
+                </li>
+              </ul>
+            </div>
+            <div className="modal-footer modal-footer-warning">
+              <button className="btn btn-warning text-light w-25" data-bs-target="#exampleModalToggle2" data-bs-toggle="modal">Ok</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="container-fluid">
         <div className="card">
           {allStation.length > 0 ? (
@@ -611,11 +664,28 @@ const UserLastData = (prop) => {
                   id="profile-users"
                 >
                   <div className="user-last-data-top-wrapper pt-5">
-                    <h1 className="mb-3 user-lastdata-heading">
-                      {balanceOrg.length == 0
-                        ? `${name} ga biriktirilgan qurilmalar`
-                        : `${balanceOrgName} ga biriktirilgan qurilmalar`}
-                    </h1>
+                    <div className="d-flex align-items-center justify-content-between">
+                      <h1 className="mb-3 user-lastdata-heading">
+                        {balanceOrg.length == 0
+                          ? `${name} ga biriktirilgan qurilmalar`
+                          : `${balanceOrgName} ga biriktirilgan qurilmalar`}
+                      </h1>
+
+                      <div className="region-heading-statis-wrapper region-heading-statis-wrapper-last-data d-flex flex-wrap cursor">
+                            <div className="d-flex align-items-center m-0">
+                              <img src={all} alt="active" width={30} height={30} /> <span className="fs-6 ms-1">Jami</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countStations} ta</span>
+                            </div>
+                            <div className="d-flex align-items-center m-0">
+                              <img src={active} className="ms-3" alt="active" width={30} height={30} /> <span className="fs-6 ms-1">Active</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countWorkingStations} ta</span>
+                            </div>
+                            <div className="d-flex align-items-center m-0">
+                              <img src={passive} className="ms-3" alt="active" width={35} height={35} /> <span className="fs-6 ms-1">Passive</span>: <span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countNotWorkingStations} ta</span>
+                            </div>
+                            <div className="d-flex align-items-center m-0">
+                              <img className="ms-3" src={defective} alt="active" width={35} height={35} /> <span className="fs-6 ms-1">No soz</span> :<span className="fs-6 ms-1 fw-semibold">{stationStatisticAll.countDefectiveStations} ta</span>
+                            </div>
+                      </div>
+                    </div>
 
                     <ul className="dashboard-list list-unstyled m-0 d-flex flex-wrap align-items-center justify-content-between mt-4">
                       {stationStatistic?.totalStationsCount > 0 ? (
@@ -825,34 +895,33 @@ const UserLastData = (prop) => {
                       {allStation?.map((e, i) => {
                         return (
                           <li className="user-last-data-list-item mt-4" key={i}>
-                            <a
-                              onClick={() => {
-                                navigate(
-                                  `/user/lastdata/${
-                                    whichStation == "allStation"
-                                      ? e._id
-                                      : e.stationsId
-                                  }`
-                                );
-                                localStorage.setItem(
-                                  "stationName",
-                                  whichStation == "allStation"
-                                    ? e.name
-                                    : e.stations?.name
-                                );
-                                localStorage.setItem(
-                                  "location",
-                                  whichStation == "allStation"
-                                    ? e.location
-                                    : e.stations?.location
-                                );
-                              }}
-                            >
+                            <a>
                               <div className="user-last-data-list-item-top d-flex align-items-center justify-content-between">
                                 <h3 className="fs-5 m-0">
                                   {whichStation == "allStation"
-                                    ? e.name
-                                    : e.stations?.name}
+                                    ?
+                                    <>
+                                    <span>
+                                      {e.name}
+                                    </span>
+                                    {
+                                      e.status == 1 && e.defective == true ?
+                                      <img className="cursor-pointer" data-bs-target="#exampleModalToggle" data-bs-toggle="modal" src={warning} alt="warning" width={35} height={35} />
+                                      : null
+                                    }
+                                    </>
+                                    :
+                                    <>
+                                      <span>
+                                      {e.stations?.name}
+                                      </span>
+                                      {
+                                        e.stations?.status == 1 && e.stations?.defective == true ?
+                                        <img className="cursor-pointer" data-bs-target="#exampleModalToggle" data-bs-toggle="modal" src={warning} alt="warning" width={35} height={35} />
+                                        : null
+                                      }
+                                    </>
+                                    }
                                 </h3>
                                 <div className="d-flex align-items-center justify-content-between">
                                   <p
@@ -938,7 +1007,29 @@ const UserLastData = (prop) => {
                                 <span className={colorCard}></span>
                               )}
 
-                              <span className="">
+                              <span
+                              onClick={() => {
+                                navigate(
+                                  `/user/lastdata/${
+                                    whichStation == "allStation"
+                                      ? e._id
+                                      : e.stationsId
+                                  }`
+                                );
+                                localStorage.setItem(
+                                  "stationName",
+                                  whichStation == "allStation"
+                                    ? e.name
+                                    : e.stations?.name
+                                );
+                                localStorage.setItem(
+                                  "location",
+                                  whichStation == "allStation"
+                                    ? e.location
+                                    : e.stations?.location
+                                );
+                              }}
+                              >
                                 <div className="text-end mt-2">
                                   <div className="d-flex align-items-center">
                                     <p className="m-0 user-lastdata-level-desc">
