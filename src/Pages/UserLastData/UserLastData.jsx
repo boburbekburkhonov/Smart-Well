@@ -200,21 +200,7 @@ const UserLastData = (prop) => {
                 data.totalPages
               )}`
             : `${setAllStation(data.data.data.docs)} ${setTotalPages(
-                data.data.totalPages
-              )}`;
-        });
-    } else if (whichStation == "notWorkStation") {
-      // ! LIMIT
-      customFetch
-        .get(`${api}/last-data/getNotLastDataStations?page=1&perPage=12`)
-        .then((res) => res.json())
-        .then((data) => {
-          role == "USER"
-            ? `${setAllStation(data.data.data.docs)} ${setTotalPages(
-                data.data.totalPages
-              )}`
-            : `${setAllStation(data.data.data.docs)} ${setTotalPages(
-                data.data.dataz.totalPages
+                data.data.data.totalPages
               )}`;
         });
     }
@@ -280,18 +266,22 @@ const UserLastData = (prop) => {
   };
 
   const returnFixdDate = (item) => {
-    const fixedDate = new Date(item);
-    fixedDate.setHours(fixedDate.getHours() - 5);
+    if(item == undefined){
+      return "Ma'lumot kelmagan"
+    }else {
+      const fixedDate = new Date(item);
+      fixedDate.setHours(fixedDate.getHours() - 5);
 
-    const date = `${fixedDate.getDate()}/${
-      fixedDate.getMonth() + 1
-    }/${fixedDate.getFullYear()} ${fixedDate.getHours()}:${
-      String(fixedDate.getMinutes()).length == 1
-        ? "0" + fixedDate.getMinutes()
-        : fixedDate.getMinutes()
-    }`;
+      const date = `${fixedDate.getDate()}/${
+        fixedDate.getMonth() + 1
+      }/${fixedDate.getFullYear()} ${fixedDate.getHours()}:${
+        String(fixedDate.getMinutes()).length == 1
+          ? "0" + fixedDate.getMinutes()
+          : fixedDate.getMinutes()
+      }`;
 
-    return date;
+      return date;
+    }
   };
 
   const checkStationWorkingOrNot = (value) => {
@@ -1036,10 +1026,15 @@ const UserLastData = (prop) => {
                                       Sath:{" "}
                                     </p>
                                     <span className="fw-bold text-end w-100 user-lastdata-level-desc">
-                                      {whichStation == "allStation"
-                                        ? Number(e.lastData?.level).toFixed()
-                                        : Number(e?.level).toFixed()}{" "}
-                                      sm
+                                      {
+                                        e.lastData != undefined && whichStation == "allStation"
+                                        ?
+                                        `${Number(e.lastData?.level).toFixed()} sm`
+                                        : e.level != undefined && whichStation != "allStation"
+                                        ? `${Number(e?.level).toFixed()} sm`
+                                        :
+                                        '-'
+                                      }
                                     </span>
                                   </div>
                                   <div className="d-flex align-items-center">
@@ -1047,14 +1042,17 @@ const UserLastData = (prop) => {
                                       Sho'rlanish:{" "}
                                     </p>
                                     <span className="fw-bold text-end w-100 user-lastdata-level-desc">
-                                      {whichStation == "allStation"
-                                        ? Number(
-                                            e.lastData?.conductivity
-                                          ).toFixed()
-                                        : Number(
-                                            e?.conductivity
-                                          ).toFixed()}{" "}
-                                      g/l
+                                      {
+                                        e.lastData != undefined && whichStation == "allStation"
+                                        ? `${Number(
+                                          e.lastData?.conductivity
+                                        ).toFixed()} g/l`
+                                        : e.conductivity != undefined && whichStation != "allStation"
+                                        ? `${Number(
+                                          e?.conductivity
+                                        ).toFixed()} g/l`
+                                        : '-'
+                                      }
                                     </span>
                                   </div>
                                   <div className="d-flex align-items-center">
@@ -1062,10 +1060,13 @@ const UserLastData = (prop) => {
                                       Temperatura:{" "}
                                     </p>
                                     <span className="fw-bold text-end w-100 user-lastdata-level-desc">
-                                      {whichStation == "allStation"
-                                        ? Number(e.lastData?.temp).toFixed()
-                                        : Number(e?.temp).toFixed()}{" "}
-                                      °C
+                                      {
+                                        e.lastData != undefined && whichStation == "allStation"
+                                        ? `${Number(e.lastData?.temp).toFixed()} °C`
+                                        : e.temp != undefined && whichStation != "allStation"
+                                        ? `${Number(e?.temp).toFixed()} °C`
+                                        : '-'
+                                      }
                                     </span>
                                   </div>
                                 </div>
