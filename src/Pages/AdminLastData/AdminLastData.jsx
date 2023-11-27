@@ -367,18 +367,22 @@ const AdminLastData = () => {
   };
 
   const returnFixdDate = (item) => {
-    const fixedDate = new Date(item);
-    fixedDate.setHours(fixedDate.getHours() - 5);
+    if(item == undefined){
+      return "Ma'lumot kelmagan"
+    }else {
+      const fixedDate = new Date(item);
+      fixedDate.setHours(fixedDate.getHours() - 5);
 
-    const date = `${fixedDate.getDate()}/${
-      fixedDate.getMonth() + 1
-    }/${fixedDate.getFullYear()} ${fixedDate.getHours()}:${
-      String(fixedDate.getMinutes()).length == 1
-        ? "0" + fixedDate.getMinutes()
-        : fixedDate.getMinutes()
-    }`;
+      const date = `${fixedDate.getDate()}/${
+        fixedDate.getMonth() + 1
+      }/${fixedDate.getFullYear()} ${fixedDate.getHours()}:${
+        String(fixedDate.getMinutes()).length == 1
+          ? "0" + fixedDate.getMinutes()
+          : fixedDate.getMinutes()
+      }`;
 
-    return date;
+      return date;
+    }
   };
 
   const checkStationWorkingOrNot = (value) => {
@@ -1360,9 +1364,15 @@ const AdminLastData = () => {
                                     </p>
                                     <span className="fw-bold text-end w-100 user-lastdata-level-desc">
                                       {whichStation == "allStation"
-                                        ? Array.isArray(e.lastData) ? Number(e.lastData[0]?.level).toFixed() : Number(e.lastData?.level).toFixed()
-                                        : Number(e?.level).toFixed()}{" "}
-                                      sm
+                                      ?
+                                        Array.isArray(e.lastData) && e.lastData.length > 0
+                                        ? `${Number(e.lastData[0]?.level).toFixed()} sm`
+                                        : Array.isArray(e.lastData) == false && e.lastData != undefined
+                                        ? `${Number(e.lastData?.level).toFixed()} sm`
+                                        : '-'
+                                      :
+                                      `${Number(e?.level).toFixed()} sm`
+                                      }
                                     </span>
                                   </div>
                                   <div className="d-flex align-items-center">
@@ -1371,15 +1381,20 @@ const AdminLastData = () => {
                                     </p>
                                     <span className="fw-bold text-end w-100 user-lastdata-level-desc">
                                       {whichStation == "allStation"
-                                        ? Array.isArray(e.lastData) ? Number(
+                                        ?
+                                          Array.isArray(e.lastData) && e.lastData.length > 0
+                                          ? `${Number(
                                             e.lastData[0]?.conductivity
-                                          ).toFixed() : Number(
+                                          ).toFixed()} g/l`
+                                          : Array.isArray(e.lastData) == false && e.lastData != undefined
+                                          ? `${Number(
                                             e.lastData?.conductivity
-                                          ).toFixed()
-                                        : Number(
-                                            e?.conductivity
-                                          ).toFixed()}{" "}
-                                      g/l
+                                          ).toFixed()} g/l`
+                                          : '-'
+                                        : `${Number(
+                                          e?.conductivity
+                                        ).toFixed()} g/l`
+                                          }
                                     </span>
                                   </div>
                                   <div className="d-flex align-items-center">
@@ -1388,9 +1403,15 @@ const AdminLastData = () => {
                                     </p>
                                     <span className="fw-bold text-end w-100 user-lastdata-level-desc">
                                       {whichStation == "allStation"
-                                        ? Array.isArray(e.lastData) ? Number(e.lastData[0]?.temp).toFixed() : Number(e.lastData?.temp).toFixed()
-                                        : Number(e?.temp).toFixed()}{" "}
-                                      °C
+                                        ?
+                                          Array.isArray(e.lastData) && e.lastData.length > 0
+                                          ? `${Number(e.lastData[0]?.temp).toFixed()} °C`
+                                          : Array.isArray(e.lastData) == false && e.lastData != undefined
+                                          ? `${Number(e.lastData?.temp).toFixed()} °C`
+                                          : '-'
+                                        :
+                                        `${Number(e?.temp).toFixed()} °C`
+                                        }
                                     </span>
                                   </div>
                                 </div>

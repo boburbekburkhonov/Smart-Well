@@ -24,7 +24,6 @@ import autoTable from "jspdf-autotable";
 import axios from "axios";
 import './AdminLastDataNews.css'
 
-
 moment.locale("uz-latn");
 
 const AdminLastDataNews = () => {
