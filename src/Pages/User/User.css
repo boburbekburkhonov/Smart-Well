@@ -332,3 +332,21 @@ body {
 .cursor-pointer {
   cursor: pointer;
 }
+
+.notification-message:hover {
+  opacity: 0.8;
+}
+
+.notification-message:active {
+  opacity: 0.5;
+}
+
+.quiz-modal-width {
+	max-width: 35vw !important;
+	height: 70%;
+}
+
+.quiz-modal-height {
+	height: 52vh;
+	overflow: auto;
+}
