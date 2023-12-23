@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import "./User.css";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
-import MailIcon from '@mui/icons-material/Mail';
+import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import menuBar from "../../assets/images/menu-bar.png";
 import dashboard from "../../assets/images/dashboard.png";
 import dashboardBlack from "../../assets/images/dashboard-black.png";
@@ -34,6 +34,7 @@ import StepContent from '@mui/material/StepContent';
 import Button from '@mui/material/Button';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
+import yellowWarning from '../../assets/images/circle-orange.png'
 
 const User = () => {
   const [countNotification, setCountNotification] = useState(0);
@@ -146,7 +147,10 @@ const User = () => {
       // ! NOTIFICATION MESSAGE
     customFetch
     .get(`/user-messages/getAllUserMessages`)
-    .then((data) => setNotificationMessage(data.data.data));
+    .then((data) => {
+      const result = data.data.data.filter(e => e.isRead != true)
+      setNotificationMessage(result)
+    });
   }, []);
 
   function logoutFunction() {
@@ -169,6 +173,15 @@ const User = () => {
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
 
+  const readMessageNotification = id => {
+    // ! NOTIFICATION
+    customFetch
+      .post(`/user-messages/updateIsRead`, {
+        id: id
+      })
+      .then((data) => data);
+  }
+
   return (
     <HelmetProvider>
       <div className="admin-wrapper">
@@ -177,7 +190,7 @@ const User = () => {
           <div className="modal-dialog modal-dialog-centered quiz-modal-width">
             <div className="modal-content quiz-modal-height">
               <div className="modal-header">
-                <h1 className="modal-title fs-5" id="staticBackdropLabel">Modal title</h1>
+                <h1 className="modal-title fs-5" id="staticBackdropLabel">Qurilmadan kelgan xabarlar</h1>
                 <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div className="modal-body m-auto">
@@ -186,11 +199,6 @@ const User = () => {
                     {notificationMessage.map((step, index) => (
                       <Step key={index + 1}>
                         <StepLabel
-                          optional={
-                            index === 2 ? (
-                              <Typography variant="caption">Last step</Typography>
-                            ) : null
-                          }
                         >
                           {/* {index + 1} */}
                         </StepLabel>
@@ -200,10 +208,12 @@ const User = () => {
                             <div>
                               <Button
                                 variant="contained"
-                                onClick={handleNext}
                                 sx={{ mt: 1, mr: 1 }}
+                                onClick={() => {
+                                  handleNext()
+                                  readMessageNotification(step._id)}}
                               >
-                                {index === notificationMessage.length - 1 ? 'Finish' : 'Continue'}
+                                {index === notificationMessage.length - 1 ? 'Xabar tugadi' : 'Keyingi xabar'}
                               </Button>
                             </div>
                           </Box>
@@ -401,9 +411,26 @@ const User = () => {
                   height={30}
                 />
                 <span className="mx-2">{username}</span>
-                <Badge className="notification-message cursor-pointer me-3" color="warning" badgeContent={countNotification} data-bs-toggle="modal" data-bs-target="#staticBackdrop">
-                  <MailIcon />
+                <Badge className="notification-message cursor-pointer me-3" color="warning" badgeContent={notificationMessage.length}  type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <NotificationsNoneIcon />
                 </Badge>
+                  <ul class="dropdown-menu px-2">
+                    {
+                      notificationMessage.map((e, i) => {
+                        return <li className="dropdown-item cursor-pointer d-flex align-items-start justify-content-between mb-2">
+                                <img src={yellowWarning} alt="yellowWarning" width={40} height={40} />
+                                <div className="dropdown-message-wrapper">
+                                  <p className="m-0">
+                                    {e.message}
+                                  </p>
+                                  <p className="text-end">
+                                    11:40
+                                  </p>
+                                </div>
+                              </li>
+                      })
+                    }
+                  </ul>
               </div>
             </div>
           </div>
