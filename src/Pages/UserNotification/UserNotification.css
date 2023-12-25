@@ -1,0 +1,16 @@
+.notification-wrapper-item-first {
+  border-top: 2px solid #e8eaf1;
+  background: #F1F5F8 !important;
+}
+
+.notification-wrapper li {
+  border-bottom: 2px solid #e8eaf1;
+  border-left: 2px solid #e8eaf1;
+  border-right: 2px solid #e8eaf1;
+  padding: 14px !important;
+  background: #FDFDFE;
+}
+
+.notification-wrapper li:hover {
+  background: #ffffff;
+}

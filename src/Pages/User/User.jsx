@@ -26,15 +26,7 @@ import { api } from "../Api/Api";
 import { useState } from "react";
 import { Badge } from "@mui/material";
 import axios from "axios";
-import Box from '@mui/material/Box';
-import Stepper from '@mui/material/Stepper';
-import Step from '@mui/material/Step';
-import StepLabel from '@mui/material/StepLabel';
-import StepContent from '@mui/material/StepContent';
-import Button from '@mui/material/Button';
-import Paper from '@mui/material/Paper';
-import Typography from '@mui/material/Typography';
-import yellowWarning from '../../assets/images/circle-orange.png'
+import UserNotification from "../UserNotification/UserNotification";
 
 const User = () => {
   const [countNotification, setCountNotification] = useState(0);
@@ -163,70 +155,9 @@ const User = () => {
     window.location.reload();
   }
 
-  const [activeStep, setActiveStep] = React.useState(0);
-
-  const handleNext = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep + 1);
-  };
-
-  const handleBack = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep - 1);
-  };
-
-  const readMessageNotification = id => {
-    // ! NOTIFICATION
-    customFetch
-      .post(`/user-messages/updateIsRead`, {
-        id: id
-      })
-      .then((data) => data);
-  }
-
   return (
     <HelmetProvider>
       <div className="admin-wrapper">
-        //! Modal
-        <div className="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-          <div className="modal-dialog modal-dialog-centered quiz-modal-width">
-            <div className="modal-content quiz-modal-height">
-              <div className="modal-header">
-                <h1 className="modal-title fs-5" id="staticBackdropLabel">Qurilmadan kelgan xabarlar</h1>
-                <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div className="modal-body m-auto">
-                <Box sx={{ maxWidth: 400 }}>
-                  <Stepper activeStep={activeStep} orientation="vertical">
-                    {notificationMessage.map((step, index) => (
-                      <Step key={index + 1}>
-                        <StepLabel
-                        >
-                          {/* {index + 1} */}
-                        </StepLabel>
-                        <StepContent>
-                          <Typography>{step.message}</Typography>
-                          <Box sx={{ mb: 2 }}>
-                            <div>
-                              <Button
-                                variant="contained"
-                                sx={{ mt: 1, mr: 1 }}
-                                onClick={() => {
-                                  handleNext()
-                                  readMessageNotification(step._id)}}
-                              >
-                                {index === notificationMessage.length - 1 ? 'Xabar tugadi' : 'Keyingi xabar'}
-                              </Button>
-                            </div>
-                          </Box>
-                        </StepContent>
-                      </Step>
-                    ))}
-                  </Stepper>
-                </Box>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div className="sidebar">
           <div className="logo-details">
             <img
@@ -398,7 +329,7 @@ const User = () => {
           </ul>
         </div>
         <header className="home-section-header">
-          <div className="container-fluid pb-3">
+          <div className="container-fluid p-3">
             <div className="dropdown text-end d-flex align-items-center justify-content-between">
               <h2 className="admin-page-heading m-0">Smart Well</h2>
 
@@ -411,26 +342,9 @@ const User = () => {
                   height={30}
                 />
                 <span className="mx-2">{username}</span>
-                <Badge className="notification-message cursor-pointer me-3" color="warning" badgeContent={notificationMessage.length}  type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <Badge className="notification-message cursor-pointer me-3" color="warning" badgeContent={notificationMessage.length}  type="button" onClick={() => navigate("/user/notification")}>
                   <NotificationsNoneIcon />
                 </Badge>
-                  <ul class="dropdown-menu px-2">
-                    {
-                      notificationMessage.map((e, i) => {
-                        return <li className="dropdown-item cursor-pointer d-flex align-items-start justify-content-between mb-2">
-                                <img src={yellowWarning} alt="yellowWarning" width={40} height={40} />
-                                <div className="dropdown-message-wrapper">
-                                  <p className="m-0">
-                                    {e.message}
-                                  </p>
-                                  <p className="text-end">
-                                    11:40
-                                  </p>
-                                </div>
-                              </li>
-                      })
-                    }
-                  </ul>
               </div>
             </div>
           </div>
@@ -440,6 +354,10 @@ const User = () => {
           <Route
             path="/*"
             element={<UserDashboard balanceOrg={balanceOrg} />}
+          />
+          <Route
+            path="/notification"
+            element={<UserNotification />}
           />
           <Route
             path="/lastdata"

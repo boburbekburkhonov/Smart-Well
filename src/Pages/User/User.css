@@ -350,15 +350,3 @@ body {
 	height: 52vh;
 	overflow: auto;
 }
-
-/*! MODAL */
-.dropdown-menu {
-  width: 16vw !important;
-  height: 56vh !important;
-  overflow-x: auto;
-}
-
-/* .dropdown-message-wrapper {
-  max-width: 100px !important;
-  width: 100%;
-} */
