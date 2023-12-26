@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import "./Admin.css";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
@@ -21,17 +21,103 @@ import AdminStation from "../AdminStation/AdminStation";
 import AdminNews from "../AdminNews/AdminNews";
 import AdminLastData from "../AdminLastData/AdminLastData";
 import AdminLastDataNews from "../AdminLastDataNews/AdminLastDataNews";
+import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
+import { Badge } from "@mui/material";
+import { api } from "../Api/Api";
+import axios from "axios";
+import AdminNotification from "../AdminNotification/AdminNotification";
+import AdminOneNotification from "../AdminOneNotification/AdminOneNotification";
 
 const Admin = () => {
   const token = window.localStorage.getItem("accessToken");
   const location = useLocation();
   const username = window.localStorage.getItem("username");
+  const [notificationMessage, setNotificationMessage] = useState([]);
   const navigate = useNavigate();
+
+  // ! CUSTOM FETCH
+  const customFetch = axios.create({
+    baseURL: api,
+    headers: {
+      "Content-type": "application/json",
+    },
+  });
+
+  // ! ADD HEADER TOKEN
+  customFetch.interceptors.request.use(
+    async (config) => {
+      const token = window.localStorage.getItem("accessToken");
+      if (token) {
+        config.headers["Authorization"] = ` bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
+    }
+  );
+
+  // ! REFRESH TOKEN
+  const refreshToken = async () => {
+    try {
+      const requestToken = await fetch(`${api}/auth/signin`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          username: window.localStorage.getItem("username"),
+          password: window.localStorage.getItem("password"),
+        }),
+      });
+
+      const responToken = await requestToken.json();
+      return responToken.data.accessToken;
+    } catch (e) {
+      console.log("refreshToken", "Error", e);
+    }
+  };
+
+  // ! GET ACCESS TOKEN
+  customFetch.interceptors.response.use(
+    (response) => {
+      return response;
+    },
+    async function (error) {
+      const originalRequest = error.config;
+      if (
+        (error.response?.status === 403 && !originalRequest._retry) ||
+        (error.response?.status === 401 && !originalRequest._retry)
+      ) {
+        originalRequest._retry = true;
+
+        const resp = await refreshToken();
+
+        const access_token = resp;
+
+        window.localStorage.setItem("accessToken", access_token);
+
+        customFetch.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${access_token}`;
+        return customFetch(originalRequest);
+      }
+      return Promise.reject(error);
+    }
+  );
 
   useEffect(() => {
     if (!token) {
       window.location.href = "/";
     }
+
+    // ! NOTIFICATION MESSAGE
+    customFetch
+    .get(`/user-messages/getAllUserMessages`)
+    .then((data) => {
+      const result = data.data.data.filter(e => e.isRead != true)
+      setNotificationMessage(result)
+    });
   }, []);
 
   function logoutFunction() {
@@ -241,15 +327,26 @@ const Admin = () => {
                   height={30}
                 />
                 <span className="mx-2">{username}</span>
+                <Badge className="notification-message cursor-pointer me-3" color="warning" badgeContent={notificationMessage.length}  type="button" onClick={() => navigate("/admin/notification")}>
+                  <NotificationsNoneIcon />
+                </Badge>
               </div>
             </div>
           </div>
         </header>
 
         <section className="home-section py-3">
-          <div className="container-fluid">
+          <div className="container-fluid px-0">
             <Routes>
               <Route path="/*" element={<AdminDashboard />} />
+              <Route
+                path="/notification"
+                element={<AdminNotification />}
+              />
+              <Route
+                path="/notification/:message"
+                element={<AdminOneNotification />}
+              />
               <Route path="/lastdata" element={<AdminLastData />} />
               <Route
                 path="/lastdata/:news"

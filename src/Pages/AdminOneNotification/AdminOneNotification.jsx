@@ -1,11 +1,11 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
 import { api } from '../Api/Api';
+import './AdminOneNotification.css'
 import logo from '../../assets/images/logo.svg'
-import './UserOneNotification.css'
+import { useParams } from 'react-router-dom';
 
-const UserOneNotification = () => {
+const AdminOneNotification = () => {
   const { message } = useParams();
   const [notificationMessage, setNotificationMessage] = useState();
   const [regions, setRegions] = useState([]);
@@ -141,10 +141,10 @@ const UserOneNotification = () => {
   }
 
   return (
-    <section className="home-section py-3">
+    <section className="py-3">
       <div className="container-fluid">
         <div className="card">
-          <div className="card-body m-auto d-flex align-items-start py-5">
+          <div className="card-body m-auto d-flex flex-wrap align-items-start py-5">
             <img className='me-5' src={logo} alt="logo" width={200} height={200} />
             <ul className='list-unstyled m-0 p-0 m-auto'>
               <li className='one-message-item d-flex'>
@@ -221,4 +221,4 @@ const UserOneNotification = () => {
   );
 };
 
-export default UserOneNotification;
+export default AdminOneNotification;

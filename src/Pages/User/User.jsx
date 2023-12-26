@@ -30,7 +30,6 @@ import UserNotification from "../UserNotification/UserNotification";
 import UserOneNotification from "../UserOneNotification/UserOneNotification";
 
 const User = () => {
-  const [countNotification, setCountNotification] = useState(0);
   const [notificationMessage, setNotificationMessage] = useState([]);
   const [balanceOrg, setBalanceOrg] = useState([]);
   const token = window.localStorage.getItem("accessToken");
@@ -132,12 +131,7 @@ const User = () => {
       balansOrgName();
     }
 
-    // ! NOTIFICATION
-    customFetch
-      .get(`/user-messages/getAllUserMessgesCount`)
-      .then((data) => setCountNotification(data.data.data));
-
-      // ! NOTIFICATION MESSAGE
+    // ! NOTIFICATION MESSAGE
     customFetch
     .get(`/user-messages/getAllUserMessages`)
     .then((data) => {
