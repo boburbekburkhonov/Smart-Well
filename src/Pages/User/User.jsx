@@ -27,6 +27,7 @@ import { useState } from "react";
 import { Badge } from "@mui/material";
 import axios from "axios";
 import UserNotification from "../UserNotification/UserNotification";
+import UserOneNotification from "../UserOneNotification/UserOneNotification";
 
 const User = () => {
   const [countNotification, setCountNotification] = useState(0);
@@ -358,6 +359,10 @@ const User = () => {
           <Route
             path="/notification"
             element={<UserNotification />}
+          />
+          <Route
+            path="/notification/:message"
+            element={<UserOneNotification />}
           />
           <Route
             path="/lastdata"

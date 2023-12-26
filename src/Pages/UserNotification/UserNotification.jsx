@@ -4,10 +4,12 @@ import messageNotRead from '../../assets/images/email-not-read.png'
 import './UserNotification.css'
 import axios from 'axios';
 import { api } from '../Api/Api';
+import { useNavigate } from 'react-router-dom';
 
 const UserNotification = () => {
   const [notificationMessage, setNotificationMessage] = useState([]);
   const [lengthNewMessage, setLengthNewMessage] = useState();
+  const navigate = useNavigate();
 
   // ! CUSTOM FETCH
   const customFetch = axios.create({
@@ -129,7 +131,9 @@ const UserNotification = () => {
 
               {
                 notificationMessage.map((e, i) => {
-                  return <li className='d-flex align-items-center justify-content-between cursor-pointer' key={i}>
+                  return <li className='d-flex align-items-center justify-content-between cursor-pointer' key={i}
+                  onClick={() => navigate(`/user/notification/${e._id}`)}
+                  >
                   <div className='d-flex align-items-center'>
                     <img src={e.isRead == true ? messageRead : messageNotRead} alt="messageRead" width={24} height={24} />
                     <p className='m-0 ms-3 text-primary'>
